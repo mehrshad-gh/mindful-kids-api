@@ -42,6 +42,9 @@ async function runMigrations() {
     const applied = await getAppliedMigrations();
     const files = fs.readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql')).sort();
 
+    console.log('Migration files on disk:', files.join(', '));
+    console.log('Already applied:', applied.join(', ') || '(none)');
+
     for (const file of files) {
       const name = path.basename(file, '.sql');
       if (applied.includes(name)) {
