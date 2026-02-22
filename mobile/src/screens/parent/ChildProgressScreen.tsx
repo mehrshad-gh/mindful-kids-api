@@ -16,6 +16,21 @@ import { Card } from '../../components/ui/Card';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 
+function formatCompletedAt(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const today = now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (d.toDateString() === today) {
+    return `Today, ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  }
+  if (d.toDateString() === yesterday.toDateString()) {
+    return `Yesterday, ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  }
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+}
+
 export function ChildProgressScreen() {
   const { selectedChildId, setSelectedChild } = useAuth();
   const [children, setChildren] = useState<ChildItem[]>([]);
@@ -127,10 +142,13 @@ export function ChildProgressScreen() {
                   {summary && summary.recent_completions.length > 0 && (
                     <View style={styles.recent}>
                       <Text style={styles.recentTitle}>Recent</Text>
-                      {summary.recent_completions.slice(0, 3).map((r) => (
-                        <Text key={r.id} style={styles.recentItem} numberOfLines={1}>
-                          {r.activity_title} — {r.stars}⭐
-                        </Text>
+                      {summary.recent_completions.slice(0, 5).map((r) => (
+                        <View key={r.id} style={styles.recentItemRow}>
+                          <Text style={styles.recentItem} numberOfLines={1}>
+                            {r.activity_title} — {r.stars}⭐
+                          </Text>
+                          <Text style={styles.recentItemTime}>{formatCompletedAt(r.completed_at)}</Text>
+                        </View>
                       ))}
                     </View>
                   )}
@@ -158,7 +176,9 @@ const styles = StyleSheet.create({
   noData: { color: colors.textSecondary, fontSize: 14 },
   recent: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
   recentTitle: { fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginBottom: spacing.xs },
-  recentItem: { fontSize: 12, color: colors.text, marginBottom: 2 },
+  recentItemRow: { marginBottom: 4 },
+  recentItem: { fontSize: 12, color: colors.text },
+  recentItemTime: { fontSize: 11, color: colors.textSecondary, marginTop: 1 },
   emptyText: { color: colors.textSecondary },
   errorText: { color: colors.error },
   hint: { color: colors.textSecondary, marginTop: spacing.xs },

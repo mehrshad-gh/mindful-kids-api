@@ -38,6 +38,15 @@ Backend API for the Mindful Kids app (parents, children, activities, advice, pro
 - **Children:** `GET /api/children`, `POST /api/children`, etc.
 - **Activities, advice, psychologists, reviews, progress, emotion-logs** — see `src/routes/`.
 
+### Progress tracking
+
+- **Save activity completion:** `PUT /api/progress/children/:child_id/activities/:activity_id` with body `{ stars }` (1–5). Creates or updates one row per child+activity.
+- **Associated with child:** Each record is stored with `child_id`; only the parent who owns the child can read or write it.
+- **Timestamp:** Every completion is stored with `completed_at` (set on insert and on each update).
+- **Parent fetches progress:** `GET /api/progress/children/:child_id` (full list) and `GET /api/progress/children/:child_id/summary` (totals, streak, recent completions with timestamps).
+- **Reward logic:** Stars are assigned per activity completion (1–5). Default stars = 3 when not provided. Each progress row stores `stars`; the child’s total stars = sum of `stars` across all their progress records (returned as `total_stars` in the summary).
+- **Streak system:** Backend calculates streak from progress: consecutive calendar days with at least one completion. Missing a day resets the streak. The current streak is stored per child (`children.current_streak`) and updated on every progress upsert. Returned in summary and via `GET /api/progress/children/:child_id/streak`.
+
 ---
 
 ## Scripts (for Railway or local)

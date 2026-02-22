@@ -21,3 +21,13 @@ export const DEFAULT_EMOTIONS: EmotionOption[] = [
   { id: 'tired', label: 'Tired', emoji: '😴', color: '#A0A0A0' },
   { id: 'surprised', label: 'Surprised', emoji: '😲', color: '#F39C12' },
 ];
+
+/** Six emotions for the Emotion Wheel activity (circular selector). */
+export const EMOTION_WHEEL_ACTIVITY_EMOTIONS: EmotionOption[] = [
+  { id: 'happy', label: 'Happy', emoji: '😊', color: '#FFD93D' },
+  { id: 'sad', label: 'Sad', emoji: '😢', color: '#4D96FF' },
+  { id: 'angry', label: 'Angry', emoji: '😠', color: '#E74C3C' },
+  { id: 'scared', label: 'Scared', emoji: '😨', color: '#95A5A6' },
+  { id: 'calm', label: 'Calm', emoji: '😌', color: '#6BCB77' },
+  { id: 'excited', label: 'Excited', emoji: '🤩', color: '#FF6B6B' },
+];

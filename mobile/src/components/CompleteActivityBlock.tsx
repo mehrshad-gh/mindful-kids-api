@@ -1,29 +1,48 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
-import { recordProgress } from '../api/progress';
+import { recordProgress, recordProgressViaPost, type ProgressMetadata } from '../api/progress';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
+
+function getErrorMessage(err: unknown): string {
+  if (err && typeof err === 'object' && 'response' in err) {
+    const res = (err as { response?: { data?: { error?: string }; status?: number } }).response;
+    if (res?.data?.error) return res.data.error;
+    if (res?.status === 404) return 'Not found. Check that the activity and profile are correct.';
+    if (res?.status === 401) return 'Please sign in again.';
+    if (res?.status && res.status >= 500) return 'Server error. Try again in a moment.';
+  }
+  return err instanceof Error ? err.message : 'Something went wrong. Try again.';
+}
 
 interface CompleteActivityBlockProps {
   activityId: string;
   activityTitle?: string;
   childId: string | null;
   onRecorded?: () => void;
+  /** Optional activity-specific data (e.g. { selectedEmotion: 'happy' }) sent with progress. */
+  metadata?: ProgressMetadata;
+  /** When true, use POST /progress with child_id, activity_id, metadata, timestamp (e.g. Emotion Wheel). */
+  usePost?: boolean;
 }
 
 const STAR_COUNT = 5;
+const DEFAULT_STARS = 3;
 
 export function CompleteActivityBlock({
   activityId,
   activityTitle,
   childId,
   onRecorded,
+  metadata,
+  usePost = false,
 }: CompleteActivityBlockProps) {
-  const [stars, setStars] = useState(0);
+  const [stars, setStars] = useState(DEFAULT_STARS);
   const [saving, setSaving] = useState(false);
   const [recorded, setRecorded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!childId) {
     return (
@@ -45,12 +64,19 @@ export function CompleteActivityBlock({
   const handleRecord = async () => {
     if (stars < 1) return;
     setSaving(true);
+    setError(null);
     try {
-      await recordProgress(childId, activityId, stars);
+      if (usePost) {
+        await recordProgressViaPost(childId, activityId, stars, metadata);
+      } else {
+        await recordProgress(childId, activityId, stars, metadata);
+      }
       setRecorded(true);
       onRecorded?.();
-    } catch (_) {
-      // Caller can show error
+    } catch (err) {
+      const message = getErrorMessage(err);
+      setError(message);
+      Alert.alert('Could not save', message, [{ text: 'OK' }]);
     } finally {
       setSaving(false);
     }
@@ -72,6 +98,7 @@ export function CompleteActivityBlock({
           </TouchableOpacity>
         ))}
       </View>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
       <Button
         title="I finished! Save my stars"
         onPress={handleRecord}
@@ -94,4 +121,5 @@ const styles = StyleSheet.create({
   hint: { color: colors.textSecondary, fontSize: 14 },
   recordedEmoji: { fontSize: 32, textAlign: 'center', marginBottom: spacing.xs },
   recordedText: { fontSize: 16, fontWeight: '600', color: colors.success, textAlign: 'center' },
+  errorText: { fontSize: 14, color: colors.error, marginBottom: spacing.sm },
 });

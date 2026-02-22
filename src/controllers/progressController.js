@@ -36,6 +36,31 @@ async function upsert(req, res, next) {
   }
 }
 
+/**
+ * POST /progress — record completion with body: child_id, activity_id, stars?, metadata?, completed_at?.
+ * Used by Emotion Wheel and other flows that send full payload. Returns progress with completed_at.
+ */
+async function create(req, res, next) {
+  try {
+    const { child_id, activity_id, stars, metadata, completed_at } = req.body;
+    const child = await Child.findById(child_id, req.user.id);
+    if (!child) {
+      return res.status(404).json({ error: 'Child not found' });
+    }
+    const progress = await Progress.upsert({
+      childId: child_id,
+      activityId: activity_id,
+      stars,
+      streakDays: 0,
+      metadata,
+      completedAt: completed_at || null,
+    });
+    res.status(201).json({ progress });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function getStreak(req, res, next) {
   try {
     const { child_id } = req.params;
@@ -67,6 +92,7 @@ async function getSummary(req, res, next) {
 module.exports = {
   list,
   upsert,
+  create,
   getStreak,
   getSummary,
 };
