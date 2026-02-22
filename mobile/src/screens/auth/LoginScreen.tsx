@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -10,6 +11,14 @@ import { spacing } from '../../theme/spacing';
 import type { AuthStackParamList } from '../../types/navigation';
 
 type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'> };
+
+function getErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err) && err.response?.data?.error) {
+    return err.response.data.error;
+  }
+  if (err instanceof Error) return err.message;
+  return 'Something went wrong. Try again.';
+}
 
 export function LoginScreen({ navigation }: Props) {
   const { login, isLoading } = useAuth();
@@ -21,7 +30,11 @@ export function LoginScreen({ navigation }: Props) {
       Alert.alert('Error', 'Please enter email and password');
       return;
     }
-    await login(email.trim(), password);
+    try {
+      await login(email.trim(), password);
+    } catch (err) {
+      Alert.alert('Sign in failed', getErrorMessage(err));
+    }
   };
 
   return (

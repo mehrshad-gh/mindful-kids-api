@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -9,6 +10,17 @@ import { spacing } from '../../theme/spacing';
 import type { AuthStackParamList } from '../../types/navigation';
 
 type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'Register'> };
+
+function getErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err) && err.response?.data?.error) {
+    return err.response.data.error;
+  }
+  if (axios.isAxiosError(err) && err.response?.data?.errors?.length) {
+    return err.response.data.errors.map((e: { msg?: string }) => e.msg).join('. ');
+  }
+  if (err instanceof Error) return err.message;
+  return 'Something went wrong. Try again.';
+}
 
 export function RegisterScreen({ navigation }: Props) {
   const { register, isLoading } = useAuth();
@@ -21,7 +33,15 @@ export function RegisterScreen({ navigation }: Props) {
       Alert.alert('Error', 'Please fill all fields');
       return;
     }
-    await register(email.trim(), password, name.trim());
+    if (password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters');
+      return;
+    }
+    try {
+      await register(email.trim(), password, name.trim());
+    } catch (err) {
+      Alert.alert('Registration failed', getErrorMessage(err));
+    }
   };
 
   return (

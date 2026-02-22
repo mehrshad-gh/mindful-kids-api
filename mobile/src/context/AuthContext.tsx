@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import type { User, UserRole } from '../types/auth';
+import { getToken } from '../services/tokenStorage';
+import * as authService from '../services/authService';
 
 interface AuthContextValue {
   user: User | null;
@@ -7,32 +9,56 @@ interface AuthContextValue {
   selectedChildId: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isRestoring: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   setAppRole: (role: UserRole) => void;
   setSelectedChild: (childId: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function normalizeUser(u: { id: string; email: string; name: string; role: string }): User {
+  return {
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    role: u.role === 'admin' ? 'admin' : 'parent',
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [appRole, setAppRoleState] = useState<UserRole>('parent');
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await getToken();
+        if (!token || cancelled) return;
+        const { user: me } = await authService.getMe();
+        if (!cancelled) setUser(normalizeUser(me));
+      } catch {
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setIsRestoring(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // TODO: Call mindful-kids-api POST /auth/login
-      const mockUser: User = {
-        id: '1',
-        email,
-        name: 'Parent User',
-        role: 'parent',
-      };
-      setUser(mockUser);
+      const { user: u } = await authService.login({ email, password });
+      setUser(normalizeUser(u));
     } finally {
       setIsLoading(false);
     }
@@ -41,15 +67,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = useCallback(async (email: string, password: string, name: string) => {
     setIsLoading(true);
     try {
-      // TODO: Call mindful-kids-api POST /auth/register
-      const mockUser: User = { id: '1', email, name, role: 'parent' };
-      setUser(mockUser);
+      const { user: u } = await authService.register({ email, password, name });
+      setUser(normalizeUser(u));
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    await authService.logout();
     setUser(null);
     setAppRoleState('parent');
     setSelectedChildId(null);
@@ -70,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       selectedChildId,
       isAuthenticated: !!user,
       isLoading,
+      isRestoring,
       login,
       register,
       logout,
@@ -81,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       appRole,
       selectedChildId,
       isLoading,
+      isRestoring,
       login,
       register,
       logout,

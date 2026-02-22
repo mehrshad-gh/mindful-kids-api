@@ -1,7 +1,4 @@
-const getBaseUrl = () => {
-  // @ts-expect-error env
-  return process.env.EXPO_PUBLIC_API_URL ?? process.env.API_BASE_URL ?? 'http://localhost:3000/api';
-};
+import { apiClient } from '../lib/apiClient';
 
 export interface ChildItem {
   id: string;
@@ -14,16 +11,18 @@ export interface ChildItem {
   updated_at: string;
 }
 
-export async function fetchChildren(
-  token: string | null | undefined,
-  baseUrl?: string
-): Promise<ChildItem[]> {
-  const res = await fetch(`${baseUrl ?? getBaseUrl()}/children`, {
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  });
-  if (!res.ok) throw new Error(await res.json().then((b) => b.error).catch(() => res.statusText));
-  const data = await res.json();
+export interface CreateChildPayload {
+  name: string;
+  birth_date?: string | null;
+  age_group?: string | null;
+}
+
+export async function fetchChildren(): Promise<ChildItem[]> {
+  const { data } = await apiClient.get<{ children: ChildItem[] }>('/children');
   return data.children ?? [];
+}
+
+export async function createChild(payload: CreateChildPayload): Promise<ChildItem> {
+  const { data } = await apiClient.post<{ child: ChildItem }>('/children', payload);
+  return data.child;
 }

@@ -10,7 +10,6 @@ interface CompleteActivityBlockProps {
   activityId: string;
   activityTitle?: string;
   childId: string | null;
-  token: string | null | undefined;
   onRecorded?: () => void;
 }
 
@@ -20,7 +19,6 @@ export function CompleteActivityBlock({
   activityId,
   activityTitle,
   childId,
-  token,
   onRecorded,
 }: CompleteActivityBlockProps) {
   const [stars, setStars] = useState(0);
@@ -48,7 +46,7 @@ export function CompleteActivityBlock({
     if (stars < 1) return;
     setSaving(true);
     try {
-      await recordProgress(childId, activityId, stars, token);
+      await recordProgress(childId, activityId, stars);
       setRecorded(true);
       onRecorded?.();
     } catch (_) {

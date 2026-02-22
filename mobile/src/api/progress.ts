@@ -1,12 +1,9 @@
 /**
  * Progress (stars, streak, completions) API.
- * Base URL: EXPO_PUBLIC_API_URL or API_BASE_URL or http://localhost:3000/api
+ * Uses apiClient so the auth token is sent automatically.
  */
 
-const getBaseUrl = () => {
-  // @ts-expect-error env
-  return process.env.EXPO_PUBLIC_API_URL ?? process.env.API_BASE_URL ?? 'http://localhost:3000/api';
-};
+import { apiClient } from '../lib/apiClient';
 
 export interface ProgressSummary {
   child_id: string;
@@ -34,65 +31,35 @@ export interface ProgressItem {
   activity_slug?: string;
 }
 
-function headers(token: string | null | undefined) {
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
-export async function fetchProgressList(
-  childId: string,
-  token: string | null | undefined,
-  baseUrl?: string
-): Promise<ProgressItem[]> {
-  const res = await fetch(`${baseUrl ?? getBaseUrl()}/progress/children/${childId}`, {
-    headers: headers(token),
-  });
-  if (!res.ok) throw new Error(await res.json().then((b) => b.error).catch(() => res.statusText));
-  const data = await res.json();
+export async function fetchProgressList(childId: string): Promise<ProgressItem[]> {
+  const { data } = await apiClient.get<{ progress: ProgressItem[] }>(
+    `/progress/children/${childId}`
+  );
   return data.progress ?? [];
 }
 
-export async function fetchProgressSummary(
-  childId: string,
-  token: string | null | undefined,
-  baseUrl?: string
-): Promise<ProgressSummary> {
-  const res = await fetch(`${baseUrl ?? getBaseUrl()}/progress/children/${childId}/summary`, {
-    headers: headers(token),
-  });
-  if (!res.ok) throw new Error(await res.json().then((b) => b.error).catch(() => res.statusText));
-  return res.json();
+export async function fetchProgressSummary(childId: string): Promise<ProgressSummary> {
+  const { data } = await apiClient.get<ProgressSummary>(
+    `/progress/children/${childId}/summary`
+  );
+  return data;
 }
 
-export async function fetchStreak(
-  childId: string,
-  token: string | null | undefined,
-  baseUrl?: string
-): Promise<number> {
-  const res = await fetch(`${baseUrl ?? getBaseUrl()}/progress/children/${childId}/streak`, {
-    headers: headers(token),
-  });
-  if (!res.ok) throw new Error(await res.json().then((b) => b.error).catch(() => res.statusText));
-  const data = await res.json();
+export async function fetchStreak(childId: string): Promise<number> {
+  const { data } = await apiClient.get<{ current_streak: number }>(
+    `/progress/children/${childId}/streak`
+  );
   return data.current_streak ?? 0;
 }
 
 export async function recordProgress(
   childId: string,
   activityId: string,
-  stars: number,
-  token: string | null | undefined,
-  baseUrl?: string
+  stars: number
 ): Promise<ProgressItem> {
-  const url = `${baseUrl ?? getBaseUrl()}/progress/children/${childId}/activities/${activityId}`;
-  const res = await fetch(url, {
-    method: 'PUT',
-    headers: headers(token),
-    body: JSON.stringify({ stars: Math.min(5, Math.max(0, stars)) }),
-  });
-  if (!res.ok) throw new Error(await res.json().then((b) => b.error).catch(() => res.statusText));
-  const data = await res.json();
+  const { data } = await apiClient.put<{ progress: ProgressItem }>(
+    `/progress/children/${childId}/activities/${activityId}`,
+    { stars: Math.min(5, Math.max(0, stars)) }
+  );
   return data.progress;
 }

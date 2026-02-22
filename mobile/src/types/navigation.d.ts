@@ -13,6 +13,11 @@ export type ParentTabParamList = {
   ChildProgress: undefined;
 };
 
+export type ParentStackParamList = {
+  Main: NavigatorScreenParams<ParentTabParamList>;
+  AddChild: undefined;
+};
+
 export type ChildTabParamList = {
   ActivityHub: undefined;
   Activity: { activityId?: string };

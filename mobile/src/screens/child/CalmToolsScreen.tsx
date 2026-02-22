@@ -11,21 +11,18 @@ import { spacing } from '../../theme/spacing';
 
 export function CalmToolsScreen() {
   const { selectedChildId } = useAuth();
-  // When you have a real auth token from login, pass it here (e.g. from AsyncStorage)
-  const authToken: string | null = null;
 
   const handleSaveEmotion = useCallback(
     async (emotion: EmotionOption) => {
       await saveEmotionToBackend({
         emotionId: emotion.id,
         childId: selectedChildId ?? undefined,
-        token: authToken ?? undefined,
       });
     },
     [selectedChildId]
   );
 
-  const canSave = Boolean(selectedChildId && authToken);
+  const canSave = Boolean(selectedChildId);
 
   return (
     <ScreenLayout>

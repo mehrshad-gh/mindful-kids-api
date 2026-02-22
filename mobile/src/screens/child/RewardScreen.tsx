@@ -7,11 +7,9 @@ import { Card } from '../../components/ui/Card';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 
-const authToken: string | null = null; // TODO: from real auth
-
 export function RewardScreen() {
   const { selectedChildId } = useAuth();
-  const { summary, loading, error, refresh } = useProgressSummary(selectedChildId, authToken);
+  const { summary, loading, error, refresh } = useProgressSummary(selectedChildId);
 
   if (!selectedChildId) {
     return (

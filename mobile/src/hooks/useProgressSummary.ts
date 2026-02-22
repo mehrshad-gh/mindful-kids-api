@@ -1,10 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchProgressSummary, type ProgressSummary } from '../api/progress';
 
-export function useProgressSummary(
-  childId: string | null,
-  token: string | null | undefined
-) {
+export function useProgressSummary(childId: string | null) {
   const [summary, setSummary] = useState<ProgressSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -17,7 +14,7 @@ export function useProgressSummary(
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchProgressSummary(childId, token);
+      const data = await fetchProgressSummary(childId);
       setSummary(data);
     } catch (e) {
       setError(e instanceof Error ? e : new Error(String(e)));
@@ -25,7 +22,7 @@ export function useProgressSummary(
     } finally {
       setLoading(false);
     }
-  }, [childId, token]);
+  }, [childId]);
 
   useEffect(() => {
     refresh();

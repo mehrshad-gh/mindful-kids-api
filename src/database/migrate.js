@@ -1,8 +1,26 @@
 const fs = require('fs');
 const path = require('path');
+
+// Load .env from project root so DATABASE_URL is set before connection is created
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+
 const { pool } = require('./connection');
 
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
+
+function getDbNameFromUrl(url) {
+  if (!url) return '(none)';
+  try {
+    const u = new URL(url.replace(/^postgresql:\/\//, 'https://'));
+    return (u.pathname || '/').replace(/^\//, '') || '(default)';
+  } catch {
+    return '(parse failed)';
+  }
+}
+
+const dbUrl = process.env.DATABASE_URL;
+console.log('DATABASE_URL set:', !!dbUrl);
+console.log('Database name:', dbUrl ? getDbNameFromUrl(dbUrl) : '(using config default)');
 
 async function getAppliedMigrations() {
   const result = await pool.query(

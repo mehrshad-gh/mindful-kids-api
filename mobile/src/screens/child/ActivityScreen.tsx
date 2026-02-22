@@ -10,8 +10,6 @@ import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import type { ChildTabParamList } from '../../types/navigation';
 
-const authToken: string | null = null; // TODO: from real auth
-
 type Props = {
   navigation: NativeStackNavigationProp<ChildTabParamList, 'Activity'>;
   route: RouteProp<ChildTabParamList, 'Activity'>;
@@ -36,7 +34,6 @@ export function ActivityScreen({ route }: Props) {
             activityId={activityId}
             activityTitle="Rate & complete"
             childId={selectedChildId}
-            token={authToken}
           />
         </>
       ) : (

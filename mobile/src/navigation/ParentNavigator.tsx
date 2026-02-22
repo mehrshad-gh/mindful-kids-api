@@ -1,15 +1,17 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { DashboardScreen } from '../screens/parent/DashboardScreen';
 import { AdviceFeedScreen } from '../screens/parent/AdviceFeedScreen';
 import { ContentLibraryScreen } from '../screens/parent/ContentLibraryScreen';
 import { PsychologistDirectoryScreen } from '../screens/parent/PsychologistDirectoryScreen';
 import { ChildProgressScreen } from '../screens/parent/ChildProgressScreen';
-import type { ParentTabParamList } from '../types/navigation';
+import { AddChildScreen } from '../screens/parent/AddChildScreen';
+import type { ParentStackParamList, ParentTabParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
 
 const Tab = createBottomTabNavigator<ParentTabParamList>();
+const Stack = createNativeStackNavigator<ParentStackParamList>();
 
 function ParentTabs() {
   return (
@@ -31,5 +33,10 @@ function ParentTabs() {
 }
 
 export function ParentNavigator() {
-  return <ParentTabs />;
+  return (
+    <Stack.Navigator screenOptions={{ headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}>
+      <Stack.Screen name="Main" component={ParentTabs} options={{ headerShown: false }} />
+      <Stack.Screen name="AddChild" component={AddChildScreen} options={{ title: 'Add child' }} />
+    </Stack.Navigator>
+  );
 }

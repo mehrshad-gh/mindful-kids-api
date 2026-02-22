@@ -3,7 +3,7 @@ const { query } = require('../database/connection');
 async function findAll(filters = {}) {
   let sql = `
     SELECT id, title, slug, description, activity_type, age_groups, psychology_basis,
-           for_parents_notes, duration_minutes, sort_order, is_active, created_at, updated_at
+           for_parents_notes, duration_minutes, sort_order, is_active, instructions, created_at, updated_at
     FROM activities WHERE 1=1`;
   const params = [];
   let i = 1;
@@ -27,7 +27,7 @@ async function findAll(filters = {}) {
 async function findById(id) {
   const result = await query(
     `SELECT id, title, slug, description, activity_type, age_groups, psychology_basis,
-            for_parents_notes, duration_minutes, sort_order, is_active, created_at, updated_at
+            for_parents_notes, duration_minutes, sort_order, is_active, instructions, created_at, updated_at
      FROM activities WHERE id = $1`,
     [id]
   );
@@ -37,7 +37,7 @@ async function findById(id) {
 async function findBySlug(slug) {
   const result = await query(
     `SELECT id, title, slug, description, activity_type, age_groups, psychology_basis,
-            for_parents_notes, duration_minutes, sort_order, is_active, created_at, updated_at
+            for_parents_notes, duration_minutes, sort_order, is_active, instructions, created_at, updated_at
      FROM activities WHERE slug = $1 AND is_active = true`,
     [slug]
   );

@@ -28,8 +28,10 @@ async function connectDatabase(retries = 3) {
 async function start() {
   await connectDatabase();
   console.log('Database connected.');
-  app.listen(config.port, () => {
-    console.log(`Mindful Kids API running on port ${config.port} (${config.env})`);
+  const port = config.port;
+  const host = process.env.HOST || '0.0.0.0';
+  app.listen(port, host, () => {
+    console.log(`Mindful Kids API running on ${host}:${port} (${config.env})`);
   });
 }
 

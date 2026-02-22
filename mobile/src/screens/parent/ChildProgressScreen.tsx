@@ -16,8 +16,6 @@ import { Card } from '../../components/ui/Card';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 
-const authToken: string | null = null; // TODO: from real auth
-
 export function ChildProgressScreen() {
   const { selectedChildId, setSelectedChild } = useAuth();
   const [children, setChildren] = useState<ChildItem[]>([]);
@@ -29,13 +27,13 @@ export function ChildProgressScreen() {
     setLoading(true);
     setError(null);
     try {
-      const list = await fetchChildren(authToken);
+      const list = await fetchChildren();
       setChildren(list);
       const summaryMap: Record<string, ProgressSummary> = {};
       await Promise.all(
         list.map(async (c) => {
           try {
-            const s = await fetchProgressSummary(c.id, authToken);
+            const s = await fetchProgressSummary(c.id);
             summaryMap[c.id] = s;
           } catch (_) {
             // skip this child's summary
@@ -90,7 +88,7 @@ export function ChildProgressScreen() {
         }
       >
         <Text style={styles.title}>Child Progress</Text>
-        <Text style={styles.subtitle}>Stars, streaks, and activity summary</Text>
+        <Text style={styles.subtitle}>Stars, streaks, and activity summary. Tap a child to set them for Child mode.</Text>
 
         {children.length === 0 ? (
           <Card style={styles.card}>
