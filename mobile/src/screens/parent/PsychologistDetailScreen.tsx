@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Linking,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -13,6 +14,8 @@ import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { VerifiedExplainerModal } from '../../components/VerifiedExplainerModal';
+import { ReportProfessionalModal } from '../../components/ReportProfessionalModal';
 import { fetchPsychologistById, type PsychologistDetail, type PsychologistReview } from '../../api/psychologists';
 import { submitReview } from '../../api/reviews';
 import { useAuth } from '../../context/AuthContext';
@@ -97,6 +100,8 @@ export function PsychologistDetailScreen({ route, navigation }: Props) {
   const [submitComment, setSubmitComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showVerifiedExplainer, setShowVerifiedExplainer] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -192,9 +197,13 @@ export function PsychologistDetailScreen({ route, navigation }: Props) {
         <View style={styles.nameRow}>
           <Text style={styles.name}>{data.name}</Text>
           {data.is_verified ? (
-            <View style={styles.verifiedBadge}>
+            <TouchableOpacity
+              style={styles.verifiedBadge}
+              onPress={() => setShowVerifiedExplainer(true)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Text style={styles.verifiedText}>✓ Verified</Text>
-            </View>
+            </TouchableOpacity>
           ) : null}
         </View>
         {data.specialty ? (
@@ -299,6 +308,27 @@ export function PsychologistDetailScreen({ route, navigation }: Props) {
           />
         </Card>
       ) : null}
+
+      <Card style={styles.section}>
+        <Button
+          title="Report this professional"
+          variant="ghost"
+          onPress={() => setShowReportModal(true)}
+          style={styles.reportButton}
+        />
+      </Card>
+
+      <VerifiedExplainerModal
+        visible={showVerifiedExplainer}
+        onClose={() => setShowVerifiedExplainer(false)}
+      />
+      <ReportProfessionalModal
+        visible={showReportModal}
+        psychologistId={data.id}
+        psychologistName={data.name}
+        onClose={() => setShowReportModal(false)}
+        onSuccess={() => Alert.alert('Thank you', 'Our team will review your report.')}
+      />
 
       {reviews.length > 0 ? (
         <Card style={styles.section}>
@@ -497,6 +527,9 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: spacing.sm,
+  },
+  reportButton: {
+    alignSelf: 'flex-start',
   },
   submitErrorText: {
     ...typography.caption,

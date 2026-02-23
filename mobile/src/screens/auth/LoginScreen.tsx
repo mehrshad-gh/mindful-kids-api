@@ -46,7 +46,9 @@ export function LoginScreen({ navigation, route }: Props) {
     }
     try {
       await login(email.trim(), password);
-      if (onSuccessNavigateTo) {
+      if (onSuccessNavigateTo === 'AddChild') {
+        (navigation as any).navigate('DisclaimerConsent', { next: 'AddChild' });
+      } else if (onSuccessNavigateTo) {
         (navigation as any).navigate(onSuccessNavigateTo);
       }
     } catch (err) {

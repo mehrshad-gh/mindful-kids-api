@@ -91,7 +91,7 @@ function formatCompletedAt(iso: string): string {
 export function DashboardScreen() {
   const navigation = useNavigation<TabNav>();
   const { user, setAppRole, selectedChildId, setSelectedChild } = useAuth();
-  const { children, loading, error, refresh } = useChildren();
+  const { children, loading, error, refresh, deleteChild } = useChildren();
   const { summary, loading: summaryLoading, refresh: refreshSummary } = useProgressSummary(selectedChildId);
   const [featuredAdvice, setFeaturedAdvice] = useState<AdviceItem | null>(null);
   const [adviceLoading, setAdviceLoading] = useState(true);
@@ -129,6 +129,30 @@ export function DashboardScreen() {
 
   const handleAddChild = () => {
     parentStack?.navigate('AddChild');
+  };
+
+  const handleRemoveChild = (childId: string, childName: string) => {
+    Alert.alert(
+      'Remove child profile',
+      `Permanently remove ${childName}'s profile and all their progress? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteChild(childId);
+              const next = children.filter((c) => c.id !== childId)[0]?.id ?? null;
+              setSelectedChild(next);
+              refresh();
+            } catch {
+              Alert.alert('Error', 'Could not remove profile. Try again.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleRefresh = useCallback(() => {
@@ -282,16 +306,25 @@ export function DashboardScreen() {
         ) : (
           <>
             {children.map((c) => (
-              <TouchableOpacity
-                key={c.id}
-                onPress={() => setSelectedChild(c.id)}
-                activeOpacity={0.8}
-              >
-                <Card style={[styles.card, selectedChildId === c.id && styles.cardSelected]}>
-                  <Text style={styles.childName}>{c.name}</Text>
-                  {c.age_group ? <Text style={styles.childMeta}>{c.age_group}</Text> : null}
-                </Card>
-              </TouchableOpacity>
+              <View key={c.id}>
+                <TouchableOpacity
+                  onPress={() => setSelectedChild(c.id)}
+                  activeOpacity={0.8}
+                >
+                  <Card style={[styles.card, selectedChildId === c.id && styles.cardSelected]}>
+                    <Text style={styles.childName}>{c.name}</Text>
+                    {c.age_group ? <Text style={styles.childMeta}>{c.age_group}</Text> : null}
+                  </Card>
+                </TouchableOpacity>
+                {selectedChildId === c.id ? (
+                  <TouchableOpacity
+                    onPress={() => handleRemoveChild(c.id, c.name)}
+                    style={styles.removeChildLink}
+                  >
+                    <Text style={styles.removeChildText}>Remove this child's profile</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
             ))}
             <Button title="Add another child" onPress={handleAddChild} variant="ghost" style={styles.addAnother} />
           </>
@@ -308,6 +341,18 @@ export function DashboardScreen() {
           variant="outline"
           style={styles.switchBtn}
         />
+
+        <View style={styles.disclaimerFooter}>
+          <Text style={styles.disclaimerText}>
+            Mindful Kids is not a replacement for professional mental health or medical care. If you or your child need clinical support, please contact a qualified professional.
+          </Text>
+          <TouchableOpacity
+            onPress={() => parentStack?.navigate('TrustAndSafety')}
+            style={styles.learnMoreLink}
+          >
+            <Text style={styles.learnMoreText}>Learn more — Trust & safety</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </ScreenLayout>
   );
@@ -385,6 +430,30 @@ const styles = StyleSheet.create({
   retryBtn: { alignSelf: 'flex-start' },
   addBtn: { marginTop: spacing.sm },
   addAnother: { marginBottom: spacing.md },
+  removeChildLink: { marginTop: -spacing.sm, marginBottom: spacing.sm, paddingVertical: spacing.xs },
+  removeChildText: { ...typography.caption, color: colors.error },
   switchBtn: { marginTop: spacing.md },
+  disclaimerFooter: {
+    marginTop: spacing.xl,
+    paddingTop: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  disclaimerText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    lineHeight: 20,
+  },
+  learnMoreLink: {
+    marginTop: spacing.sm,
+    alignSelf: 'center',
+  },
+  learnMoreText: {
+    ...typography.caption,
+    color: colors.primary,
+    textDecorationLine: 'underline',
+  },
   centered: { padding: layout.screenPadding },
 });

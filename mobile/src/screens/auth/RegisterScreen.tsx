@@ -51,7 +51,9 @@ export function RegisterScreen({ navigation, route }: Props) {
     }
     try {
       await register(email.trim(), password, name.trim());
-      if (onSuccessNavigateTo) {
+      if (onSuccessNavigateTo === 'AddChild') {
+        (navigation as any).navigate('DisclaimerConsent', { next: 'AddChild' });
+      } else if (onSuccessNavigateTo) {
         (navigation as any).navigate(onSuccessNavigateTo);
       }
     } catch (err) {

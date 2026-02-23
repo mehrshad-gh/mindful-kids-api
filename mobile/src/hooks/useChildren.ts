@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchChildren, createChild as createChildApi, type ChildItem, type CreateChildPayload } from '../api/children';
+import { fetchChildren, createChild as createChildApi, deleteChild as deleteChildApi, type ChildItem, type CreateChildPayload } from '../api/children';
 
 export function useChildren() {
   const [children, setChildren] = useState<ChildItem[]>([]);
@@ -33,5 +33,10 @@ export function useChildren() {
     []
   );
 
-  return { children, loading, error, refresh, createChild };
+  const deleteChild = useCallback(async (childId: string): Promise<void> => {
+    await deleteChildApi(childId);
+    setChildren((prev) => prev.filter((c) => c.id !== childId));
+  }, []);
+
+  return { children, loading, error, refresh, createChild, deleteChild };
 }

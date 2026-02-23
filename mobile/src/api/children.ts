@@ -26,3 +26,7 @@ export async function createChild(payload: CreateChildPayload): Promise<ChildIte
   const { data } = await apiClient.post<{ child: ChildItem }>('/children', payload);
   return data.child;
 }
+
+export async function deleteChild(childId: string): Promise<void> {
+  await apiClient.delete(`/children/${childId}`);
+}

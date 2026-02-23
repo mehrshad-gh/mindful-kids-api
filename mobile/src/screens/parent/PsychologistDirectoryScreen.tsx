@@ -13,6 +13,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
+import { VerifiedExplainerModal } from '../../components/VerifiedExplainerModal';
 import { fetchPsychologistList, type PsychologistListItem } from '../../api/psychologists';
 import type { ParentStackParamList, ParentTabParamList } from '../../types/navigation';
 import { colors } from '../../theme/colors';
@@ -95,6 +96,7 @@ export function PsychologistDirectoryScreen() {
   const [specialty, setSpecialty] = useState('');
   const [location, setLocation] = useState('');
   const [minRating, setMinRating] = useState<number | null>(null);
+  const [showVerifiedExplainer, setShowVerifiedExplainer] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -150,7 +152,13 @@ export function PsychologistDirectoryScreen() {
   return (
     <ScreenLayout scroll={false}>
       <Text style={styles.title}>Expert directory</Text>
-      <Text style={styles.subtitle}>Browse verified psychologists. Tap a profile for details.</Text>
+      <View style={styles.subtitleRow}>
+        <Text style={styles.subtitle}>Browse verified psychologists. Tap a profile for details.</Text>
+        <TouchableOpacity onPress={() => setShowVerifiedExplainer(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Text style={styles.verifiedLink}>What does Verified mean?</Text>
+        </TouchableOpacity>
+      </View>
+      <VerifiedExplainerModal visible={showVerifiedExplainer} onClose={() => setShowVerifiedExplainer(false)} />
 
       <View style={styles.filters}>
         <Text style={styles.filterLabel}>Specialty</Text>
@@ -226,9 +234,17 @@ const styles = StyleSheet.create({
     ...typography.h2,
     marginBottom: spacing.xs,
   },
+  subtitleRow: {
+    marginBottom: spacing.md,
+  },
   subtitle: {
     ...typography.subtitle,
-    marginBottom: spacing.md,
+  },
+  verifiedLink: {
+    ...typography.caption,
+    color: colors.primary,
+    marginTop: 4,
+    textDecorationLine: 'underline',
   },
   filters: {
     marginBottom: spacing.lg,

@@ -10,6 +10,7 @@ import { ChildProgressScreen } from '../screens/parent/ChildProgressScreen';
 import { AddChildScreen } from '../screens/parent/AddChildScreen';
 import { PsychologistDetailScreen } from '../screens/parent/PsychologistDetailScreen';
 import { ClinicDetailScreen } from '../screens/parent/ClinicDetailScreen';
+import { TrustAndSafetyScreen } from '../screens/parent/TrustAndSafetyScreen';
 import type { ParentStackParamList, ParentTabParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
 
@@ -43,6 +44,7 @@ export function ParentNavigator() {
       <Stack.Screen name="AddChild" component={AddChildScreen} options={{ title: 'Add child' }} />
       <Stack.Screen name="PsychologistDetail" component={PsychologistDetailScreen} options={{ title: 'Profile' }} />
       <Stack.Screen name="ClinicDetail" component={ClinicDetailScreen} options={{ title: 'Clinic' }} />
+      <Stack.Screen name="TrustAndSafety" component={TrustAndSafetyScreen} options={{ title: 'Trust & safety' }} />
     </Stack.Navigator>
   );
 }

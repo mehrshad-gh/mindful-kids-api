@@ -24,6 +24,7 @@ export type ParentStackParamList = {
   AddChild: undefined;
   PsychologistDetail: { psychologistId: string };
   ClinicDetail: { clinicId: string };
+  TrustAndSafety: undefined;
 };
 
 export type ChildTabParamList = {
@@ -42,6 +43,7 @@ export type OnboardingStackParamList = {
   Welcome: undefined;
   Register: AuthOnSuccessParams | undefined;
   Login: AuthOnSuccessParams | undefined;
+  DisclaimerConsent: { next: 'AddChild' } | undefined;
   AddChild: undefined;
   ParentChildExplain: undefined;
 };

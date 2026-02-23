@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
+import { DisclaimerConsentScreen } from '../screens/onboarding/DisclaimerConsentScreen';
 import { OnboardingAddChildScreen } from '../screens/onboarding/OnboardingAddChildScreen';
 import { ParentChildExplainScreen } from '../screens/onboarding/ParentChildExplainScreen';
 import type { OnboardingStackParamList } from '../types/navigation';
@@ -33,6 +34,11 @@ export function OnboardingNavigator() {
         name="Login"
         component={LoginScreen}
         options={{ title: 'Sign in' }}
+      />
+      <Stack.Screen
+        name="DisclaimerConsent"
+        component={DisclaimerConsentScreen}
+        options={{ title: 'Important information' }}
       />
       <Stack.Screen
         name="AddChild"
