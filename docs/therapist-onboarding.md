@@ -2,20 +2,29 @@
 
 Enterprise therapist onboarding: professional registration, credential submission, verification status, clinic affiliation, public profile generation, and admin approval workflow.
 
+## User roles
+
+- **parent** – App user (default).
+- **therapist** – Can apply for onboarding; when approved, gets a **public psychologist profile** linked via `psychologists.user_id`. Use `GET /api/therapist/profile` for the linked profile.
+- **clinic_admin** – Can manage **multiple clinics** (assigned by platform admin). Each clinic can have **multiple therapists** (psychologists affiliated via `therapist_clinics`). Role-based access: clinic_admin only sees/edits clinics they are assigned to.
+- **admin** – Platform admin; full access.
+
 ## Overview
 
 - **Therapists** register with role `therapist`, then create and submit an **application** (profile + credentials + clinic affiliations).
 - **Admins** review applications and **approve** or **reject**. On approval, a **public psychologist profile** is created and linked to the therapist’s user account; **clinic affiliations** are copied to the directory.
-- **Clinics** are managed by admins; therapists choose affiliations when applying. Public **psychologist** detail includes `clinics`.
+- **Clinic admins** are assigned to clinics by platform admin. They can list their clinics, list therapists per clinic, and remove a therapist from a clinic.
+- **Clinics** are created by admins; therapists choose affiliations when applying. Public **psychologist** detail includes `clinics`.
 
 ## Data model
 
-- **users** – `role` can be `parent`, `admin`, or `therapist`.
+- **users** – `role`: `parent`, `admin`, `therapist`, or `clinic_admin`.
 - **clinics** – Name, slug, description, address, country, website, logo. Used for therapist affiliation.
+- **clinic_admins** – `(user_id, clinic_id)` many-to-many: which users (role clinic_admin) manage which clinics. A clinic can have multiple admins; a clinic_admin can manage multiple clinics.
 - **therapist_applications** – One per therapist user: professional info, credentials (JSONB array), status (`draft` | `pending` | `approved` | `rejected`), review metadata, and optional `psychologist_id` after approval.
 - **therapist_application_clinics** – Application’s chosen clinic IDs (and role/is_primary); copied to `therapist_clinics` on approval.
-- **psychologists** – Optional `user_id`; set when created from an approved application. Public directory row.
-- **therapist_clinics** – Psychologist–clinic many-to-many for directory display.
+- **psychologists** – Optional `user_id`; set when created from an approved application (therapist linked to public profile).
+- **therapist_clinics** – Psychologist–clinic many-to-many; clinic can have multiple therapists.
 
 ## API
 
@@ -23,7 +32,7 @@ Enterprise therapist onboarding: professional registration, credential submissio
 
 - **POST /api/auth/register**  
   Body: `{ email, password, name, role? }`  
-  `role` optional: `parent` (default) or `therapist`.
+  `role` optional: `parent` (default), `therapist`, or `clinic_admin`.
 
 ### Therapist (authenticated, role = therapist)
 
@@ -35,6 +44,23 @@ Enterprise therapist onboarding: professional registration, credential submissio
 
 - **POST /api/therapist/application/submit**  
   Submit draft for review (status → `pending`).
+
+- **GET /api/therapist/profile**  
+  Returns the therapist’s **linked public profile** (psychologist row with clinics and ratings) when approved; otherwise `profile: null`.
+
+### Clinic admin (authenticated, role = clinic_admin)
+
+- **GET /api/clinic-admin/clinics**  
+  List clinics the current user manages (assigned via `clinic_admins`).
+
+- **GET /api/clinic-admin/clinics/:clinicId**  
+  One clinic (must be one they manage) with `therapist_count`.
+
+- **GET /api/clinic-admin/clinics/:clinicId/therapists**  
+  List psychologists (therapists) affiliated with this clinic.
+
+- **DELETE /api/clinic-admin/clinics/:clinicId/therapists/:psychologistId**  
+  Remove therapist affiliation from the clinic.
 
 ### Admin (authenticated, role = admin)
 
@@ -50,6 +76,9 @@ Enterprise therapist onboarding: professional registration, credential submissio
 
 - **GET /api/admin/clinics** – List clinics.  
 - **POST /api/admin/clinics** – Create clinic (body: `name`, optional `slug`, `description`, `address`, `country`, `website`, `logo_url`).
+- **GET /api/admin/clinics/:id/admins** – List users who are clinic admins for this clinic.
+- **POST /api/admin/clinics/:id/admins** – Assign a user as clinic admin (body: `{ user_id }`). User’s role is set to `clinic_admin` if not already admin/clinic_admin.
+- **DELETE /api/admin/clinics/:id/admins/:userId** – Remove clinic admin from clinic.
 
 ### Public
 
@@ -77,4 +106,5 @@ Run:
 npm run migrate
 ```
 
-Migration `011_therapist_onboarding.sql` adds: `therapist` role, `psychologists.user_id`, `clinics`, `therapist_applications`, `therapist_application_clinics`, `therapist_clinics`, and indexes/triggers.
+- Migration `011_therapist_onboarding.sql`: `therapist` role, `psychologists.user_id`, `clinics`, `therapist_applications`, `therapist_application_clinics`, `therapist_clinics`.
+- Migration `012_clinic_admin_role.sql`: `clinic_admin` role, `clinic_admins` table (user–clinic management).

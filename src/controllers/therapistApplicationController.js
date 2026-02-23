@@ -1,5 +1,6 @@
 const TherapistApplication = require('../models/TherapistApplication');
-const Clinic = require('../models/Clinic');
+const Psychologist = require('../models/Psychologist');
+const TherapistClinic = require('../models/TherapistClinic');
 
 /** GET /api/therapist/application – get current user's application (therapist only) */
 async function getMine(req, res, next) {
@@ -96,8 +97,31 @@ async function submit(req, res, next) {
   }
 }
 
+/** GET /api/therapist/profile – linked public profile (psychologist) when approved */
+async function getProfile(req, res, next) {
+  try {
+    const psychologist = await Psychologist.findByUserId(req.user.id);
+    if (!psychologist) {
+      return res.json({ profile: null, message: 'No public profile yet. Complete and submit your application for approval.' });
+    }
+    const { avg_rating, review_count } = await Psychologist.getAverageRating(psychologist.id);
+    const clinics = await TherapistClinic.findByPsychologistId(psychologist.id);
+    res.json({
+      profile: {
+        ...psychologist,
+        avg_rating: parseFloat(avg_rating),
+        review_count,
+        clinics,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getMine,
   upsert,
   submit,
+  getProfile,
 };

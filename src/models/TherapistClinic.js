@@ -22,7 +22,33 @@ async function findByPsychologistId(psychologistId) {
   return result.rows;
 }
 
+/** List psychologists (therapists) affiliated with a clinic. */
+async function findByClinicId(clinicId, options = {}) {
+  const limit = options.limit ? Math.min(parseInt(options.limit, 10) || 100, 100) : 100;
+  const result = await query(
+    `SELECT p.id, p.name, p.specialty, p.specialization, p.bio, p.location, p.profile_image, p.avatar_url,
+            p.is_verified, p.user_id, tc.role_label, tc.is_primary
+     FROM therapist_clinics tc
+     JOIN psychologists p ON p.id = tc.psychologist_id AND p.is_active = true
+     WHERE tc.clinic_id = $1
+     ORDER BY tc.is_primary DESC, p.name
+     LIMIT $2`,
+    [clinicId, limit]
+  );
+  return result.rows;
+}
+
+async function remove(psychologistId, clinicId) {
+  const result = await query(
+    'DELETE FROM therapist_clinics WHERE psychologist_id = $1 AND clinic_id = $2',
+    [psychologistId, clinicId]
+  );
+  return result.rowCount > 0;
+}
+
 module.exports = {
   add,
   findByPsychologistId,
+  findByClinicId,
+  remove,
 };

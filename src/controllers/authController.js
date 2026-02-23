@@ -19,7 +19,7 @@ async function register(req, res, next) {
       return res.status(409).json({ error: 'Email already registered' });
     }
     const passwordHash = await bcrypt.hash(password, 12);
-    const role = req.body.role === 'therapist' ? 'therapist' : 'parent';
+    const role = ['therapist', 'clinic_admin'].includes(req.body.role) ? req.body.role : 'parent';
     const user = await User.create({
       email,
       passwordHash,

@@ -62,8 +62,33 @@ function requireRole(roleOrRoles) {
   };
 }
 
+/**
+ * Require that the user can access the clinic (admin or clinic_admin for this clinic).
+ * Expects req.params.clinicId to be set (e.g. from route /clinics/:clinicId/...).
+ */
+function requireClinicAccess(ClinicAdminModel) {
+  return async (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    const clinicId = req.params.clinicId || req.params.id;
+    if (!clinicId) {
+      return res.status(400).json({ error: 'Clinic ID required' });
+    }
+    if (req.user.role === 'admin') {
+      return next();
+    }
+    if (req.user.role === 'clinic_admin') {
+      const isAdmin = await ClinicAdminModel.isAdminOfClinic(req.user.id, clinicId);
+      if (isAdmin) return next();
+    }
+    res.status(403).json({ error: 'You do not have access to this clinic' });
+  };
+}
+
 module.exports = {
   authenticate,
   optionalAuth,
   requireRole,
+  requireClinicAccess,
 };

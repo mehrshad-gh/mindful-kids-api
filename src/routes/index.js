@@ -9,6 +9,7 @@ const progressRoutes = require('./progress');
 const emotionLogsRoutes = require('./emotionLogs');
 const therapistRoutes = require('./therapist');
 const adminRoutes = require('./admin');
+const clinicAdminRoutes = require('./clinicAdmin');
 const clinicsRoutes = require('./clinics');
 
 const router = express.Router();
@@ -23,6 +24,7 @@ router.use('/progress', progressRoutes);
 router.use('/emotion-logs', emotionLogsRoutes);
 router.use('/therapist', therapistRoutes);
 router.use('/admin', adminRoutes);
+router.use('/clinic-admin', clinicAdminRoutes);
 router.use('/clinics', clinicsRoutes);
 
 router.get('/health', (req, res) => {

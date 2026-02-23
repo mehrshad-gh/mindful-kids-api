@@ -64,6 +64,14 @@ async function findById(id) {
   return toPsychologist(result.rows[0] || null);
 }
 
+async function findByUserId(userId) {
+  const result = await query(
+    `SELECT ${PSYCHOLOGIST_COLUMNS} FROM psychologists WHERE user_id = $1`,
+    [userId]
+  );
+  return toPsychologist(result.rows[0] || null);
+}
+
 async function getAverageRating(psychologistId) {
   const result = await query(
     'SELECT COALESCE(AVG(rating), 0)::numeric(3,2) as avg_rating, COUNT(*)::int as review_count FROM reviews WHERE psychologist_id = $1',
@@ -103,6 +111,7 @@ async function create(data) {
 module.exports = {
   findAll,
   findById,
+  findByUserId,
   getAverageRating,
   create,
 };

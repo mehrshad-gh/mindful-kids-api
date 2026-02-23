@@ -1,8 +1,9 @@
 const express = require('express');
-const { authenticate } = require('../middleware/auth');
-const { requireRole } = require('../middleware/auth');
+const { authenticate, requireRole } = require('../middleware/auth');
 const adminTherapistController = require('../controllers/adminTherapistController');
 const Clinic = require('../models/Clinic');
+const ClinicAdmin = require('../models/ClinicAdmin');
+const User = require('../models/User');
 
 const router = express.Router();
 
@@ -40,6 +41,57 @@ router.post('/clinics', async (req, res, next) => {
       logoUrl: logo_url,
     });
     res.status(201).json({ clinic });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Assign clinic_admin to a clinic (user gains access to manage that clinic)
+router.post('/clinics/:id/admins', async (req, res, next) => {
+  try {
+    const { user_id } = req.body;
+    if (!user_id) {
+      return res.status(400).json({ error: 'user_id is required' });
+    }
+    const user = await User.findById(user_id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const clinic = await Clinic.findById(req.params.id);
+    if (!clinic) {
+      return res.status(404).json({ error: 'Clinic not found' });
+    }
+    if (user.role !== 'admin' && user.role !== 'clinic_admin') {
+      await User.updateRole(user_id, 'clinic_admin');
+    }
+    await ClinicAdmin.add(user_id, req.params.id);
+    const admins = await ClinicAdmin.findByClinicId(req.params.id);
+    res.status(201).json({ message: 'Clinic admin assigned', admins });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/clinics/:id/admins', async (req, res, next) => {
+  try {
+    const clinic = await Clinic.findById(req.params.id);
+    if (!clinic) {
+      return res.status(404).json({ error: 'Clinic not found' });
+    }
+    const admins = await ClinicAdmin.findByClinicId(req.params.id);
+    res.json({ admins });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/clinics/:id/admins/:userId', async (req, res, next) => {
+  try {
+    const removed = await ClinicAdmin.remove(req.params.userId, req.params.id);
+    if (!removed) {
+      return res.status(404).json({ error: 'User is not an admin of this clinic' });
+    }
+    res.json({ message: 'Clinic admin removed' });
   } catch (err) {
     next(err);
   }

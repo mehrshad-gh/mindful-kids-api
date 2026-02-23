@@ -16,6 +16,7 @@ const applicationUpsertValidation = [
   body('credentials').optional().isArray().withMessage('Credentials must be an array'),
 ];
 
+router.get('/profile', therapistApplicationController.getProfile);
 router.get('/application', therapistApplicationController.getMine);
 router.put('/application', applicationUpsertValidation, handleValidationErrors, therapistApplicationController.upsert);
 router.post('/application/submit', therapistApplicationController.submit);

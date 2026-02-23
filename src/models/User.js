@@ -32,9 +32,19 @@ async function create({ email, passwordHash, name, role = 'parent' }) {
   return result.rows[0];
 }
 
+async function updateRole(userId, role) {
+  const result = await query(
+    `UPDATE users SET role = $1 WHERE id = $2
+     RETURNING id, email, name, role, created_at, updated_at`,
+    [role, userId]
+  );
+  return result.rows[0] || null;
+}
+
 module.exports = {
   toUser,
   findByEmail,
   findById,
   create,
+  updateRole,
 };
