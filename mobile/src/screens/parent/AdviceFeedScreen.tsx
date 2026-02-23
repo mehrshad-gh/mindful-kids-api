@@ -14,7 +14,8 @@ import { Button } from '../../components/ui/Button';
 import { fetchFeaturedAdvice, type AdviceItem } from '../../api/advice';
 import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { spacing, layout } from '../../theme';
+import { typography } from '../../theme/typography';
 
 export function AdviceFeedScreen() {
   const { setAppRole, setPendingActivityId } = useAuth();
@@ -102,14 +103,14 @@ export function AdviceFeedScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { padding: spacing.md, paddingBottom: spacing.xxl },
-  title: { fontSize: 24, fontWeight: '700', color: colors.text, marginBottom: spacing.xs },
-  subtitle: { fontSize: 15, color: colors.textSecondary, marginBottom: spacing.lg },
+  scrollContent: { padding: layout.screenPadding, paddingBottom: spacing.xxl },
+  title: { ...typography.h2, marginBottom: spacing.xs },
+  subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.lg },
   centered: { paddingVertical: spacing.xxl, alignItems: 'center' },
-  loadingText: { marginTop: spacing.sm, fontSize: 15, color: colors.textSecondary },
-  card: { marginBottom: spacing.md },
-  errorText: { fontSize: 16, color: colors.error },
-  hint: { fontSize: 14, color: colors.textSecondary, marginTop: spacing.xs },
+  loadingText: { ...typography.bodySmall, marginTop: spacing.sm, color: colors.textSecondary },
+  card: { marginBottom: layout.listItemGap },
+  errorText: { ...typography.error },
+  hint: { ...typography.subtitle, marginTop: spacing.xs },
   featured: { marginBottom: spacing.lg },
   badge: {
     alignSelf: 'flex-start',
@@ -119,35 +120,13 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: spacing.sm,
   },
-  badgeText: { fontSize: 12, fontWeight: '700', color: colors.surface },
-  adviceTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.md,
-    lineHeight: 28,
-  },
-  adviceContent: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors.text,
-    marginBottom: spacing.lg,
-  },
-  psychologyCard: { marginBottom: spacing.md },
-  psychologyLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  psychologyText: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.text,
-  },
-  ageRange: { fontSize: 13, color: colors.textSecondary },
+  badgeText: { ...typography.caption, fontWeight: '700', color: colors.surface },
+  adviceTitle: { ...typography.h2, marginBottom: spacing.md, lineHeight: 28 },
+  adviceContent: { ...typography.body, marginBottom: spacing.lg },
+  psychologyCard: { marginBottom: layout.listItemGap },
+  psychologyLabel: { ...typography.label, marginBottom: spacing.xs },
+  psychologyText: { ...typography.bodySmall },
+  ageRange: { ...typography.caption, fontSize: 13 },
   tryActivityBtn: { marginTop: spacing.lg },
-  emptyText: { fontSize: 16, color: colors.textSecondary },
+  emptyText: { ...typography.body, color: colors.textSecondary },
 });

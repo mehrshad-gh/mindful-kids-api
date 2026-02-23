@@ -19,11 +19,12 @@ async function register(req, res, next) {
       return res.status(409).json({ error: 'Email already registered' });
     }
     const passwordHash = await bcrypt.hash(password, 12);
+    const role = req.body.role === 'therapist' ? 'therapist' : 'parent';
     const user = await User.create({
       email,
       passwordHash,
       name,
-      role: 'parent',
+      role,
     });
     const token = generateToken(user);
     res.status(201).json({

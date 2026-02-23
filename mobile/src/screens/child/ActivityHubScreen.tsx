@@ -16,7 +16,8 @@ import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { spacing, layout } from '../../theme';
+import { typography } from '../../theme/typography';
 import type { ChildTabParamList } from '../../types/navigation';
 
 export function ActivityHubScreen() {
@@ -114,17 +115,17 @@ export function ActivityHubScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { padding: spacing.md, paddingBottom: spacing.xxl },
-  title: { fontSize: 24, fontWeight: '700', color: colors.text, marginBottom: spacing.xs },
-  subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.lg },
-  card: { marginBottom: spacing.md },
-  activityTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
-  activityDesc: { fontSize: 14, color: colors.textSecondary, marginTop: spacing.xs },
+  scrollContent: { padding: layout.screenPadding, paddingBottom: spacing.xxl },
+  title: { ...typography.h2, marginBottom: spacing.xs },
+  subtitle: { ...typography.subtitle, marginBottom: spacing.lg },
+  card: { marginBottom: layout.listItemGap },
+  activityTitle: { ...typography.h3 },
+  activityDesc: { ...typography.subtitle, marginTop: spacing.xs },
   meta: { flexDirection: 'row', marginTop: spacing.xs },
-  metaText: { fontSize: 12, color: colors.textSecondary },
-  errorText: { color: colors.error, marginBottom: spacing.sm },
+  metaText: { ...typography.caption },
+  errorText: { ...typography.error, marginBottom: spacing.sm },
   retryBtn: { alignSelf: 'flex-start' },
-  emptyText: { color: colors.textSecondary },
+  emptyText: { ...typography.subtitle },
   centered: { padding: spacing.xl, alignItems: 'center' },
   switchBtn: { marginTop: spacing.lg },
 });

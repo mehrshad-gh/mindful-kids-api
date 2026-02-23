@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useChildren } from '../../hooks/useChildren';
@@ -9,11 +8,13 @@ import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { spacing } from '../../theme/spacing';
-import type { ParentStackParamList } from '../../types/navigation';
+import type { OnboardingStackParamList } from '../../types/navigation';
 
 const AGE_GROUPS = ['3-5', '6-8', '9-12', '13+'] as const;
 
-type Nav = NativeStackNavigationProp<ParentStackParamList, 'AddChild'>;
+type Props = {
+  navigation: NativeStackNavigationProp<OnboardingStackParamList, 'AddChild'>;
+};
 
 function getErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err) && err.response?.data) {
@@ -26,8 +27,7 @@ function getErrorMessage(err: unknown): string {
   return 'Could not add child';
 }
 
-export function AddChildScreen() {
-  const navigation = useNavigation<Nav>();
+export function OnboardingAddChildScreen({ navigation }: Props) {
   const { setSelectedChild } = useAuth();
   const { createChild } = useChildren();
   const [name, setName] = useState('');
@@ -35,14 +35,16 @@ export function AddChildScreen() {
   const [ageGroup, setAgeGroup] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const handleSubmit = async () => {
+  const goNext = () => navigation.navigate('ParentChildExplain');
+
+  const handleAdd = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
       Alert.alert('Error', 'Please enter the child\'s name');
       return;
     }
     const trimmedAgeGroup = ageGroup.trim();
-    if (trimmedAgeGroup && !AGE_GROUPS.includes(trimmedAgeGroup as typeof AGE_GROUPS[number])) {
+    if (trimmedAgeGroup && !AGE_GROUPS.includes(trimmedAgeGroup as (typeof AGE_GROUPS)[number])) {
       Alert.alert('Error', 'Age group must be one of: 3-5, 6-8, 9-12, 13+');
       return;
     }
@@ -59,7 +61,7 @@ export function AddChildScreen() {
         age_group: trimmedAgeGroup || undefined,
       });
       setSelectedChild(child.id);
-      navigation.goBack();
+      goNext();
     } catch (err) {
       Alert.alert('Could not add child', getErrorMessage(err));
     } finally {
@@ -94,9 +96,14 @@ export function AddChildScreen() {
           />
           <Button
             title="Add child"
-            onPress={handleSubmit}
+            onPress={handleAdd}
             loading={saving}
             style={styles.submit}
+          />
+          <Button
+            title="Skip for now"
+            onPress={goNext}
+            variant="ghost"
           />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -106,5 +113,5 @@ export function AddChildScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  submit: { marginTop: spacing.lg },
+  submit: { marginTop: spacing.lg, marginBottom: spacing.xs },
 });

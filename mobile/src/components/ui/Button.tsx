@@ -9,13 +9,16 @@ import {
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'outline';
+type Size = 'medium' | 'small';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
   variant?: Variant;
+  size?: Size;
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
@@ -26,6 +29,7 @@ export function Button({
   title,
   onPress,
   variant = 'primary',
+  size = 'medium',
   loading = false,
   disabled = false,
   style,
@@ -36,6 +40,10 @@ export function Button({
     secondary: [styles.base, styles.secondary],
     ghost: [styles.base, styles.ghost],
     outline: [styles.base, styles.outline],
+  };
+  const sizeStyles = {
+    medium: styles.sizeMedium,
+    small: styles.sizeSmall,
   };
   const textVariantStyles = {
     primary: styles.textPrimary,
@@ -48,6 +56,7 @@ export function Button({
     <TouchableOpacity
       style={[
         variantStyles[variant],
+        sizeStyles[size],
         disabled && styles.disabled,
         style,
       ]}
@@ -58,7 +67,9 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={variant === 'ghost' ? colors.primary : colors.surface} />
       ) : (
-        <Text style={[styles.text, textVariantStyles[variant], textStyle]}>{title}</Text>
+        <Text style={[styles.text, size === 'small' && styles.textSmall, textVariantStyles[variant], textStyle]}>
+          {title}
+        </Text>
       )}
     </TouchableOpacity>
   );
@@ -66,12 +77,19 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  sizeMedium: {
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.lg,
     minHeight: 48,
+  },
+  sizeSmall: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    minHeight: 40,
   },
   primary: { backgroundColor: colors.primary },
   secondary: { backgroundColor: colors.secondary },
@@ -82,7 +100,8 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   disabled: { opacity: 0.5 },
-  text: { fontSize: 16, fontWeight: '600' },
+  text: { ...typography.body, fontWeight: '600' },
+  textSmall: { fontSize: 14 },
   textPrimary: { color: colors.surface },
   textSecondary: { color: colors.text },
   textGhost: { color: colors.primary },

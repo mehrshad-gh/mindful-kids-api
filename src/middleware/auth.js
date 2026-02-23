@@ -47,14 +47,15 @@ function optionalAuth(req, res, next) {
 }
 
 /**
- * Require role (e.g. 'admin').
+ * Require one of the given roles (e.g. 'admin' or ['admin', 'therapist']).
  */
-function requireRole(role) {
+function requireRole(roleOrRoles) {
+  const allowed = Array.isArray(roleOrRoles) ? roleOrRoles : [roleOrRoles];
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    if (req.user.role !== role) {
+    if (!allowed.includes(req.user.role)) {
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
     next();

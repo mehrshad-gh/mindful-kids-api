@@ -7,6 +7,9 @@ const psychologistsRoutes = require('./psychologists');
 const reviewsRoutes = require('./reviews');
 const progressRoutes = require('./progress');
 const emotionLogsRoutes = require('./emotionLogs');
+const therapistRoutes = require('./therapist');
+const adminRoutes = require('./admin');
+const clinicsRoutes = require('./clinics');
 
 const router = express.Router();
 
@@ -18,6 +21,9 @@ router.use('/psychologists', psychologistsRoutes);
 router.use('/reviews', reviewsRoutes);
 router.use('/progress', progressRoutes);
 router.use('/emotion-logs', emotionLogsRoutes);
+router.use('/therapist', therapistRoutes);
+router.use('/admin', adminRoutes);
+router.use('/clinics', clinicsRoutes);
 
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

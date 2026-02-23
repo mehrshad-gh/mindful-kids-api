@@ -43,6 +43,10 @@ async function findAll(filters = {}) {
     sql += ` AND (name ILIKE $${i++} OR bio ILIKE $${i++})`;
     params.push(`%${filters.search}%`, `%${filters.search}%`);
   }
+  if (filters.location) {
+    sql += ` AND location ILIKE $${i++}`;
+    params.push(`%${filters.location}%`);
+  }
   sql += ' ORDER BY is_verified DESC, name ASC';
   if (filters.limit) {
     sql += ` LIMIT $${i++}`;
@@ -68,8 +72,37 @@ async function getAverageRating(psychologistId) {
   return result.rows[0];
 }
 
+/** Create psychologist (e.g. from approved therapist application). */
+async function create(data) {
+  const result = await query(
+    `INSERT INTO psychologists (
+      user_id, name, email, phone, specialty, specialization, bio, location, video_urls,
+      profile_image, avatar_url, contact_info, languages, is_verified, is_active
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, true)
+    RETURNING ${PSYCHOLOGIST_COLUMNS}`,
+    [
+      data.user_id || null,
+      data.name,
+      data.email || null,
+      data.phone || null,
+      data.specialty || null,
+      data.specialization || [],
+      data.bio || null,
+      data.location || null,
+      data.video_urls || [],
+      data.profile_image || data.avatar_url || null,
+      data.avatar_url || data.profile_image || null,
+      typeof data.contact_info === 'string' ? data.contact_info : JSON.stringify(data.contact_info || {}),
+      data.languages || [],
+      data.is_verified !== false,
+    ]
+  );
+  return toPsychologist(result.rows[0]);
+}
+
 module.exports = {
   findAll,
   findById,
   getAverageRating,
+  create,
 };

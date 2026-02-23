@@ -11,7 +11,9 @@ import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { spacing, layout } from '../../theme';
+import { typography } from '../../theme/typography';
+import { getParentInsight } from '../../utils/parentInsight';
 import type { ParentTabParamList } from '../../types/navigation';
 import type { ParentStackParamList } from '../../types/navigation';
 
@@ -143,6 +145,21 @@ export function DashboardScreen() {
       >
         <Text style={styles.title}>Dashboard</Text>
         <Text style={styles.subtitle}>Hello, {user?.name ?? 'Parent'}!</Text>
+
+        <Card style={styles.insightCard} variant="elevated">
+          <Text style={styles.insightLabel}>Insight for you</Text>
+          {children.length === 0 ? (
+            <Text style={styles.insightText}>Add a child to see a personalized insight based on their activities and check-ins.</Text>
+          ) : !selectedChild ? (
+            <Text style={styles.insightText}>Select a child below to see a short, supportive insight.</Text>
+          ) : summaryLoading && !summary ? (
+            <ActivityIndicator size="small" color={colors.parentAccent} style={styles.insightLoader} />
+          ) : (
+            <Text style={styles.insightText}>
+              {getParentInsight(summary ?? null, selectedChild.name)}
+            </Text>
+          )}
+        </Card>
 
         <Card style={styles.adviceCard}>
           <Text style={styles.adviceCardLabel}>Daily advice</Text>
@@ -297,58 +314,77 @@ export function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { padding: spacing.md, paddingBottom: spacing.xxl },
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
-  subtitle: { fontSize: 16, color: colors.textSecondary, marginBottom: spacing.lg },
+  scrollContent: { padding: layout.screenPadding, paddingBottom: spacing.xxl },
+  title: { ...typography.h2, marginBottom: spacing.xs },
+  subtitle: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.md },
+  insightCard: {
+    marginBottom: spacing.lg,
+    backgroundColor: colors.primary + '0C',
+    borderColor: colors.primary + '24',
+  },
+  insightLabel: {
+    ...typography.label,
+    color: colors.primary,
+    marginBottom: spacing.xs,
+  },
+  insightText: {
+    ...typography.bodySmall,
+    color: colors.text,
+    lineHeight: 22,
+  },
+  insightLoader: {
+    alignSelf: 'flex-start',
+    marginVertical: spacing.xs,
+  },
   adviceCard: { marginBottom: spacing.lg },
-  adviceCardLabel: { fontSize: 12, fontWeight: '600', color: colors.parentAccent, marginBottom: spacing.xs },
-  adviceCardTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },
-  adviceCardSummary: { fontSize: 15, lineHeight: 22, color: colors.textSecondary, marginBottom: spacing.md },
+  adviceCardLabel: { ...typography.label, color: colors.parentAccent, marginBottom: spacing.xs },
+  adviceCardTitle: { ...typography.h3, marginBottom: spacing.sm },
+  adviceCardSummary: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.md },
   adviceCardButton: { alignSelf: 'flex-start' },
-  adviceCardEmpty: { fontSize: 15, color: colors.textSecondary },
+  adviceCardEmpty: { ...typography.bodySmall, color: colors.textSecondary },
   adviceLoader: { marginVertical: spacing.sm },
   dashboardCard: { marginBottom: spacing.lg },
-  dashboardChildName: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },
-  progressSummary: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.md, lineHeight: 20 },
+  dashboardChildName: { ...typography.h2, fontSize: 20, marginBottom: spacing.sm },
+  progressSummary: { ...typography.subtitle, marginBottom: spacing.md },
   summaryLoader: { marginVertical: spacing.sm },
   statsRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   stat: { flex: 1 },
-  statValue: { fontSize: 20, fontWeight: '700', color: colors.parentAccent },
-  statLabel: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
+  statValue: { ...typography.h2, fontSize: 20, color: colors.parentAccent },
+  statLabel: { ...typography.caption, marginTop: 2 },
   lastRewardSection: { marginBottom: spacing.sm, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
-  lastRewardTitle: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: spacing.xs },
+  lastRewardTitle: { ...typography.label, marginBottom: spacing.xs },
   lastRewardRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs },
-  lastRewardActivity: { fontSize: 15, fontWeight: '600', color: colors.text, flex: 1, minWidth: 0 },
-  lastRewardStars: { fontSize: 14, color: colors.childAccent },
-  lastRewardWhen: { fontSize: 12, color: colors.textSecondary },
+  lastRewardActivity: { ...typography.bodySmall, fontWeight: '600', flex: 1, minWidth: 0 },
+  lastRewardStars: { ...typography.subtitle, color: colors.childAccent },
+  lastRewardWhen: { ...typography.caption },
   emotionSection: { marginTop: spacing.sm, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
-  emotionSectionTitle: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: spacing.xs },
+  emotionSectionTitle: { ...typography.label, marginBottom: spacing.xs },
   emotionStatsRow: { marginBottom: spacing.xs },
-  emotionCount: { fontSize: 14, fontWeight: '600', color: colors.text },
+  emotionCount: { ...typography.subtitle, fontWeight: '600', color: colors.text },
   lastEmotionRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', marginTop: 2 },
-  lastEmotionLabel: { fontSize: 13, color: colors.textSecondary },
-  lastEmotionValue: { fontSize: 13, fontWeight: '600', color: colors.text },
-  lastEmotionWhen: { fontSize: 12, color: colors.textSecondary },
-  noEmotionYet: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  insightText: { fontSize: 13, color: colors.textSecondary, lineHeight: 20, marginTop: spacing.sm },
+  lastEmotionLabel: { ...typography.caption, fontSize: 13 },
+  lastEmotionValue: { ...typography.caption, fontSize: 13, fontWeight: '600', color: colors.text },
+  lastEmotionWhen: { ...typography.caption },
+  noEmotionYet: { ...typography.caption, fontSize: 13, marginTop: 2 },
+  insightText: { ...typography.caption, fontSize: 13, lineHeight: 20, marginTop: spacing.sm },
   recentSection: { marginTop: spacing.sm, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
-  recentTitle: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: spacing.sm },
+  recentTitle: { ...typography.label, marginBottom: spacing.sm },
   recentRow: { marginBottom: spacing.sm },
-  recentActivity: { fontSize: 14, fontWeight: '600', color: colors.text },
-  recentMeta: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-  noActivity: { fontSize: 14, color: colors.textSecondary },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: spacing.sm },
-  card: { marginBottom: spacing.md },
+  recentActivity: { ...typography.subtitle, fontWeight: '600', color: colors.text },
+  recentMeta: { ...typography.caption, marginTop: 2 },
+  noActivity: { ...typography.subtitle },
+  sectionTitle: { ...typography.h3, fontSize: 16, marginBottom: spacing.sm },
+  card: { marginBottom: layout.listItemGap },
   cardSelected: { borderColor: colors.parentAccent, borderWidth: 2 },
-  childName: { fontSize: 16, fontWeight: '600', color: colors.text },
-  childMeta: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-  cardTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
-  cardDesc: { color: colors.textSecondary, marginTop: spacing.xs },
-  hint: { color: colors.textSecondary, marginBottom: spacing.sm },
-  errorText: { color: colors.error, marginBottom: spacing.sm },
+  childName: { ...typography.body, fontWeight: '600' },
+  childMeta: { ...typography.caption, marginTop: 2 },
+  cardTitle: { ...typography.h3 },
+  cardDesc: { ...typography.subtitle, marginTop: spacing.xs },
+  hint: { ...typography.subtitle, marginBottom: spacing.sm },
+  errorText: { ...typography.error, marginBottom: spacing.sm },
   retryBtn: { alignSelf: 'flex-start' },
   addBtn: { marginTop: spacing.sm },
   addAnother: { marginBottom: spacing.md },
   switchBtn: { marginTop: spacing.md },
-  centered: { padding: spacing.md },
+  centered: { padding: layout.screenPadding },
 });

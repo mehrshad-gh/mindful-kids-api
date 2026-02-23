@@ -7,6 +7,7 @@ import { ContentLibraryScreen } from '../screens/parent/ContentLibraryScreen';
 import { PsychologistDirectoryScreen } from '../screens/parent/PsychologistDirectoryScreen';
 import { ChildProgressScreen } from '../screens/parent/ChildProgressScreen';
 import { AddChildScreen } from '../screens/parent/AddChildScreen';
+import { PsychologistDetailScreen } from '../screens/parent/PsychologistDetailScreen';
 import type { ParentStackParamList, ParentTabParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
 
@@ -37,6 +38,7 @@ export function ParentNavigator() {
     <Stack.Navigator screenOptions={{ headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}>
       <Stack.Screen name="Main" component={ParentTabs} options={{ headerShown: false }} />
       <Stack.Screen name="AddChild" component={AddChildScreen} options={{ title: 'Add child' }} />
+      <Stack.Screen name="PsychologistDetail" component={PsychologistDetailScreen} options={{ title: 'Profile' }} />
     </Stack.Navigator>
   );
 }

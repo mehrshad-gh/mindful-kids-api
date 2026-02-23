@@ -47,7 +47,7 @@ Then open in iOS simulator, Android emulator, or Expo Go.
 
 ## API
 
-Auth and data are intended to use the **mindful-kids-api** in the repo root. Replace the mock login/register in `src/context/AuthContext.tsx` with real calls to your API (e.g. `POST /auth/login`, `POST /auth/register`).
+Set **`EXPO_PUBLIC_API_URL`** to your Railway API URL (e.g. `https://your-app.up.railway.app/api`). Copy `mobile/.env.example` to `mobile/.env` and set that variable. Auth and all data use this API.
 
 ## Reusable pieces
 

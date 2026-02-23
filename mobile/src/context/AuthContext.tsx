@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import type { User, UserRole } from '../types/auth';
 import { getToken } from '../services/tokenStorage';
+import { getOnboardingComplete, setOnboardingComplete as persistOnboardingComplete } from '../services/onboardingStorage';
 import * as authService from '../services/authService';
 
 interface AuthContextValue {
@@ -12,6 +13,10 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   isRestoring: boolean;
+  /** Onboarding completed and persisted; when false, show onboarding flow. */
+  onboardingComplete: boolean;
+  /** Mark onboarding complete and persist. */
+  setOnboardingComplete: (complete: boolean) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -38,13 +43,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [pendingActivityId, setPendingActivityIdState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRestoring, setIsRestoring] = useState(true);
+  const [onboardingComplete, setOnboardingCompleteState] = useState<boolean>(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const token = await getToken();
-        if (!token || cancelled) return;
+        const [token, complete] = await Promise.all([getToken(), getOnboardingComplete()]);
+        if (token && !complete) {
+          if (!cancelled) setOnboardingCompleteState(true);
+          await persistOnboardingComplete(true);
+        } else if (!cancelled) {
+          setOnboardingCompleteState(complete);
+        }
+        if (!token || cancelled) {
+          if (!cancelled) setIsRestoring(false);
+          return;
+        }
         const { user: me } = await authService.getMe();
         if (!cancelled) setUser(normalizeUser(me));
       } catch {
@@ -56,6 +71,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  const setOnboardingComplete = useCallback(async (complete: boolean) => {
+    setOnboardingCompleteState(complete);
+    await persistOnboardingComplete(complete);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -107,6 +127,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: !!user,
       isLoading,
       isRestoring,
+      onboardingComplete,
+      setOnboardingComplete,
       login,
       register,
       logout,
@@ -121,6 +143,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       pendingActivityId,
       isLoading,
       isRestoring,
+      onboardingComplete,
+      setOnboardingComplete,
       login,
       register,
       logout,
