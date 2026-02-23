@@ -7,6 +7,8 @@ interface AuthContextValue {
   user: User | null;
   appRole: UserRole;
   selectedChildId: string | null;
+  /** When set, child mode will open this activity (e.g. from advice "Try this with your child"). */
+  pendingActivityId: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isRestoring: boolean;
@@ -15,6 +17,7 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   setAppRole: (role: UserRole) => void;
   setSelectedChild: (childId: string | null) => void;
+  setPendingActivityId: (activityId: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -32,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [appRole, setAppRoleState] = useState<UserRole>('parent');
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+  const [pendingActivityId, setPendingActivityIdState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRestoring, setIsRestoring] = useState(true);
 
@@ -79,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setAppRoleState('parent');
     setSelectedChildId(null);
+    setPendingActivityIdState(null);
   }, []);
 
   const setAppRole = useCallback((role: UserRole) => {
@@ -89,11 +94,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSelectedChildId(childId);
   }, []);
 
+  const setPendingActivityId = useCallback((activityId: string | null) => {
+    setPendingActivityIdState(activityId);
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       appRole,
       selectedChildId,
+      pendingActivityId,
       isAuthenticated: !!user,
       isLoading,
       isRestoring,
@@ -102,11 +112,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       setAppRole,
       setSelectedChild,
+      setPendingActivityId,
     }),
     [
       user,
       appRole,
       selectedChildId,
+      pendingActivityId,
       isLoading,
       isRestoring,
       login,
@@ -114,6 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       setAppRole,
       setSelectedChild,
+      setPendingActivityId,
     ]
   );
 

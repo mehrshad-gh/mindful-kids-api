@@ -8,7 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
 import { fetchActivities, type Activity } from '../../services/activitiesService';
@@ -21,10 +21,19 @@ import type { ChildTabParamList } from '../../types/navigation';
 
 export function ActivityHubScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ChildTabParamList, 'ActivityHub'>>();
-  const { setAppRole } = useAuth();
+  const { setAppRole, pendingActivityId, setPendingActivityId } = useAuth();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (pendingActivityId) {
+        setPendingActivityId(null);
+        navigation.navigate('Activity', { activityId: pendingActivityId });
+      }
+    }, [pendingActivityId, setPendingActivityId, navigation])
+  );
 
   const load = useCallback(async () => {
     setError(null);

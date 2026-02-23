@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, RefreshControl, ScrollView, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
 import { useChildren } from '../../hooks/useChildren';
 import { useProgressSummary } from '../../hooks/useProgressSummary';
+import { fetchFeaturedAdvice, type AdviceItem } from '../../api/advice';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -13,6 +14,14 @@ import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import type { ParentTabParamList } from '../../types/navigation';
 import type { ParentStackParamList } from '../../types/navigation';
+
+const ADVICE_SUMMARY_LENGTH = 120;
+
+function getAdviceSummary(content: string): string {
+  const trimmed = content.trim();
+  if (trimmed.length <= ADVICE_SUMMARY_LENGTH) return trimmed;
+  return trimmed.slice(0, ADVICE_SUMMARY_LENGTH).trim() + '…';
+}
 
 type TabNav = NativeStackNavigationProp<ParentTabParamList, 'Dashboard'>;
 
@@ -82,12 +91,27 @@ export function DashboardScreen() {
   const { user, setAppRole, selectedChildId, setSelectedChild } = useAuth();
   const { children, loading, error, refresh } = useChildren();
   const { summary, loading: summaryLoading, refresh: refreshSummary } = useProgressSummary(selectedChildId);
+  const [featuredAdvice, setFeaturedAdvice] = useState<AdviceItem | null>(null);
+  const [adviceLoading, setAdviceLoading] = useState(true);
+
+  const loadAdvice = useCallback(async () => {
+    setAdviceLoading(true);
+    try {
+      const item = await fetchFeaturedAdvice();
+      setFeaturedAdvice(item);
+    } catch {
+      setFeaturedAdvice(null);
+    } finally {
+      setAdviceLoading(false);
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       refresh();
       refreshSummary();
-    }, [refresh, refreshSummary])
+      loadAdvice();
+    }, [refresh, refreshSummary, loadAdvice])
   );
 
   const selectedChild = children.find((c) => c.id === selectedChildId);
@@ -108,7 +132,8 @@ export function DashboardScreen() {
   const handleRefresh = useCallback(() => {
     refresh();
     refreshSummary();
-  }, [refresh, refreshSummary]);
+    loadAdvice();
+  }, [refresh, refreshSummary, loadAdvice]);
 
   return (
     <ScreenLayout scroll={false}>
@@ -118,6 +143,28 @@ export function DashboardScreen() {
       >
         <Text style={styles.title}>Dashboard</Text>
         <Text style={styles.subtitle}>Hello, {user?.name ?? 'Parent'}!</Text>
+
+        <Card style={styles.adviceCard}>
+          <Text style={styles.adviceCardLabel}>Daily advice</Text>
+          {adviceLoading && !featuredAdvice ? (
+            <ActivityIndicator size="small" color={colors.parentAccent} style={styles.adviceLoader} />
+          ) : featuredAdvice ? (
+            <>
+              <Text style={styles.adviceCardTitle}>{featuredAdvice.title}</Text>
+              <Text style={styles.adviceCardSummary} numberOfLines={3}>
+                {getAdviceSummary(featuredAdvice.content)}
+              </Text>
+              <Button
+                title="Open full advice"
+                onPress={() => navigation.navigate('AdviceFeed')}
+                variant="outline"
+                style={styles.adviceCardButton}
+              />
+            </>
+          ) : (
+            <Text style={styles.adviceCardEmpty}>No advice right now. Check back later.</Text>
+          )}
+        </Card>
 
         {children.length > 0 && selectedChild && (
           <Card style={styles.dashboardCard}>
@@ -253,6 +300,13 @@ const styles = StyleSheet.create({
   scrollContent: { padding: spacing.md, paddingBottom: spacing.xxl },
   title: { fontSize: 24, fontWeight: '700', color: colors.text },
   subtitle: { fontSize: 16, color: colors.textSecondary, marginBottom: spacing.lg },
+  adviceCard: { marginBottom: spacing.lg },
+  adviceCardLabel: { fontSize: 12, fontWeight: '600', color: colors.parentAccent, marginBottom: spacing.xs },
+  adviceCardTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },
+  adviceCardSummary: { fontSize: 15, lineHeight: 22, color: colors.textSecondary, marginBottom: spacing.md },
+  adviceCardButton: { alignSelf: 'flex-start' },
+  adviceCardEmpty: { fontSize: 15, color: colors.textSecondary },
+  adviceLoader: { marginVertical: spacing.sm },
   dashboardCard: { marginBottom: spacing.lg },
   dashboardChildName: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },
   progressSummary: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.md, lineHeight: 20 },
