@@ -4,10 +4,19 @@
 
 import { apiClient } from '../lib/apiClient';
 
+export interface PsychologistClinic {
+  id: string;
+  name: string;
+  slug?: string;
+  role_label?: string | null;
+  is_primary?: boolean;
+}
+
 export interface PsychologistListItem {
   id: string;
   name: string;
   specialty?: string | null;
+  specialization?: string[] | null;
   bio?: string | null;
   rating?: number | null;
   location?: string | null;
@@ -15,6 +24,7 @@ export interface PsychologistListItem {
   profile_image?: string | null;
   avg_rating?: number;
   review_count?: number;
+  is_verified?: boolean;
 }
 
 export interface PsychologistDetail extends PsychologistListItem {
@@ -22,6 +32,9 @@ export interface PsychologistDetail extends PsychologistListItem {
   email?: string | null;
   phone?: string | null;
   review_count?: number;
+  is_verified?: boolean;
+  /** Clinic affiliations (from therapist_clinics). */
+  clinics?: PsychologistClinic[] | null;
 }
 
 export interface PsychologistReview {

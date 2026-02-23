@@ -1,9 +1,11 @@
 const express = require('express');
 const Clinic = require('../models/Clinic');
+const TherapistClinic = require('../models/TherapistClinic');
+const Psychologist = require('../models/Psychologist');
 
 const router = express.Router();
 
-/** GET /api/clinics – list active clinics (public; used by therapist onboarding to pick affiliations) */
+/** GET /api/clinics – list active clinics (public) */
 router.get('/', async (req, res, next) => {
   try {
     const { country, search, limit } = req.query;
@@ -19,14 +21,34 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-/** GET /api/clinics/:id – get one clinic (public) */
+/** GET /api/clinics/:id – get one clinic with therapists list (public page) */
 router.get('/:id', async (req, res, next) => {
   try {
     const clinic = await Clinic.findById(req.params.id);
     if (!clinic) {
       return res.status(404).json({ error: 'Clinic not found' });
     }
-    res.json({ clinic });
+    const therapistRows = await TherapistClinic.findByClinicId(req.params.id);
+    const therapists = await Promise.all(
+      therapistRows.map(async (t) => {
+        const { avg_rating, review_count } = await Psychologist.getAverageRating(t.id);
+        return {
+          id: t.id,
+          name: t.name,
+          specialty: t.specialty,
+          specialization: t.specialization,
+          bio: t.bio,
+          location: t.location,
+          profile_image: t.profile_image || t.avatar_url,
+          is_verified: t.is_verified,
+          role_label: t.role_label,
+          is_primary: t.is_primary,
+          avg_rating: parseFloat(avg_rating),
+          review_count,
+        };
+      })
+    );
+    res.json({ clinic, therapists });
   } catch (err) {
     next(err);
   }

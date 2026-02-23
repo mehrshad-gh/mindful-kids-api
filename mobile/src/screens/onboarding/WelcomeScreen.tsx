@@ -29,6 +29,12 @@ export function WelcomeScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('Login', { onSuccessNavigateTo: 'AddChild' })}
           variant="ghost"
         />
+        <Button
+          title="I'm a therapist – join the directory"
+          onPress={() => (navigation.getParent() as any)?.navigate('TherapistOnboarding')}
+          variant="outline"
+          style={styles.therapistBtn}
+        />
       </View>
     </ScreenLayout>
   );
@@ -54,5 +60,8 @@ const styles = StyleSheet.create({
   },
   primary: {
     marginBottom: spacing.sm,
+  },
+  therapistBtn: {
+    marginTop: spacing.md,
   },
 });

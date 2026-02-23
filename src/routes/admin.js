@@ -4,6 +4,7 @@ const adminTherapistController = require('../controllers/adminTherapistControlle
 const Clinic = require('../models/Clinic');
 const ClinicAdmin = require('../models/ClinicAdmin');
 const User = require('../models/User');
+const Psychologist = require('../models/Psychologist');
 
 const router = express.Router();
 
@@ -27,7 +28,7 @@ router.get('/clinics', async (req, res, next) => {
 
 router.post('/clinics', async (req, res, next) => {
   try {
-    const { name, slug, description, address, country, website, logo_url } = req.body;
+    const { name, slug, description, location, address, country, website, logo_url } = req.body;
     if (!name) {
       return res.status(400).json({ error: 'name is required' });
     }
@@ -35,6 +36,7 @@ router.post('/clinics', async (req, res, next) => {
       name,
       slug: slug || name.toLowerCase().replace(/\s+/g, '-'),
       description,
+      location,
       address,
       country,
       website,
@@ -92,6 +94,24 @@ router.delete('/clinics/:id/admins/:userId', async (req, res, next) => {
       return res.status(404).json({ error: 'User is not an admin of this clinic' });
     }
     res.json({ message: 'Clinic admin removed' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Assign verified status to a psychologist (verification badge)
+router.patch('/psychologists/:id', async (req, res, next) => {
+  try {
+    const { is_verified } = req.body;
+    if (typeof is_verified !== 'boolean') {
+      return res.status(400).json({ error: 'Body must include is_verified (boolean)' });
+    }
+    const psychologist = await Psychologist.findById(req.params.id);
+    if (!psychologist) {
+      return res.status(404).json({ error: 'Psychologist not found' });
+    }
+    const updated = await Psychologist.update(req.params.id, { is_verified });
+    res.json({ message: is_verified ? 'Verified badge assigned.' : 'Verified badge removed.', psychologist: updated });
   } catch (err) {
     next(err);
   }

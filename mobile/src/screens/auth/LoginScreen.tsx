@@ -83,6 +83,17 @@ export function LoginScreen({ navigation, route }: Props) {
           }
           variant="ghost"
         />
+        <Button
+          title="Register as therapist"
+          onPress={() =>
+            (navigation.getParent() as any)?.navigate('TherapistOnboarding', {
+              screen: 'TherapistRegister',
+              params: { fromAuth: true },
+            })
+          }
+          variant="outline"
+          style={styles.therapistBtn}
+        />
       </KeyboardAvoidingView>
     </ScreenLayout>
   );
@@ -91,4 +102,5 @@ export function LoginScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.md },
   button: { marginTop: spacing.lg },
+  therapistBtn: { marginTop: spacing.sm },
 });

@@ -108,10 +108,33 @@ async function create(data) {
   return toPsychologist(result.rows[0]);
 }
 
+/** Update psychologist (admin: e.g. set verified status). */
+async function update(id, data) {
+  const updates = [];
+  const values = [];
+  let i = 1;
+  if (data.is_verified !== undefined) {
+    updates.push(`is_verified = $${i++}`);
+    values.push(!!data.is_verified);
+  }
+  if (data.is_active !== undefined) {
+    updates.push(`is_active = $${i++}`);
+    values.push(!!data.is_active);
+  }
+  if (updates.length === 0) return findById(id);
+  values.push(id);
+  const result = await query(
+    `UPDATE psychologists SET ${updates.join(', ')} WHERE id = $${i} RETURNING ${PSYCHOLOGIST_COLUMNS}`,
+    values
+  );
+  return toPsychologist(result.rows[0] || null);
+}
+
 module.exports = {
   findAll,
   findById,
   findByUserId,
   getAverageRating,
   create,
+  update,
 };

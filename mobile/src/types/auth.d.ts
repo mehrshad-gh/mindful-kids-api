@@ -1,10 +1,10 @@
-export type UserRole = 'parent' | 'child';
+export type UserRole = 'parent' | 'child' | 'therapist' | 'admin';
 
 export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'parent' | 'admin';
+  role: 'parent' | 'admin' | 'therapist' | 'clinic_admin';
   avatarUrl?: string;
 }
 

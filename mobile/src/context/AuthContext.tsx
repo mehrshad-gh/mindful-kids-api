@@ -18,7 +18,7 @@ interface AuthContextValue {
   /** Mark onboarding complete and persist. */
   setOnboardingComplete: (complete: boolean) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (email: string, password: string, name: string, role?: 'parent' | 'therapist' | 'clinic_admin') => Promise<void>;
   logout: () => Promise<void>;
   setAppRole: (role: UserRole) => void;
   setSelectedChild: (childId: string | null) => void;
@@ -28,11 +28,12 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function normalizeUser(u: { id: string; email: string; name: string; role: string }): User {
+  const role = u.role as User['role'];
   return {
     id: u.id,
     email: u.email,
     name: u.name,
-    role: u.role === 'admin' ? 'admin' : 'parent',
+    role: role === 'admin' || role === 'therapist' || role === 'clinic_admin' ? role : 'parent',
   };
 }
 
@@ -88,15 +89,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const register = useCallback(async (email: string, password: string, name: string) => {
-    setIsLoading(true);
-    try {
-      const { user: u } = await authService.register({ email, password, name });
-      setUser(normalizeUser(u));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const register = useCallback(
+    async (email: string, password: string, name: string, role?: 'parent' | 'therapist' | 'clinic_admin') => {
+      setIsLoading(true);
+      try {
+        const { user: u } = await authService.register({ email, password, name, role });
+        setUser(normalizeUser(u));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
 
   const logout = useCallback(async () => {
     await authService.logout();

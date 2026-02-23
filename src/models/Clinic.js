@@ -1,6 +1,6 @@
 const { query } = require('../database/connection');
 
-const COLUMNS = 'id, name, slug, description, address, country, website, logo_url, is_active, created_at, updated_at';
+const COLUMNS = 'id, name, slug, description, location, address, country, website, logo_url, is_active, created_at, updated_at';
 
 async function findAll(filters = {}) {
   let sql = `SELECT ${COLUMNS} FROM clinics WHERE 1=1`;
@@ -37,12 +37,12 @@ async function findBySlug(slug) {
   return result.rows[0] || null;
 }
 
-async function create({ name, slug, description, address, country, website, logoUrl, isActive = true }) {
+async function create({ name, slug, description, location, address, country, website, logoUrl, isActive = true }) {
   const result = await query(
-    `INSERT INTO clinics (name, slug, description, address, country, website, logo_url, is_active)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO clinics (name, slug, description, location, address, country, website, logo_url, is_active)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING ${COLUMNS}`,
-    [name, slug || name.toLowerCase().replace(/\s+/g, '-'), description || null, address || null, country || null, website || null, logoUrl || null, isActive !== false]
+    [name, slug || name.toLowerCase().replace(/\s+/g, '-'), description || null, location || null, address || null, country || null, website || null, logoUrl || null, isActive !== false]
   );
   return result.rows[0];
 }

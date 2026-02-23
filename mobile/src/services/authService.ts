@@ -11,6 +11,7 @@ export interface RegisterPayload {
   email: string;
   password: string;
   name: string;
+  role?: 'parent' | 'therapist' | 'clinic_admin';
 }
 
 export interface AuthResponse {
@@ -26,7 +27,10 @@ export async function login(payload: LoginPayload): Promise<AuthResponse> {
 }
 
 export async function register(payload: RegisterPayload): Promise<AuthResponse> {
-  const { data } = await apiClient.post<AuthResponse>('/auth/register', payload);
+  const body = payload.role
+    ? { email: payload.email, password: payload.password, name: payload.name, role: payload.role }
+    : { email: payload.email, password: payload.password, name: payload.name };
+  const { data } = await apiClient.post<AuthResponse>('/auth/register', body);
   await storeToken(data.token);
   return data;
 }

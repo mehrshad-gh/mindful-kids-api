@@ -12,7 +12,8 @@ import type { RootStackParamList } from '../../types/navigation';
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList, 'RoleSelect'> };
 
 export function RoleSelectScreen({ navigation }: Props) {
-  const { setAppRole } = useAuth();
+  const { user, setAppRole } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const selectParent = () => {
     setAppRole('parent');
@@ -21,6 +22,11 @@ export function RoleSelectScreen({ navigation }: Props) {
 
   const selectChild = () => {
     setAppRole('child');
+    navigation.replace('App');
+  };
+
+  const selectAdmin = () => {
+    setAppRole('admin');
     navigation.replace('App');
   };
 
@@ -38,6 +44,13 @@ export function RoleSelectScreen({ navigation }: Props) {
           <Text style={styles.cardDesc}>Activities, rewards, and calm tools.</Text>
           <Button title="Use as Child" onPress={selectChild} style={styles.btn} />
         </Card>
+        {isAdmin && (
+          <Card style={[styles.card, styles.adminCard]}>
+            <Text style={styles.cardTitle}>Admin</Text>
+            <Text style={styles.cardDesc}>Review therapist applications, assign verified badge.</Text>
+            <Button title="Open verification" onPress={selectAdmin} style={styles.btn} />
+          </Card>
+        )}
       </View>
     </ScreenLayout>
   );
@@ -47,6 +60,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: spacing.md },
   title: { fontSize: 20, fontWeight: '600', color: colors.text, marginBottom: spacing.lg },
   card: { marginBottom: spacing.md },
+  adminCard: { borderLeftWidth: 4, borderLeftColor: colors.primary },
   cardTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
   cardDesc: { color: colors.textSecondary, marginTop: spacing.xs, marginBottom: spacing.md },
   btn: { alignSelf: 'flex-start' },

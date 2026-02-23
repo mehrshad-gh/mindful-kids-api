@@ -72,7 +72,10 @@ Enterprise therapist onboarding: professional registration, credential submissio
 
 - **PATCH /api/admin/therapist-applications/:id**  
   Body: `{ status: "approved" | "rejected", rejection_reason? }`.  
-  On **approve**: creates psychologist row (verified), sets `psychologist_id`, copies clinic affiliations to `therapist_clinics`.
+  On **approve**: creates psychologist row with **verified status** (`is_verified: true`), sets `psychologist_id`, copies clinic affiliations to `therapist_clinics`.
+
+- **PATCH /api/admin/psychologists/:id**  
+  Body: `{ is_verified: true | false }`. Assign or remove the verification badge on a psychologist profile.
 
 - **GET /api/admin/clinics** – List clinics.  
 - **POST /api/admin/clinics** – Create clinic (body: `name`, optional `slug`, `description`, `address`, `country`, `website`, `logo_url`).
@@ -82,8 +85,8 @@ Enterprise therapist onboarding: professional registration, credential submissio
 
 ### Public
 
-- **GET /api/clinics** – List active clinics (`?country=`, `?search=`, `?limit=`). Used by therapist onboarding to pick affiliations.
-- **GET /api/clinics/:id** – One clinic.
+- **GET /api/clinics** – List active clinics (`?country=`, `?search=`, `?limit=`). Used by therapist onboarding and the Clinics directory.
+- **GET /api/clinics/:id** – One clinic **with therapists list** (name, specialty, rating, verified badge, role at clinic). Public clinic page.
 - **GET /api/psychologists**, **GET /api/psychologists/:id** – Unchanged; detail response now includes `psychologist.clinics` (from `therapist_clinics`).
 
 ## Credentials format

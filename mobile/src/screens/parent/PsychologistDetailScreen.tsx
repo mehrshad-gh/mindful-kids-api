@@ -86,7 +86,7 @@ function ContactLink({ label, value, href }: { label: string; value: string; hre
   );
 }
 
-export function PsychologistDetailScreen({ route }: Props) {
+export function PsychologistDetailScreen({ route, navigation }: Props) {
   const { psychologistId } = route.params;
   const { user } = useAuth();
   const [data, setData] = useState<PsychologistDetail | null>(null);
@@ -189,9 +189,21 @@ export function PsychologistDetailScreen({ route }: Props) {
         <View style={styles.avatarLarge}>
           <Text style={styles.avatarLargeText}>{data.name.charAt(0)}</Text>
         </View>
-        <Text style={styles.name}>{data.name}</Text>
+        <View style={styles.nameRow}>
+          <Text style={styles.name}>{data.name}</Text>
+          {data.is_verified ? (
+            <View style={styles.verifiedBadge}>
+              <Text style={styles.verifiedText}>✓ Verified</Text>
+            </View>
+          ) : null}
+        </View>
         {data.specialty ? (
           <Text style={styles.specialty}>{data.specialty}</Text>
+        ) : null}
+        {data.specialization?.length ? (
+          <Text style={styles.specialization}>
+            {data.specialization.join(' · ')}
+          </Text>
         ) : null}
         <View style={styles.ratingRow}>
           <Text style={styles.ratingNum}>{displayRating}</Text>
@@ -205,6 +217,19 @@ export function PsychologistDetailScreen({ route }: Props) {
         ) : null}
       </View>
 
+      <Card style={styles.section}>
+        <Text style={styles.sectionTitle}>Review summary</Text>
+        <View style={styles.reviewSummaryRow}>
+          <Text style={styles.reviewSummaryRating}>{displayRating}</Text>
+          <Text style={styles.star}>★</Text>
+          <Text style={styles.reviewSummaryText}>
+            {reviewCount > 0
+              ? `Based on ${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'}`
+              : 'No reviews yet'}
+          </Text>
+        </View>
+      </Card>
+
       {data.bio ? (
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
@@ -216,6 +241,28 @@ export function PsychologistDetailScreen({ route }: Props) {
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Languages</Text>
           <Text style={styles.languages}>{languages}</Text>
+        </Card>
+      ) : null}
+
+      {data.clinics?.length ? (
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>Clinic affiliation</Text>
+          {data.clinics.map((c) => (
+            <TouchableOpacity
+              key={c.id}
+              style={styles.clinicRow}
+              onPress={() => navigation.navigate('ClinicDetail', { clinicId: c.id })}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.clinicName}>{c.name}</Text>
+              {c.role_label ? (
+                <Text style={styles.clinicRole}>{c.role_label}</Text>
+              ) : null}
+              {c.is_primary ? (
+                <Text style={styles.clinicPrimary}>Primary</Text>
+              ) : null}
+            </TouchableOpacity>
+          ))}
         </Card>
       ) : null}
 
@@ -297,14 +344,38 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.parentAccent,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginBottom: 2,
+  },
   name: {
     ...typography.h2,
     textAlign: 'center',
+  },
+  verifiedBadge: {
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  verifiedText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
   },
   specialty: {
     ...typography.bodySmall,
     color: colors.parentAccent,
     marginTop: 4,
+  },
+  specialization: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    marginTop: 2,
+    textAlign: 'center',
   },
   ratingRow: {
     flexDirection: 'row',
@@ -327,6 +398,37 @@ const styles = StyleSheet.create({
   location: {
     ...typography.subtitle,
     marginTop: 6,
+  },
+  reviewSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  reviewSummaryRating: {
+    ...typography.h3,
+    fontSize: 20,
+    color: colors.text,
+  },
+  reviewSummaryText: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+  },
+  clinicRow: {
+    marginBottom: spacing.sm,
+  },
+  clinicName: {
+    ...typography.body,
+    fontWeight: '600',
+  },
+  clinicRole: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  clinicPrimary: {
+    ...typography.bodySmall,
+    color: colors.primary,
+    marginTop: 2,
   },
   section: {
     marginBottom: layout.listItemGap,

@@ -58,7 +58,14 @@ function PsychologistCard({
             <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
           </View>
           <View style={styles.cardMeta}>
-            <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+            <View style={styles.nameRow}>
+              <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+              {item.is_verified ? (
+                <View style={styles.verifiedBadge}>
+                  <Text style={styles.verifiedText}>✓ Verified</Text>
+                </View>
+              ) : null}
+            </View>
             {item.specialty ? (
               <Text style={styles.specialty} numberOfLines={1}>{item.specialty}</Text>
             ) : null}
@@ -284,9 +291,27 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: 2,
+  },
   cardName: {
     ...typography.body,
     fontWeight: '600',
+    flex: 1,
+  },
+  verifiedBadge: {
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  verifiedText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.primary,
   },
   specialty: {
     ...typography.caption,
