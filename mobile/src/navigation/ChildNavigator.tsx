@@ -1,13 +1,16 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityHubScreen } from '../screens/child/ActivityHubScreen';
 import { ActivityScreen } from '../screens/child/ActivityScreen';
 import { RewardScreen } from '../screens/child/RewardScreen';
 import { CalmToolsScreen } from '../screens/child/CalmToolsScreen';
-import type { ChildTabParamList } from '../types/navigation';
+import { CompletionRewardScreen } from '../screens/child/CompletionRewardScreen';
+import type { ChildTabParamList, ChildStackParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
 
 const Tab = createBottomTabNavigator<ChildTabParamList>();
+const Stack = createNativeStackNavigator<ChildStackParamList>();
 
 function ChildTabs() {
   return (
@@ -28,5 +31,10 @@ function ChildTabs() {
 }
 
 export function ChildNavigator() {
-  return <ChildTabs />;
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Main" component={ChildTabs} />
+      <Stack.Screen name="CompletionReward" component={CompletionRewardScreen} />
+    </Stack.Navigator>
+  );
 }

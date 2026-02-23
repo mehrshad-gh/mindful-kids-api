@@ -15,6 +15,8 @@ export interface EmotionWheelActivityProps {
   childId: string | null;
   /** Called when user confirms their emotion selection (returns the selected emotion). */
   onEmotionSelected?: (emotion: EmotionOption) => void;
+  /** Called after progress is saved with stars earned (e.g. navigate to reward screen). */
+  onRecorded?: (stars: number) => void;
 }
 
 /**
@@ -28,6 +30,7 @@ export function EmotionWheelActivity({
   instructions,
   childId,
   onEmotionSelected,
+  onRecorded,
 }: EmotionWheelActivityProps) {
   const [selected, setSelected] = useState<EmotionOption | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -77,6 +80,7 @@ export function EmotionWheelActivity({
             childId={childId}
             metadata={selected ? { selectedEmotion: selected.id } : undefined}
             usePost
+            onRecorded={onRecorded}
           />
         </View>
       )}

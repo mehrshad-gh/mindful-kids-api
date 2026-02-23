@@ -45,6 +45,23 @@ function getEmotionInsight(emotionId: string): string {
   return insights[emotionId] ?? 'Noting how they feel helps you respond with care.';
 }
 
+function getProgressSummaryText(summary: {
+  completed_count: number;
+  total_stars: number;
+  current_streak: number;
+}): React.ReactNode {
+  const { completed_count, total_stars, current_streak } = summary;
+  if (completed_count === 0) {
+    return <Text style={styles.progressSummary}>No activities completed yet. Completing activities earns stars and builds streaks!</Text>;
+  }
+  const parts: string[] = [];
+  parts.push(`${completed_count} activity${completed_count !== 1 ? 'ies' : ''} completed`);
+  parts.push(`${total_stars} total star${total_stars !== 1 ? 's' : ''}`);
+  if (current_streak > 0) parts.push(`${current_streak}-day streak`);
+  const text = parts.join(', ') + '.';
+  return <Text style={styles.progressSummary}>{text.charAt(0).toUpperCase() + text.slice(1)}</Text>;
+}
+
 function formatCompletedAt(iso: string): string {
   const d = new Date(iso);
   const now = new Date();
@@ -109,16 +126,36 @@ export function DashboardScreen() {
               <ActivityIndicator size="small" color={colors.parentAccent} style={styles.summaryLoader} />
             ) : summary ? (
               <>
+                {getProgressSummaryText(summary)}
                 <View style={styles.statsRow}>
-                  <View style={styles.stat}>
-                    <Text style={styles.statValue}>{summary.completed_count}</Text>
-                    <Text style={styles.statLabel}>Completed activities</Text>
-                  </View>
                   <View style={styles.stat}>
                     <Text style={styles.statValue}>⭐ {summary.total_stars}</Text>
                     <Text style={styles.statLabel}>Total stars</Text>
                   </View>
+                  <View style={styles.stat}>
+                    <Text style={styles.statValue}>🔥 {summary.current_streak}</Text>
+                    <Text style={styles.statLabel}>Current streak</Text>
+                  </View>
+                  <View style={styles.stat}>
+                    <Text style={styles.statValue}>{summary.completed_count}</Text>
+                    <Text style={styles.statLabel}>Activities done</Text>
+                  </View>
                 </View>
+
+                {summary.recent_completions.length > 0 && (
+                  <View style={styles.lastRewardSection}>
+                    <Text style={styles.lastRewardTitle}>Last activity reward</Text>
+                    <View style={styles.lastRewardRow}>
+                      <Text style={styles.lastRewardActivity} numberOfLines={1}>
+                        {summary.recent_completions[0].activity_title}
+                      </Text>
+                      <Text style={styles.lastRewardStars}>
+                        {'⭐'.repeat(Math.min(5, summary.recent_completions[0].stars))} {summary.recent_completions[0].stars} star{summary.recent_completions[0].stars !== 1 ? 's' : ''}
+                      </Text>
+                      <Text style={styles.lastRewardWhen}>{formatCompletedAt(summary.recent_completions[0].completed_at)}</Text>
+                    </View>
+                  </View>
+                )}
 
                 <View style={styles.emotionSection}>
                   <Text style={styles.emotionSectionTitle}>Emotional check-ins</Text>
@@ -217,12 +254,19 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '700', color: colors.text },
   subtitle: { fontSize: 16, color: colors.textSecondary, marginBottom: spacing.lg },
   dashboardCard: { marginBottom: spacing.lg },
-  dashboardChildName: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
+  dashboardChildName: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },
+  progressSummary: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.md, lineHeight: 20 },
   summaryLoader: { marginVertical: spacing.sm },
-  statsRow: { flexDirection: 'row', gap: spacing.lg, marginBottom: spacing.md },
+  statsRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   stat: { flex: 1 },
-  statValue: { fontSize: 22, fontWeight: '700', color: colors.parentAccent },
-  statLabel: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  statValue: { fontSize: 20, fontWeight: '700', color: colors.parentAccent },
+  statLabel: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
+  lastRewardSection: { marginBottom: spacing.sm, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
+  lastRewardTitle: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: spacing.xs },
+  lastRewardRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs },
+  lastRewardActivity: { fontSize: 15, fontWeight: '600', color: colors.text, flex: 1, minWidth: 0 },
+  lastRewardStars: { fontSize: 14, color: colors.childAccent },
+  lastRewardWhen: { fontSize: 12, color: colors.textSecondary },
   emotionSection: { marginTop: spacing.sm, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
   emotionSectionTitle: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: spacing.xs },
   emotionStatsRow: { marginBottom: spacing.xs },

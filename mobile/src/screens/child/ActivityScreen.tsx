@@ -18,7 +18,7 @@ import { useAuth } from '../../context/AuthContext';
 import { fetchActivityById, type Activity } from '../../services/activitiesService';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
-import type { ChildTabParamList } from '../../types/navigation';
+import type { ChildStackParamList, ChildTabParamList } from '../../types/navigation';
 
 type Props = {
   navigation: NativeStackNavigationProp<ChildTabParamList, 'Activity'>;
@@ -33,9 +33,13 @@ function formatInstructions(instructions: string | null): string[] {
     .filter(Boolean);
 }
 
-export function ActivityScreen({ route }: Props) {
+export function ActivityScreen({ navigation, route }: Props) {
   const activityId = route.params?.activityId;
   const { selectedChildId } = useAuth();
+  const stackNav = navigation.getParent<NativeStackNavigationProp<ChildStackParamList>>();
+  const handleRecorded = (stars: number) => {
+    stackNav?.navigate('CompletionReward', { starsEarned: stars });
+  };
   const [activity, setActivity] = useState<Activity | null>(null);
   const [loading, setLoading] = useState(!!activityId);
   const [error, setError] = useState<string | null>(null);
@@ -112,6 +116,7 @@ export function ActivityScreen({ route }: Props) {
             activityDescription={activity.description}
             instructions={activity.instructions ?? undefined}
             childId={selectedChildId}
+            onRecorded={handleRecorded}
           />
         </ScrollView>
       </ScreenLayout>
@@ -164,6 +169,7 @@ export function ActivityScreen({ route }: Props) {
             activityId={activity.id}
             activityTitle="Rate & save"
             childId={selectedChildId}
+            onRecorded={handleRecorded}
           />
         </View>
       </ScrollView>

@@ -25,6 +25,11 @@ export type ChildTabParamList = {
   CalmTools: undefined;
 };
 
+export type ChildStackParamList = {
+  Main: undefined;
+  CompletionReward: { starsEarned: number };
+};
+
 export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
   RoleSelect: undefined;
@@ -36,6 +41,6 @@ declare global {
     interface RootParamList extends RootStackParamList {}
     interface AuthParamList extends AuthStackParamList {}
     interface ParentParamList extends ParentTabParamList {}
-    interface ChildParamList extends ChildTabParamList {}
+    interface ChildParamList extends ChildStackParamList {}
   }
 }

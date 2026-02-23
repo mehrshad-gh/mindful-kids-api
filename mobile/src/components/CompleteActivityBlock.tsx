@@ -21,7 +21,8 @@ interface CompleteActivityBlockProps {
   activityId: string;
   activityTitle?: string;
   childId: string | null;
-  onRecorded?: () => void;
+  /** Called after progress is saved; receives stars earned. Use to e.g. navigate to reward screen. */
+  onRecorded?: (stars: number) => void;
   /** Optional activity-specific data (e.g. { selectedEmotion: 'happy' }) sent with progress. */
   metadata?: ProgressMetadata;
   /** When true, use POST /progress with child_id, activity_id, metadata, timestamp (e.g. Emotion Wheel). */
@@ -72,7 +73,7 @@ export function CompleteActivityBlock({
         await recordProgress(childId, activityId, stars, metadata);
       }
       setRecorded(true);
-      onRecorded?.();
+      onRecorded?.(stars);
     } catch (err) {
       const message = getErrorMessage(err);
       setError(message);
