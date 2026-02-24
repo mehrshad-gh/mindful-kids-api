@@ -27,7 +27,7 @@ async function findByClinicId(clinicId, options = {}) {
   const limit = options.limit ? Math.min(parseInt(options.limit, 10) || 100, 100) : 100;
   const result = await query(
     `SELECT p.id, p.name, p.specialty, p.specialization, p.bio, p.location, p.profile_image, p.avatar_url,
-            p.is_verified, p.user_id, tc.role_label, tc.is_primary
+            p.verification_status, p.user_id, tc.role_label, tc.is_primary
      FROM therapist_clinics tc
      JOIN psychologists p ON p.id = tc.psychologist_id AND p.is_active = true
      WHERE tc.clinic_id = $1
@@ -35,7 +35,10 @@ async function findByClinicId(clinicId, options = {}) {
      LIMIT $2`,
     [clinicId, limit]
   );
-  return result.rows;
+  return result.rows.map((r) => ({
+    ...r,
+    is_verified: r.verification_status === 'verified',
+  }));
 }
 
 async function remove(psychologistId, clinicId) {

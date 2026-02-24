@@ -99,19 +99,30 @@ router.delete('/clinics/:id/admins/:userId', async (req, res, next) => {
   }
 });
 
-// Assign verified status to a psychologist (verification badge)
+// Update psychologist verification (admin): is_verified (boolean) or verification_status (pending|verified|rejected|suspended|expired)
 router.patch('/psychologists/:id', async (req, res, next) => {
   try {
-    const { is_verified } = req.body;
-    if (typeof is_verified !== 'boolean') {
-      return res.status(400).json({ error: 'Body must include is_verified (boolean)' });
-    }
+    const { is_verified, verification_status } = req.body;
     const psychologist = await Psychologist.findById(req.params.id);
     if (!psychologist) {
       return res.status(404).json({ error: 'Psychologist not found' });
     }
-    const updated = await Psychologist.update(req.params.id, { is_verified });
-    res.json({ message: is_verified ? 'Verified badge assigned.' : 'Verified badge removed.', psychologist: updated });
+    if (verification_status !== undefined) {
+      const allowed = ['pending', 'verified', 'rejected', 'suspended', 'expired'];
+      if (!allowed.includes(verification_status)) {
+        return res.status(400).json({ error: `verification_status must be one of: ${allowed.join(', ')}` });
+      }
+      const updated = await Psychologist.update(req.params.id, { verification_status });
+      return res.json({ message: 'Verification status updated.', psychologist: updated });
+    }
+    if (typeof is_verified === 'boolean') {
+      const updated = await Psychologist.update(req.params.id, { is_verified });
+      return res.json({
+        message: is_verified ? 'Verified badge assigned.' : 'Verified badge removed.',
+        psychologist: updated,
+      });
+    }
+    return res.status(400).json({ error: 'Body must include is_verified (boolean) or verification_status' });
   } catch (err) {
     next(err);
   }

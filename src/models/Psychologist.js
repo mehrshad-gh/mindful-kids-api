@@ -1,7 +1,7 @@
 const { query } = require('../database/connection');
 
-const PSYCHOLOGIST_COLUMNS = `id, name, specialty, specialization, bio, rating, location, languages,
-  profile_image, avatar_url, contact_info, email, phone, video_urls, is_verified, is_active, created_at, updated_at`;
+const PSYCHOLOGIST_COLUMNS = `id, user_id, name, specialty, specialization, bio, rating, location, languages,
+  profile_image, avatar_url, contact_info, email, phone, video_urls, verification_status, verification_expires_at, last_verification_review_at, verified_at, is_active, created_at, updated_at`;
 
 /** Build contact_info from row: use contact_info JSONB if non-empty, else { email, phone }. */
 function normalizeContact(row) {
@@ -13,7 +13,7 @@ function normalizeContact(row) {
   return out;
 }
 
-/** Map DB row to supported shape: name, specialty, bio, rating, location, languages, profile_image, contact_info, created_at + rest. */
+/** Map DB row to supported shape. Exposes is_verified (boolean) for API compatibility from verification_status. */
 function toPsychologist(row) {
   if (!row) return null;
   const profile_image = row.profile_image || row.avatar_url || null;
@@ -22,6 +22,7 @@ function toPsychologist(row) {
     ...row,
     profile_image,
     contact_info,
+    is_verified: row.verification_status === 'verified',
   };
 }
 
@@ -47,7 +48,8 @@ async function findAll(filters = {}) {
     sql += ` AND location ILIKE $${i++}`;
     params.push(`%${filters.location}%`);
   }
-  sql += ' ORDER BY is_verified DESC, name ASC';
+  sql += ` AND verification_status = 'verified'`;
+  sql += ' ORDER BY verified_at DESC NULLS LAST, name ASC';
   if (filters.limit) {
     sql += ` LIMIT $${i++}`;
     params.push(filters.limit);
@@ -82,11 +84,12 @@ async function getAverageRating(psychologistId) {
 
 /** Create psychologist (e.g. from approved therapist application). */
 async function create(data) {
+  const verificationStatus = data.verification_status || (data.is_verified !== false ? 'verified' : 'pending');
   const result = await query(
     `INSERT INTO psychologists (
       user_id, name, email, phone, specialty, specialization, bio, location, video_urls,
-      profile_image, avatar_url, contact_info, languages, is_verified, is_active
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, true)
+      profile_image, avatar_url, contact_info, languages, verification_status, verification_expires_at, last_verification_review_at, verified_at, is_active
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, true)
     RETURNING ${PSYCHOLOGIST_COLUMNS}`,
     [
       data.user_id || null,
@@ -102,20 +105,43 @@ async function create(data) {
       data.avatar_url || data.profile_image || null,
       typeof data.contact_info === 'string' ? data.contact_info : JSON.stringify(data.contact_info || {}),
       data.languages || [],
-      data.is_verified !== false,
+      verificationStatus,
+      data.verification_expires_at || null,
+      data.last_verification_review_at || (verificationStatus === 'verified' ? new Date() : null),
+      data.verified_at || (verificationStatus === 'verified' ? new Date() : null),
     ]
   );
   return toPsychologist(result.rows[0]);
 }
 
-/** Update psychologist (admin: e.g. set verified status). */
+/** Update psychologist (admin: verification_status, is_active, re-verification timestamps). */
 async function update(id, data) {
   const updates = [];
   const values = [];
   let i = 1;
-  if (data.is_verified !== undefined) {
-    updates.push(`is_verified = $${i++}`);
-    values.push(!!data.is_verified);
+  if (data.verification_status !== undefined) {
+    updates.push(`verification_status = $${i++}`);
+    values.push(data.verification_status);
+    if (data.verification_status === 'verified') {
+      updates.push('verified_at = COALESCE(verified_at, NOW())');
+      updates.push('last_verification_review_at = NOW()');
+    }
+  } else if (data.is_verified !== undefined) {
+    const status = data.is_verified ? 'verified' : 'suspended';
+    updates.push(`verification_status = $${i++}`);
+    values.push(status);
+    if (data.is_verified) {
+      updates.push('verified_at = COALESCE(verified_at, NOW())');
+      updates.push('last_verification_review_at = NOW()');
+    }
+  }
+  if (data.verification_expires_at !== undefined) {
+    updates.push(`verification_expires_at = $${i++}`);
+    values.push(data.verification_expires_at);
+  }
+  if (data.last_verification_review_at !== undefined) {
+    updates.push(`last_verification_review_at = $${i++}`);
+    values.push(data.last_verification_review_at);
   }
   if (data.is_active !== undefined) {
     updates.push(`is_active = $${i++}`);

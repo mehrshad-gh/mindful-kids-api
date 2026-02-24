@@ -1,6 +1,7 @@
 const TherapistApplication = require('../models/TherapistApplication');
 const Psychologist = require('../models/Psychologist');
 const TherapistClinic = require('../models/TherapistClinic');
+const ProfessionalCredential = require('../models/ProfessionalCredential');
 const User = require('../models/User');
 
 /** GET /api/admin/therapist-applications – list applications (admin only) */
@@ -83,9 +84,17 @@ async function review(req, res, next) {
         avatar_url: app.profile_image_url,
         video_urls: app.video_urls,
         contact_info: app.contact_info,
-        is_verified: true,
+        verification_status: 'verified',
       });
       await TherapistApplication.setPsychologistId(app.id, psychologist.id);
+
+      if (app.credentials && app.credentials.length) {
+        await ProfessionalCredential.createFromApplicationCredentials(
+          psychologist.id,
+          app.credentials,
+          req.user.id
+        );
+      }
 
       const clinicAffiliations = await TherapistApplication.getApplicationClinicIds(app.id);
       for (const aff of clinicAffiliations) {
