@@ -57,8 +57,26 @@ async function findByPsychologistId(psychologistId) {
   return result.rows;
 }
 
+/** Get first issuing_country per psychologist (for verified_country in list/detail). */
+async function getVerifiedCountryByPsychologistIds(psychologistIds) {
+  if (!psychologistIds || psychologistIds.length === 0) return {};
+  const result = await query(
+    `SELECT DISTINCT ON (psychologist_id) psychologist_id, issuing_country
+     FROM professional_credentials
+     WHERE psychologist_id = ANY($1) AND verification_status = 'verified' AND issuing_country IS NOT NULL
+     ORDER BY psychologist_id, verified_at DESC NULLS LAST`,
+    [psychologistIds]
+  );
+  const map = {};
+  for (const row of result.rows) {
+    map[row.psychologist_id] = row.issuing_country;
+  }
+  return map;
+}
+
 module.exports = {
   create,
   createFromApplicationCredentials,
   findByPsychologistId,
+  getVerifiedCountryByPsychologistIds,
 };

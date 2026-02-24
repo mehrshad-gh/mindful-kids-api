@@ -80,6 +80,9 @@ function PsychologistCard({
             {item.location ? (
               <Text style={styles.location} numberOfLines={1}>📍 {item.location}</Text>
             ) : null}
+            {item.is_verified && item.verified_country ? (
+              <Text style={styles.verifiedCountry}>License verified in {item.verified_country}</Text>
+            ) : null}
           </View>
         </View>
       </Card>
@@ -356,6 +359,11 @@ const styles = StyleSheet.create({
   },
   location: {
     ...typography.caption,
+    marginTop: 2,
+  },
+  verifiedCountry: {
+    ...typography.caption,
+    color: colors.primary,
     marginTop: 2,
   },
   centered: {

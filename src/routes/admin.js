@@ -1,6 +1,7 @@
 const express = require('express');
 const { authenticate, requireRole } = require('../middleware/auth');
 const adminTherapistController = require('../controllers/adminTherapistController');
+const adminReportsController = require('../controllers/adminReportsController');
 const Clinic = require('../models/Clinic');
 const ClinicAdmin = require('../models/ClinicAdmin');
 const User = require('../models/User');
@@ -15,6 +16,11 @@ router.use(requireRole('admin'));
 router.get('/therapist-applications', adminTherapistController.list);
 router.get('/therapist-applications/:id', adminTherapistController.getOne);
 router.patch('/therapist-applications/:id', adminTherapistController.review);
+
+// Reports (trust & safety): list, get one, set status/action_taken (triggers psychologist verification update when needed)
+router.get('/reports', adminReportsController.list);
+router.get('/reports/:id', adminReportsController.getOne);
+router.patch('/reports/:id', adminReportsController.update);
 
 // Clinics (admin create for therapist affiliation)
 router.get('/clinics', async (req, res, next) => {
@@ -43,6 +49,30 @@ router.post('/clinics', async (req, res, next) => {
       logoUrl: logo_url,
     });
     res.status(201).json({ clinic });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch('/clinics/:id', async (req, res, next) => {
+  try {
+    const { verification_status, verified_by, documentation_url } = req.body;
+    const clinic = await Clinic.findById(req.params.id);
+    if (!clinic) {
+      return res.status(404).json({ error: 'Clinic not found' });
+    }
+    const data = {};
+    if (verification_status !== undefined) {
+      const allowed = ['pending', 'verified', 'rejected', 'suspended'];
+      if (!allowed.includes(verification_status)) {
+        return res.status(400).json({ error: `verification_status must be one of: ${allowed.join(', ')}` });
+      }
+      data.verification_status = verification_status;
+    }
+    if (verified_by !== undefined) data.verified_by = verified_by;
+    if (documentation_url !== undefined) data.documentation_url = documentation_url;
+    const updated = await Clinic.update(req.params.id, data);
+    res.json({ message: 'Clinic updated.', clinic: updated });
   } catch (err) {
     next(err);
   }

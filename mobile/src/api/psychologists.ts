@@ -25,6 +25,10 @@ export interface PsychologistListItem {
   avg_rating?: number;
   review_count?: number;
   is_verified?: boolean;
+  /** When verification was granted (public transparency). */
+  verified_at?: string | null;
+  /** Primary credential issuing country (e.g. "CA"). */
+  verified_country?: string | null;
 }
 
 export interface PsychologistDetail extends PsychologistListItem {
@@ -33,6 +37,8 @@ export interface PsychologistDetail extends PsychologistListItem {
   phone?: string | null;
   review_count?: number;
   is_verified?: boolean;
+  verified_at?: string | null;
+  verified_country?: string | null;
   /** Clinic affiliations (from therapist_clinics). */
   clinics?: PsychologistClinic[] | null;
 }

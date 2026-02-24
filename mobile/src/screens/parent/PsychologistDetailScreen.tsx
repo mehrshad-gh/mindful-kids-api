@@ -206,6 +206,13 @@ export function PsychologistDetailScreen({ route, navigation }: Props) {
             </TouchableOpacity>
           ) : null}
         </View>
+        {data.is_verified && (data.verified_at || data.verified_country) ? (
+          <Text style={styles.verifiedMeta}>
+            {data.verified_at ? `Verified ${formatDate(data.verified_at)}` : null}
+            {data.verified_at && data.verified_country ? ' · ' : null}
+            {data.verified_country ? `License verified in ${data.verified_country}` : null}
+          </Text>
+        ) : null}
         {data.specialty ? (
           <Text style={styles.specialty}>{data.specialty}</Text>
         ) : null}
@@ -395,6 +402,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: colors.primary,
+  },
+  verifiedMeta: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
   specialty: {
     ...typography.bodySmall,

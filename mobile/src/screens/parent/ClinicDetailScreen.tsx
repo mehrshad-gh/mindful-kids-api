@@ -132,7 +132,14 @@ export function ClinicDetailScreen({ route, navigation }: Props) {
     <ScreenLayout>
       <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
-          <Text style={styles.name}>{clinic.name}</Text>
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{clinic.name}</Text>
+            {clinic.verification_status === 'verified' ? (
+              <View style={styles.clinicVerifiedBadge}>
+                <Text style={styles.clinicVerifiedText}>✓ Verified clinic</Text>
+              </View>
+            ) : null}
+          </View>
           {locationLine ? (
             <Text style={styles.location}>📍 {locationLine}</Text>
           ) : null}
@@ -181,7 +188,10 @@ const styles = StyleSheet.create({
   errorCard: { margin: spacing.md },
   errorText: { color: colors.error },
   header: { marginBottom: spacing.lg },
-  name: { ...typography.h2, marginBottom: spacing.xs },
+  nameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.xs },
+  name: { ...typography.h2 },
+  clinicVerifiedBadge: { backgroundColor: colors.primary + '20', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  clinicVerifiedText: { fontSize: 12, fontWeight: '600', color: colors.primary },
   location: { ...typography.body, color: colors.textSecondary },
   section: { marginBottom: spacing.lg },
   sectionTitle: { ...typography.label, color: colors.primary, marginBottom: spacing.sm },

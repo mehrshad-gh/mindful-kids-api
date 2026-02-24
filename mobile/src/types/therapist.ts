@@ -49,6 +49,7 @@ export interface Clinic {
   website?: string;
   logo_url?: string;
   is_active: boolean;
+  verification_status?: 'pending' | 'verified' | 'rejected' | 'suspended';
 }
 
 /** Therapist on a clinic public page (summary for listing). */
