@@ -20,6 +20,7 @@ export function TherapistOnboardingNavigator() {
         headerShown: true,
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
+        headerShadowVisible: false,
       }}
     >
       <Stack.Screen name="TherapistRegister" component={TherapistRegisterScreen} options={{ title: 'Create account' }} />

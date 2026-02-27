@@ -119,10 +119,21 @@ export function AdminApplicationDetailScreen({ route, navigation }: Props) {
 
   const app = data.application;
   const isPending = app.status === 'pending';
+  const isApprovedButSuspended =
+    app.status === 'approved' &&
+    (app.psychologist_verification_status === 'suspended' ||
+      app.psychologist_verification_status === 'rejected');
 
   return (
     <ScreenLayout>
       <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
+        {isApprovedButSuspended && (
+          <Card style={styles.suspendedBanner}>
+            <Text style={styles.suspendedBannerText}>
+              This profile is currently {app.psychologist_verification_status === 'rejected' ? 'revoked' : 'suspended'} (e.g. after a report). The application was approved but the linked psychologist verification has been updated.
+            </Text>
+          </Card>
+        )}
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Applicant</Text>
           <Text style={styles.name}>{app.professional_name}</Text>
@@ -236,6 +247,8 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorCard: { margin: spacing.md },
   errorText: { color: colors.error },
+  suspendedBanner: { marginBottom: spacing.md, borderLeftWidth: 4, borderLeftColor: colors.warning },
+  suspendedBannerText: { ...typography.bodySmall, color: colors.text },
   section: { marginBottom: spacing.md },
   sectionTitle: { ...typography.label, color: colors.primary, marginBottom: spacing.sm },
   name: { ...typography.h3, marginBottom: spacing.xs },

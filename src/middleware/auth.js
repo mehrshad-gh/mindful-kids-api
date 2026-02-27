@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config');
+const User = require('../models/User');
 
 /**
  * Verify JWT and attach user id and role to req.user.
@@ -48,14 +49,27 @@ function optionalAuth(req, res, next) {
 
 /**
  * Require one of the given roles (e.g. 'admin' or ['admin', 'therapist']).
+ * When 'admin' is among allowed roles, current role is verified against the DB
+ * so that revoking admin (role change to parent) takes effect immediately.
  */
 function requireRole(roleOrRoles) {
   const allowed = Array.isArray(roleOrRoles) ? roleOrRoles : [roleOrRoles];
-  return (req, res, next) => {
+  const needsDbRoleCheck = allowed.includes('admin');
+
+  return async (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    if (!allowed.includes(req.user.role)) {
+    if (needsDbRoleCheck) {
+      const dbUser = await User.findById(req.user.id);
+      if (!dbUser) {
+        return res.status(401).json({ error: 'User not found' });
+      }
+      if (!allowed.includes(dbUser.role)) {
+        return res.status(403).json({ error: 'Insufficient permissions' });
+      }
+      req.user.role = dbUser.role;
+    } else if (!allowed.includes(req.user.role)) {
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
     next();

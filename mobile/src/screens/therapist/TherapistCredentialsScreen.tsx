@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
+import { useAuth } from '../../context/AuthContext';
 import { getApplication, upsertApplication } from '../../api/therapist';
 import type { TherapistCredential } from '../../types/therapist';
 import { spacing } from '../../theme/spacing';
@@ -25,7 +26,10 @@ function getErrorMessage(err: unknown): string {
 const DEFAULT_CREDENTIAL: TherapistCredential = { type: 'license', issuer: '', number: '' };
 
 export function TherapistCredentialsScreen({ navigation }: { navigation: Nav }) {
+  const { user } = useAuth();
   const [credentials, setCredentials] = useState<TherapistCredential[]>([{ ...DEFAULT_CREDENTIAL }]);
+  const [existingName, setExistingName] = useState('');
+  const [existingEmail, setExistingEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -35,24 +39,32 @@ export function TherapistCredentialsScreen({ navigation }: { navigation: Nav }) 
       try {
         const res = await getApplication();
         if (cancelled) return;
-        if (res.application?.credentials?.length) {
-          setCredentials(
-            res.application.credentials.map((c) => ({
-              type: c.type || 'license',
-              issuer: c.issuer || '',
-              number: c.number || '',
-              document_url: c.document_url,
-            }))
-          );
+        if (res.application) {
+          setExistingName(res.application.professional_name || user?.name || '');
+          setExistingEmail(res.application.email || user?.email || '');
+          if (res.application.credentials?.length) {
+            setCredentials(
+              res.application.credentials.map((c) => ({
+                type: c.type || 'license',
+                issuer: c.issuer || '',
+                number: c.number ?? '',
+                document_url: c.document_url,
+              }))
+            );
+          }
+        } else {
+          setExistingName(user?.name || '');
+          setExistingEmail(user?.email || '');
         }
       } catch {
-        // keep default
+        setExistingName(user?.name || '');
+        setExistingEmail(user?.email || '');
       } finally {
         if (!cancelled) setFetching(false);
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [user?.name, user?.email]);
 
   const updateCred = (index: number, field: keyof TherapistCredential, value: string) => {
     setCredentials((prev) => {
@@ -77,9 +89,17 @@ export function TherapistCredentialsScreen({ navigation }: { navigation: Nav }) 
       Alert.alert('Required', 'Please enter at least credential type for each entry.');
       return;
     }
+    if (!existingName.trim() || !existingEmail.trim()) {
+      Alert.alert('Error', 'Professional name and email are required. Please go back and complete the previous step.');
+      return;
+    }
     setLoading(true);
     try {
-      await upsertApplication({ credentials });
+      await upsertApplication({
+        professional_name: existingName.trim(),
+        email: existingEmail.trim(),
+        credentials,
+      });
       navigation.navigate('TherapistLicense');
     } catch (err) {
       Alert.alert('Error', getErrorMessage(err));

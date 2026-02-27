@@ -37,9 +37,17 @@ function ApplicationCard({
 }) {
   const statusLabel = STATUS_LABELS[item.status] ?? item.status;
   const isPending = item.status === 'pending';
+  const isApprovedButSuspended =
+    item.status === 'approved' &&
+    (item.psychologist_verification_status === 'suspended' ||
+      item.psychologist_verification_status === 'rejected');
+  const badgeLabel = isApprovedButSuspended
+    ? `${statusLabel} · ${item.psychologist_verification_status === 'rejected' ? 'Revoked' : 'Suspended'}`
+    : statusLabel;
   const cardStyle: ViewStyle = StyleSheet.flatten([
     styles.card,
     isPending ? styles.cardPending : undefined,
+    isApprovedButSuspended ? styles.cardSuspended : undefined,
   ]);
 
   return (
@@ -47,8 +55,14 @@ function ApplicationCard({
       <Card style={cardStyle}>
         <View style={styles.row}>
           <Text style={styles.name} numberOfLines={1}>{item.professional_name}</Text>
-          <View style={[styles.badge, item.status === 'pending' ? styles.badgePending : undefined]}>
-            <Text style={styles.badgeText}>{statusLabel}</Text>
+          <View
+            style={[
+              styles.badge,
+              item.status === 'pending' && styles.badgePending,
+              isApprovedButSuspended && styles.badgeSuspended,
+            ]}
+          >
+            <Text style={styles.badgeText}>{badgeLabel}</Text>
           </View>
         </View>
         {(item.user_email || item.email) && (
@@ -99,9 +113,17 @@ export function AdminTherapistApplicationsScreen() {
   const pendingCount = applications.filter((a) => a.status === 'pending').length;
 
   return (
-    <ScreenLayout>
+    <ScreenLayout scroll={false}>
       <View style={styles.header}>
-        <Text style={styles.title}>Therapist applications</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Therapist applications</Text>
+          <TouchableOpacity
+            style={styles.reportsBtn}
+            onPress={() => navigation.navigate('AdminReports')}
+          >
+            <Text style={styles.reportsBtnText}>Reports</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.subtitle}>
           {filter === 'pending' ? `${pendingCount} pending` : 'All statuses'} · Review and approve or reject
         </Text>
@@ -135,6 +157,7 @@ export function AdminTherapistApplicationsScreen() {
               onPress={() => navigation.navigate('TherapistApplicationDetail', { applicationId: item.id })}
             />
           )}
+          style={styles.listContainer}
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />
@@ -154,20 +177,26 @@ export function AdminTherapistApplicationsScreen() {
 
 const styles = StyleSheet.create({
   header: { paddingHorizontal: spacing.md, paddingBottom: spacing.md },
-  title: { ...typography.h2, marginBottom: spacing.xs },
+  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xs },
+  title: { ...typography.h2 },
+  reportsBtn: { paddingVertical: spacing.xs, paddingHorizontal: spacing.sm },
+  reportsBtnText: { ...typography.bodySmall, color: colors.primary, fontWeight: '600' },
   subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.md },
   tabs: { flexDirection: 'row', gap: spacing.sm },
   tab: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: 8 },
   tabActive: { backgroundColor: colors.primary },
   tabText: { ...typography.bodySmall, color: colors.text },
   tabTextActive: { ...typography.bodySmall, color: colors.surface },
+  listContainer: { flex: 1 },
   list: { padding: spacing.md, paddingTop: 0 },
   card: { marginBottom: spacing.md },
   cardPending: { borderLeftWidth: 4, borderLeftColor: colors.primary },
+  cardSuspended: { borderLeftWidth: 4, borderLeftColor: colors.warning },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xs },
   name: { ...typography.h3, flex: 1 },
   badge: { backgroundColor: colors.border, paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: 6 },
   badgePending: { backgroundColor: colors.primary + '30' },
+  badgeSuspended: { backgroundColor: colors.warning + '40' },
   badgeText: { fontSize: 12, color: colors.text },
   email: { ...typography.bodySmall, color: colors.textSecondary },
   specialty: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs },

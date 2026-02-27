@@ -1,17 +1,21 @@
+/**
+ * Mindful Kids – warm, calm palette for families.
+ * Sage + warm neutrals + soft accents.
+ */
 export const colors = {
-  primary: '#4A90A4',
-  primaryDark: '#3A7585',
-  secondary: '#F5A623',
-  background: '#F8F9FA',
+  primary: '#5B8A72',
+  primaryDark: '#456B58',
+  secondary: '#C4956A',
+  background: '#F7F5F2',
   surface: '#FFFFFF',
-  text: '#2C3E50',
-  textSecondary: '#7F8C8D',
-  border: '#E0E6ED',
-  success: '#27AE60',
-  warning: '#F39C12',
-  error: '#E74C3C',
-  childAccent: '#9B59B6',
-  parentAccent: '#3498DB',
+  text: '#2D2A26',
+  textSecondary: '#6B6560',
+  border: '#E8E4DF',
+  success: '#2E7D5E',
+  warning: '#C4903C',
+  error: '#C75C5C',
+  childAccent: '#7B68A6',
+  parentAccent: '#4A7BA7',
 } as const;
 
 export type Colors = typeof colors;

@@ -60,10 +60,17 @@ export type TherapistOnboardingStackParamList = {
   TherapistSuccess: undefined;
 };
 
-/** Admin: therapist applications, assign verified. */
+/** Admin: therapist applications, reports (trust & safety), assign verified. */
 export type AdminStackParamList = {
   AdminMain: undefined;
   TherapistApplicationDetail: { applicationId: string };
+  AdminReports: undefined;
+  AdminReportDetail: { reportId: string };
+};
+
+/** Therapist: dashboard (application status). */
+export type TherapistStackParamList = {
+  TherapistDashboard: undefined;
 };
 
 export type RootStackParamList = {
@@ -83,5 +90,6 @@ declare global {
     interface ChildParamList extends ChildStackParamList {}
     interface TherapistOnboardingParamList extends TherapistOnboardingStackParamList {}
     interface AdminParamList extends AdminStackParamList {}
+    interface TherapistParamList extends TherapistStackParamList {}
   }
 }

@@ -8,10 +8,10 @@ import {
   Pressable,
   ScrollView,
 } from 'react-native';
-import { Button } from './Button';
-import { Input } from './Input';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
 import { colors } from '../theme/colors';
-import { spacing } from '../theme';
+import { spacing, borderRadius } from '../theme';
 import { typography } from '../theme/typography';
 import { reportProfessional, type ReportProfessionalReason } from '../api/reports';
 
@@ -126,14 +126,14 @@ export function ReportProfessionalModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(45,42,38,0.35)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
   },
   box: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     padding: spacing.lg,
     maxWidth: 400,
     width: '100%',
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   option: {
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    borderRadius: 8,
+    borderRadius: borderRadius.md,
     marginBottom: 4,
     backgroundColor: colors.background,
   },

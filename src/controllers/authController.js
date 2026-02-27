@@ -4,10 +4,11 @@ const config = require('../config');
 const User = require('../models/User');
 
 function generateToken(user) {
+  const expiresIn = user.role === 'admin' ? config.jwt.expiresInAdmin : config.jwt.expiresIn;
   return jwt.sign(
     { sub: user.id, role: user.role },
     config.jwt.secret,
-    { expiresIn: config.jwt.expiresIn }
+    { expiresIn }
   );
 }
 
@@ -26,12 +27,13 @@ async function register(req, res, next) {
       name,
       role,
     });
+    const expiresIn = user.role === 'admin' ? config.jwt.expiresInAdmin : config.jwt.expiresIn;
     const token = generateToken(user);
     res.status(201).json({
       message: 'Registration successful',
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
       token,
-      expiresIn: config.jwt.expiresIn,
+      expiresIn,
     });
   } catch (err) {
     next(err);
@@ -49,12 +51,13 @@ async function login(req, res, next) {
     if (!valid) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
+    const expiresIn = user.role === 'admin' ? config.jwt.expiresInAdmin : config.jwt.expiresIn;
     const token = generateToken(user);
     res.json({
       message: 'Login successful',
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
       token,
-      expiresIn: config.jwt.expiresIn,
+      expiresIn,
     });
   } catch (err) {
     next(err);

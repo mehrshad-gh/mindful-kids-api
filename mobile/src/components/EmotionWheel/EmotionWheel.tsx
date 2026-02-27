@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import type { EmotionOption } from './emotionData';
 import { DEFAULT_EMOTIONS } from './emotionData';
+import { colors } from '../../theme/colors';
+import { spacing, borderRadius } from '../../theme/spacing';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const WHEEL_SIZE = Math.min(SCREEN_WIDTH - 48, 320);
@@ -164,7 +166,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    padding: spacing.lg,
   },
   wheel: {
     position: 'relative',
@@ -187,12 +189,12 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   segmentSelected: {
-    borderColor: '#2C3E50',
+    borderColor: colors.text,
     borderWidth: 4,
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
     elevation: 4,
   },
   emoji: {
@@ -202,7 +204,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: colors.text,
     textAlign: 'center',
   },
   center: {
@@ -222,24 +224,24 @@ const styles = StyleSheet.create({
   centerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 4,
   },
   centerSelected: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A90A4',
+    color: colors.primary,
   },
   savingText: {
     fontSize: 12,
-    color: '#7F8C8D',
+    color: colors.textSecondary,
     marginTop: 4,
   },
   successText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#27AE60',
+    color: colors.success,
     marginTop: 4,
   },
 });

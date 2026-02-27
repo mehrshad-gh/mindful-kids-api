@@ -12,8 +12,9 @@ import type { RootStackParamList } from '../../types/navigation';
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList, 'RoleSelect'> };
 
 export function RoleSelectScreen({ navigation }: Props) {
-  const { user, setAppRole } = useAuth();
+  const { user, setAppRole, logout } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const isTherapist = user?.role === 'therapist';
 
   const selectParent = () => {
     setAppRole('parent');
@@ -22,6 +23,11 @@ export function RoleSelectScreen({ navigation }: Props) {
 
   const selectChild = () => {
     setAppRole('child');
+    navigation.replace('App');
+  };
+
+  const selectTherapist = () => {
+    setAppRole('therapist');
     navigation.replace('App');
   };
 
@@ -34,6 +40,13 @@ export function RoleSelectScreen({ navigation }: Props) {
     <ScreenLayout>
       <View style={styles.container}>
         <Text style={styles.title}>Choose how to use the app</Text>
+        {isTherapist && (
+          <Card style={[styles.card, styles.therapistCard]}>
+            <Text style={styles.cardTitle}>Therapist</Text>
+            <Text style={styles.cardDesc}>View your application status and professional profile.</Text>
+            <Button title="Use as Therapist" onPress={selectTherapist} style={styles.btn} />
+          </Card>
+        )}
         <Card style={styles.card}>
           <Text style={styles.cardTitle}>Parent</Text>
           <Text style={styles.cardDesc}>Dashboard, advice, library, experts, and child progress.</Text>
@@ -51,6 +64,7 @@ export function RoleSelectScreen({ navigation }: Props) {
             <Button title="Open verification" onPress={selectAdmin} style={styles.btn} />
           </Card>
         )}
+        <Button title="Sign out" onPress={logout} variant="ghost" style={styles.signOutBtn} />
       </View>
     </ScreenLayout>
   );
@@ -60,8 +74,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: spacing.md },
   title: { fontSize: 20, fontWeight: '600', color: colors.text, marginBottom: spacing.lg },
   card: { marginBottom: spacing.md },
+  therapistCard: { borderLeftWidth: 4, borderLeftColor: colors.primary },
   adminCard: { borderLeftWidth: 4, borderLeftColor: colors.primary },
   cardTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
   cardDesc: { color: colors.textSecondary, marginTop: spacing.xs, marginBottom: spacing.md },
   btn: { alignSelf: 'flex-start' },
+  signOutBtn: { marginTop: spacing.lg },
 });

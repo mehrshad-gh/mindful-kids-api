@@ -3,6 +3,7 @@ const Psychologist = require('../models/Psychologist');
 const TherapistClinic = require('../models/TherapistClinic');
 const ProfessionalCredential = require('../models/ProfessionalCredential');
 const User = require('../models/User');
+const AdminAuditLog = require('../models/AdminAuditLog');
 
 /** GET /api/admin/therapist-applications – list applications (admin only) */
 async function list(req, res, next) {
@@ -13,10 +14,16 @@ async function list(req, res, next) {
     const withUser = await Promise.all(
       applications.map(async (app) => {
         const user = await User.findById(app.user_id);
+        let psychologist_verification_status = null;
+        if (app.psychologist_id) {
+          const psychologist = await Psychologist.findById(app.psychologist_id);
+          if (psychologist) psychologist_verification_status = psychologist.verification_status;
+        }
         return {
           ...app,
           user_email: user?.email,
           user_name: user?.name,
+          psychologist_verification_status,
         };
       })
     );
@@ -35,8 +42,13 @@ async function getOne(req, res, next) {
     }
     const user = await User.findById(app.user_id);
     const clinicAffiliations = await TherapistApplication.getApplicationClinicIds(app.id);
+    let psychologist_verification_status = null;
+    if (app.psychologist_id) {
+      const psychologist = await Psychologist.findById(app.psychologist_id);
+      if (psychologist) psychologist_verification_status = psychologist.verification_status;
+    }
     res.json({
-      application: app,
+      application: { ...app, psychologist_verification_status },
       user_email: user?.email,
       user_name: user?.name,
       clinic_affiliations: clinicAffiliations,
@@ -68,6 +80,14 @@ async function review(req, res, next) {
       req.user.id,
       status === 'rejected' ? rejection_reason || null : null
     );
+
+    await AdminAuditLog.insert({
+      adminUserId: req.user.id,
+      actionType: status === 'approved' ? 'therapist_application_approved' : 'therapist_application_rejected',
+      targetType: 'therapist_application',
+      targetId: app.id,
+      details: status === 'rejected' ? { rejection_reason: rejection_reason || null } : { application_id: app.id },
+    });
 
     if (status === 'approved') {
       const psychologist = await Psychologist.create({

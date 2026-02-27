@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
+import { Text, Modal, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
 import { colors } from '../theme/colors';
-import { spacing, typography } from '../theme';
+import { spacing, typography, borderRadius } from '../theme';
 
 const EXPLAINER_TEXT = `"Verified" means Mindful Kids has reviewed this professional's submitted credentials (e.g. professional license, issuing country, specialization). It is not an endorsement of their practice or outcomes. Always use your own judgment when choosing care.`;
 
@@ -20,7 +20,7 @@ export function VerifiedExplainerModal({ visible, onClose }: Props) {
           <TouchableOpacity style={styles.button} onPress={onClose} activeOpacity={0.8}>
             <Text style={styles.buttonText}>Got it</Text>
           </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
       </Pressable>
     </Modal>
   );
@@ -29,14 +29,14 @@ export function VerifiedExplainerModal({ visible, onClose }: Props) {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(45,42,38,0.35)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
   },
   box: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     padding: spacing.lg,
     maxWidth: 360,
     width: '100%',
@@ -53,9 +53,9 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: colors.primary,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.md,
-    borderRadius: 8,
+    borderRadius: borderRadius.md,
     alignSelf: 'flex-end',
   },
   buttonText: {

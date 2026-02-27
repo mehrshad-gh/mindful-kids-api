@@ -10,8 +10,13 @@ async function getMine(req, res, next) {
       return res.json({ application: null });
     }
     const clinics = await TherapistApplication.getApplicationClinicIds(app.id);
+    let psychologist_verification_status = null;
+    if (app.psychologist_id) {
+      const psychologist = await Psychologist.findById(app.psychologist_id);
+      if (psychologist) psychologist_verification_status = psychologist.verification_status;
+    }
     res.json({
-      application: app,
+      application: { ...app, psychologist_verification_status },
       clinic_affiliations: clinics,
     });
   } catch (err) {

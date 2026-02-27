@@ -52,9 +52,16 @@ export function RootNavigator() {
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="RoleSelect">
+    <Stack.Navigator
+      key={onboardingComplete ? 'onboarding-complete' : 'onboarding-incomplete'}
+      screenOptions={{ headerShown: false }}
+      initialRouteName="RoleSelect"
+    >
       <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
       <Stack.Screen name="App" component={AppSwitch} />
+      {user?.role === 'therapist' && (
+        <Stack.Screen name="TherapistOnboarding" component={TherapistOnboardingNavigator} />
+      )}
     </Stack.Navigator>
   );
 }

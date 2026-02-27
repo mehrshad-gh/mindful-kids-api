@@ -62,10 +62,10 @@ export function Button({
       ]}
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.8}
+      activeOpacity={0.82}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'ghost' ? colors.primary : colors.surface} />
+        <ActivityIndicator color={variant === 'ghost' ? colors.primary : colors.surface} size="small" />
       ) : (
         <Text style={[styles.text, size === 'small' && styles.textSmall, textVariantStyles[variant], textStyle]}>
           {title}
@@ -77,19 +77,19 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sizeMedium: {
-    paddingVertical: spacing.sm + 2,
+    paddingVertical: spacing.sm + 4,
     paddingHorizontal: spacing.lg,
-    minHeight: 48,
+    minHeight: 52,
   },
   sizeSmall: {
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    minHeight: 40,
+    minHeight: 42,
   },
   primary: { backgroundColor: colors.primary },
   secondary: { backgroundColor: colors.secondary },

@@ -3,27 +3,29 @@ import { colors } from './colors';
 
 /**
  * Design system typography.
- * Use these styles for consistent headings, body, labels, and captions.
+ * Warm, readable hierarchy for families.
  */
 export const typography = StyleSheet.create({
-  // Screen / section titles
   h1: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '700',
     color: colors.text,
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
+    lineHeight: 36,
   },
   h2: {
     fontSize: 22,
     fontWeight: '700',
     color: colors.text,
+    letterSpacing: -0.2,
+    lineHeight: 28,
   },
   h3: {
     fontSize: 18,
     fontWeight: '600',
     color: colors.text,
+    lineHeight: 24,
   },
-  // Body
   body: {
     fontSize: 16,
     fontWeight: '400',
@@ -36,7 +38,6 @@ export const typography = StyleSheet.create({
     color: colors.text,
     lineHeight: 22,
   },
-  // Supporting
   subtitle: {
     fontSize: 14,
     fontWeight: '400',
@@ -54,13 +55,14 @@ export const typography = StyleSheet.create({
     fontWeight: '600',
     color: colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
+    lineHeight: 16,
   },
-  // Semantic
   accent: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '600',
     color: colors.primary,
+    lineHeight: 22,
   },
   error: {
     fontSize: 14,

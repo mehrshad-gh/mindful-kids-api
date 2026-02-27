@@ -21,10 +21,13 @@ function ParentTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: colors.parentAccent,
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
+        headerShadowVisible: false,
       }}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ tabBarLabel: 'Home' }} />

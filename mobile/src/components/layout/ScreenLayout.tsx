@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { layout } from '../../theme';
+import { colors } from '../../theme/colors';
 
 interface ScreenLayoutProps {
   children: React.ReactNode;
@@ -30,8 +32,8 @@ export function ScreenLayout({ children, scroll = true, style }: ScreenLayoutPro
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F8F9FA' },
+  safe: { flex: 1, backgroundColor: colors.background },
   scroll: { flex: 1 },
-  scrollContent: { flexGrow: 1, padding: 16 },
-  container: { flex: 1, padding: 16 },
+  scrollContent: { flexGrow: 1, padding: layout.screenPadding },
+  container: { flex: 1, padding: layout.screenPadding },
 });

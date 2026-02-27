@@ -18,8 +18,11 @@ function ChildTabs() {
       screenOptions={{
         tabBarActiveTintColor: colors.childAccent,
         tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
+        headerShadowVisible: false,
       }}
     >
       <Tab.Screen name="ActivityHub" component={ActivityHubScreen} options={{ tabBarLabel: 'Activities' }} />

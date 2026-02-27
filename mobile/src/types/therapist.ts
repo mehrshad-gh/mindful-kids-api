@@ -28,6 +28,8 @@ export interface TherapistApplication {
   reviewed_at?: string;
   rejection_reason?: string;
   psychologist_id?: string;
+  /** When approved, current verification status of the linked psychologist (e.g. suspended after report action). */
+  psychologist_verification_status?: string | null;
   created_at: string;
   updated_at: string;
 }

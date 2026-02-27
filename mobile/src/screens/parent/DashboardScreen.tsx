@@ -90,7 +90,7 @@ function formatCompletedAt(iso: string): string {
 
 export function DashboardScreen() {
   const navigation = useNavigation<TabNav>();
-  const { user, setAppRole, selectedChildId, setSelectedChild } = useAuth();
+  const { user, setAppRole, selectedChildId, setSelectedChild, logout } = useAuth();
   const { children, loading, error, refresh, deleteChild } = useChildren();
   const { summary, loading: summaryLoading, refresh: refreshSummary } = useProgressSummary(selectedChildId);
   const [featuredAdvice, setFeaturedAdvice] = useState<AdviceItem | null>(null);
@@ -342,6 +342,8 @@ export function DashboardScreen() {
           style={styles.switchBtn}
         />
 
+        <Button title="Sign out" onPress={logout} variant="ghost" style={styles.signOutBtn} />
+
         <View style={styles.disclaimerFooter}>
           <Text style={styles.disclaimerText}>
             Mindful Kids is not a replacement for professional mental health or medical care. If you or your child need clinical support, please contact a qualified professional.
@@ -433,6 +435,7 @@ const styles = StyleSheet.create({
   removeChildLink: { marginTop: -spacing.sm, marginBottom: spacing.sm, paddingVertical: spacing.xs },
   removeChildText: { ...typography.caption, color: colors.error },
   switchBtn: { marginTop: spacing.md },
+  signOutBtn: { marginTop: spacing.sm },
   disclaimerFooter: {
     marginTop: spacing.xl,
     paddingTop: spacing.lg,

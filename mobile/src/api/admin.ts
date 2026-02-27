@@ -8,6 +8,8 @@ import type { TherapistApplication } from '../types/therapist';
 export interface AdminApplicationListItem extends TherapistApplication {
   user_email?: string;
   user_name?: string;
+  /** When application is approved, current verification status of the linked psychologist (suspended/rejected after report action). */
+  psychologist_verification_status?: string | null;
 }
 
 export interface AdminApplicationDetailResponse {
@@ -54,6 +56,52 @@ export async function setPsychologistVerified(
   const { data } = await apiClient.patch<{ message: string; psychologist: unknown }>(
     `/admin/psychologists/${psychologistId}`,
     { is_verified: isVerified }
+  );
+  return data;
+}
+
+// Reports (trust & safety)
+export type ProfessionalReportStatus = 'open' | 'under_review' | 'resolved' | 'dismissed';
+export type ProfessionalReportActionTaken =
+  | 'none'
+  | 'warning'
+  | 'temporary_suspension'
+  | 'verification_revoked';
+
+export interface AdminReportListItem {
+  id: string;
+  reporter_id: string;
+  psychologist_id: string;
+  reason: string;
+  details: string | null;
+  status: ProfessionalReportStatus;
+  action_taken: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listReports(params?: {
+  status?: ProfessionalReportStatus;
+  limit?: number;
+}): Promise<{ reports: AdminReportListItem[] }> {
+  const { data } = await apiClient.get<{ reports: AdminReportListItem[] }>('/admin/reports', {
+    params,
+  });
+  return data;
+}
+
+export async function getReport(id: string): Promise<{ report: AdminReportListItem }> {
+  const { data } = await apiClient.get<{ report: AdminReportListItem }>(`/admin/reports/${id}`);
+  return data;
+}
+
+export async function updateReport(
+  id: string,
+  payload: { status?: ProfessionalReportStatus; action_taken?: ProfessionalReportActionTaken }
+): Promise<{ message: string; report: AdminReportListItem }> {
+  const { data } = await apiClient.patch<{ message: string; report: AdminReportListItem }>(
+    `/admin/reports/${id}`,
+    payload
   );
   return data;
 }

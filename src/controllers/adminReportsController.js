@@ -1,4 +1,5 @@
 const ProfessionalReport = require('../models/ProfessionalReport');
+const AdminAuditLog = require('../models/AdminAuditLog');
 
 const ALLOWED_ACTION_TAKEN = ['none', 'warning', 'temporary_suspension', 'verification_revoked'];
 const ALLOWED_STATUS = ['open', 'under_review', 'resolved', 'dismissed'];
@@ -52,6 +53,15 @@ async function update(req, res, next) {
       return res.json({ report });
     }
     const updated = await ProfessionalReport.update(req.params.id, data);
+
+    await AdminAuditLog.insert({
+      adminUserId: req.user.id,
+      actionType: 'report_action_taken',
+      targetType: 'professional_report',
+      targetId: req.params.id,
+      details: { status: data.status, action_taken: data.action_taken, psychologist_id: report.psychologist_id },
+    });
+
     res.json({
       message: 'Report updated. Psychologist verification status was updated if action_taken required it.',
       report: updated,
