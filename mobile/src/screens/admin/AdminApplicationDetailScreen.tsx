@@ -9,7 +9,9 @@ import {
   TextInput,
   Modal,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
+import * as FileSystem from 'expo-file-system';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
@@ -20,6 +22,8 @@ import {
   reviewTherapistApplication,
   type AdminApplicationDetailResponse,
 } from '../../api/admin';
+import { getBaseURL } from '../../lib/apiClient';
+import { getToken } from '../../services/tokenStorage';
 import type { AdminStackParamList } from '../../types/navigation';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
@@ -27,11 +31,42 @@ import { typography } from '../../theme/typography';
 
 type Props = NativeStackScreenProps<AdminStackParamList, 'TherapistApplicationDetail'>;
 
+/** Open a credential document: if it's our API URL, download with auth and open; else open in browser. */
+async function openCredentialDocument(documentUrl: string): Promise<void> {
+  const base = getBaseURL();
+  const isOurApi = documentUrl.startsWith(base);
+  if (!isOurApi) {
+    const can = await Linking.canOpenURL(documentUrl);
+    if (can) await Linking.openURL(documentUrl);
+    else Alert.alert('Cannot open', 'This link could not be opened.');
+    return;
+  }
+  try {
+    const token = await getToken();
+    if (!token) {
+      Alert.alert('Error', 'You must be signed in to view this document.');
+      return;
+    }
+    const filename = documentUrl.split('/').pop() || `credential_${Date.now()}.pdf`;
+    const ext = filename.includes('.') ? filename.slice(filename.lastIndexOf('.')) : '.pdf';
+    const localUri = `${FileSystem.cacheDirectory}cred_${Date.now()}${ext}`;
+    await FileSystem.downloadAsync(documentUrl, localUri, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const can = await Linking.canOpenURL(localUri);
+    if (can) await Linking.openURL(localUri);
+    else Alert.alert('Opened', 'Document downloaded. Open it from your device storage if needed.');
+  } catch (e) {
+    Alert.alert('Could not open document', e instanceof Error ? e.message : 'Download failed.');
+  }
+}
+
 export function AdminApplicationDetailScreen({ route, navigation }: Props) {
   const { applicationId } = route.params;
   const [data, setData] = useState<AdminApplicationDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [openingDocUrl, setOpeningDocUrl] = useState<string | null>(null);
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
 
@@ -161,7 +196,21 @@ export function AdminApplicationDetailScreen({ route, navigation }: Props) {
                   {c.type}{c.issuer ? ` · ${c.issuer}` : ''}{c.number ? ` #${c.number}` : ''}
                 </Text>
                 {c.document_url ? (
-                  <Text style={styles.link} numberOfLines={1}>{c.document_url}</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setOpeningDocUrl(c.document_url!);
+                      openCredentialDocument(c.document_url!)
+                        .finally(() => setOpeningDocUrl(null));
+                    }}
+                    disabled={openingDocUrl !== null}
+                    style={styles.docLinkWrap}
+                  >
+                    {openingDocUrl === c.document_url ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : (
+                      <Text style={styles.link}>View attached document</Text>
+                    )}
+                  </TouchableOpacity>
                 ) : null}
               </View>
             ))
@@ -256,7 +305,8 @@ const styles = StyleSheet.create({
   bodySmall: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.xs },
   bio: { marginTop: spacing.xs },
   credRow: { marginBottom: spacing.sm },
-  link: { fontSize: 12, color: colors.primary, marginTop: 2 },
+  docLinkWrap: { marginTop: 4, alignSelf: 'flex-start' },
+  link: { fontSize: 14, color: colors.primary },
   actions: { marginTop: spacing.lg },
   approveBtn: { marginBottom: spacing.sm },
   rejectBtn: {},
