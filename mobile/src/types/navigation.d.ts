@@ -76,7 +76,7 @@ export type TherapistStackParamList = {
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
   Auth: NavigatorScreenParams<AuthStackParamList>;
-  TherapistOnboarding: NavigatorScreenParams<TherapistOnboardingStackParamList>;
+  TherapistOnboarding: NavigatorScreenParams<TherapistOnboardingStackParamList> & { initialScreen?: keyof TherapistOnboardingStackParamList };
   RoleSelect: undefined;
   App: undefined;
 };

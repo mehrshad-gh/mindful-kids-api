@@ -1,5 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TherapistRegisterScreen } from '../screens/therapist/TherapistRegisterScreen';
 import { TherapistProfessionalScreen } from '../screens/therapist/TherapistProfessionalScreen';
 import { TherapistCredentialsScreen } from '../screens/therapist/TherapistCredentialsScreen';
@@ -9,13 +10,18 @@ import { TherapistClinicScreen } from '../screens/therapist/TherapistClinicScree
 import { TherapistSubmitScreen } from '../screens/therapist/TherapistSubmitScreen';
 import { TherapistSuccessScreen } from '../screens/therapist/TherapistSuccessScreen';
 import type { TherapistOnboardingStackParamList } from '../types/navigation';
+import type { RootStackParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator<TherapistOnboardingStackParamList>();
 
-export function TherapistOnboardingNavigator() {
+type Props = NativeStackScreenProps<RootStackParamList, 'TherapistOnboarding'>;
+
+export function TherapistOnboardingNavigator({ route }: Props) {
+  const initialScreen = route.params?.initialScreen ?? 'TherapistRegister';
   return (
     <Stack.Navigator
+      initialRouteName={initialScreen}
       screenOptions={{
         headerShown: true,
         headerStyle: { backgroundColor: colors.surface },

@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   Linking,
   Image,
-  Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -307,10 +307,10 @@ export function AdminApplicationDetailScreen({ route, navigation }: Props) {
       </Modal>
 
       <Modal visible={!!documentPreview} animationType="fade" onRequestClose={() => setDocumentPreview(null)}>
-        <View style={styles.previewContainer}>
+        <SafeAreaView style={styles.previewContainer} edges={['top', 'bottom', 'left', 'right']}>
           <View style={styles.previewHeader}>
-            <Text style={styles.previewTitle}>Credential document</Text>
-            <TouchableOpacity onPress={() => setDocumentPreview(null)} style={styles.previewCloseBtn}>
+            <Text style={styles.previewTitle} numberOfLines={1}>Credential document</Text>
+            <TouchableOpacity onPress={() => setDocumentPreview(null)} style={styles.previewCloseBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <Text style={styles.previewCloseText}>Close</Text>
             </TouchableOpacity>
           </View>
@@ -330,7 +330,7 @@ export function AdminApplicationDetailScreen({ route, navigation }: Props) {
               )
             )}
           </View>
-        </View>
+        </SafeAreaView>
       </Modal>
     </ScreenLayout>
   );
@@ -379,13 +379,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    gap: spacing.md,
   },
-  previewTitle: { ...typography.h3 },
-  previewCloseBtn: { padding: spacing.sm },
+  previewTitle: { ...typography.h3, flex: 1 },
+  previewCloseBtn: { paddingVertical: spacing.sm, paddingLeft: spacing.md },
   previewCloseText: { ...typography.body, color: colors.primary },
   previewContent: { flex: 1 },
   previewImage: { width: '100%', height: '100%' },

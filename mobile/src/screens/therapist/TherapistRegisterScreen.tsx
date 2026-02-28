@@ -33,9 +33,14 @@ export function TherapistRegisterScreen({ navigation, route }: TherapistRegister
   const fromAuth = route.params?.fromAuth;
 
   const goToSignIn = () => {
-    const parent = navigation.getParent() as any;
-    if (fromAuth) parent?.navigate('Auth');
-    else parent?.navigate('Onboarding', { screen: 'Login' });
+    const parent = navigation.getParent() as { navigate: (name: string, params?: object) => void; getState?: () => { routes: { name: string }[] } } | undefined;
+    if (!parent) return;
+    if (fromAuth) {
+      const hasAuth = parent.getState?.()?.routes?.some((r) => r.name === 'Auth');
+      if (hasAuth) parent.navigate('Auth');
+    } else {
+      parent.navigate('Onboarding', { screen: 'Login' });
+    }
   };
 
   const handleRegister = async () => {
@@ -49,7 +54,8 @@ export function TherapistRegisterScreen({ navigation, route }: TherapistRegister
     }
     try {
       await register(email.trim(), password, name.trim(), 'therapist');
-      navigation.replace('TherapistProfessional');
+      // RootNavigator will re-render (user is now authenticated) and show TherapistOnboarding
+      // with initialScreen TherapistProfessional, so no need to replace here.
     } catch (err) {
       Alert.alert('Registration failed', getErrorMessage(err));
     }

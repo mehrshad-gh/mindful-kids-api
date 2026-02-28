@@ -44,7 +44,11 @@ export function RootNavigator() {
   if (user?.role === 'therapist' && !onboardingComplete) {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="TherapistOnboarding" component={TherapistOnboardingNavigator} />
+        <Stack.Screen
+          name="TherapistOnboarding"
+          component={TherapistOnboardingNavigator}
+          initialParams={{ initialScreen: 'TherapistProfessional' }}
+        />
         <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
         <Stack.Screen name="App" component={AppSwitch} />
       </Stack.Navigator>
