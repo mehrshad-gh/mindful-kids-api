@@ -10,8 +10,10 @@ import {
   Modal,
   TouchableOpacity,
   Linking,
+  Image,
+  Dimensions,
 } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+import { WebView } from 'react-native-webview';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
@@ -22,8 +24,8 @@ import {
   reviewTherapistApplication,
   type AdminApplicationDetailResponse,
 } from '../../api/admin';
-import { getBaseURL } from '../../lib/apiClient';
-import { getToken } from '../../services/tokenStorage';
+import axios from 'axios';
+import { apiClient, getBaseURL } from '../../lib/apiClient';
 import type { AdminStackParamList } from '../../types/navigation';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
@@ -31,34 +33,31 @@ import { typography } from '../../theme/typography';
 
 type Props = NativeStackScreenProps<AdminStackParamList, 'TherapistApplicationDetail'>;
 
-/** Open a credential document: if it's our API URL, download with auth and open; else open in browser. */
-async function openCredentialDocument(documentUrl: string): Promise<void> {
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+function mimeFromUrl(url: string): string {
+  const lower = url.toLowerCase();
+  if (lower.endsWith('.pdf')) return 'application/pdf';
+  if (lower.match(/\.(jpe?g|png|webp)$/)) return lower.endsWith('.png') ? 'image/png' : lower.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+  return 'application/pdf';
+}
+
+export type DocumentPreview = { dataUrl: string; mimeType: string };
+
+/** Fetch credential document from our API (with auth) and return data URL for in-app preview. No file is saved on device. */
+async function fetchCredentialPreview(documentUrl: string): Promise<DocumentPreview | null> {
   const base = getBaseURL();
-  const isOurApi = documentUrl.startsWith(base);
-  if (!isOurApi) {
-    const can = await Linking.canOpenURL(documentUrl);
-    if (can) await Linking.openURL(documentUrl);
-    else Alert.alert('Cannot open', 'This link could not be opened.');
-    return;
-  }
-  try {
-    const token = await getToken();
-    if (!token) {
-      Alert.alert('Error', 'You must be signed in to view this document.');
-      return;
-    }
-    const filename = documentUrl.split('/').pop() || `credential_${Date.now()}.pdf`;
-    const ext = filename.includes('.') ? filename.slice(filename.lastIndexOf('.')) : '.pdf';
-    const localUri = `${FileSystem.cacheDirectory}cred_${Date.now()}${ext}`;
-    await FileSystem.downloadAsync(documentUrl, localUri, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const can = await Linking.canOpenURL(localUri);
-    if (can) await Linking.openURL(localUri);
-    else Alert.alert('Opened', 'Document downloaded. Open it from your device storage if needed.');
-  } catch (e) {
-    Alert.alert('Could not open document', e instanceof Error ? e.message : 'Download failed.');
-  }
+  if (!documentUrl.startsWith(base)) return null;
+  const res = await apiClient.get(documentUrl, { responseType: 'arraybuffer' });
+  const base64 = arrayBufferToBase64(res.data as ArrayBuffer);
+  const mimeType = mimeFromUrl(documentUrl);
+  const dataUrl = `data:${mimeType};base64,${base64}`;
+  return { dataUrl, mimeType };
 }
 
 export function AdminApplicationDetailScreen({ route, navigation }: Props) {
@@ -67,8 +66,32 @@ export function AdminApplicationDetailScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [openingDocUrl, setOpeningDocUrl] = useState<string | null>(null);
+  const [documentPreview, setDocumentPreview] = useState<DocumentPreview | null>(null);
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
+
+  const handleViewDocument = useCallback(async (documentUrl: string) => {
+    const base = getBaseURL();
+    if (!documentUrl.startsWith(base)) {
+      const can = await Linking.canOpenURL(documentUrl);
+      if (can) await Linking.openURL(documentUrl);
+      else Alert.alert('Cannot open', 'This link could not be opened.');
+      return;
+    }
+    setOpeningDocUrl(documentUrl);
+    try {
+      const preview = await fetchCredentialPreview(documentUrl);
+      if (preview) setDocumentPreview(preview);
+      else Alert.alert('Error', 'Could not load document.');
+    } catch (e: unknown) {
+      const message = axios.isAxiosError(e) && e.response?.status === 404
+        ? 'This document is no longer available. Uploaded files are stored on the server and may be removed when the app is redeployed. Ask the therapist to re-upload the credential document if needed.'
+        : (e instanceof Error ? e.message : 'Load failed.');
+      Alert.alert('Could not open document', message);
+    } finally {
+      setOpeningDocUrl(null);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -197,11 +220,7 @@ export function AdminApplicationDetailScreen({ route, navigation }: Props) {
                 </Text>
                 {c.document_url ? (
                   <TouchableOpacity
-                    onPress={() => {
-                      setOpeningDocUrl(c.document_url!);
-                      openCredentialDocument(c.document_url!)
-                        .finally(() => setOpeningDocUrl(null));
-                    }}
+                    onPress={() => handleViewDocument(c.document_url!)}
                     disabled={openingDocUrl !== null}
                     style={styles.docLinkWrap}
                   >
@@ -286,6 +305,33 @@ export function AdminApplicationDetailScreen({ route, navigation }: Props) {
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
+
+      <Modal visible={!!documentPreview} animationType="fade" onRequestClose={() => setDocumentPreview(null)}>
+        <View style={styles.previewContainer}>
+          <View style={styles.previewHeader}>
+            <Text style={styles.previewTitle}>Credential document</Text>
+            <TouchableOpacity onPress={() => setDocumentPreview(null)} style={styles.previewCloseBtn}>
+              <Text style={styles.previewCloseText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.previewContent}>
+            {documentPreview && (
+              documentPreview.mimeType.startsWith('image/') ? (
+                <Image source={{ uri: documentPreview.dataUrl }} style={styles.previewImage} resizeMode="contain" />
+              ) : (
+                <WebView
+                  source={{
+                    html: `<html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;background:#525252"><embed type="application/pdf" src="${documentPreview.dataUrl}" width="100%" height="100%" /></body></html>`,
+                  }}
+                  style={styles.previewWebView}
+                  scrollEnabled
+                  showsVerticalScrollIndicator
+                />
+              )
+            )}
+          </View>
+        </View>
+      </Modal>
     </ScreenLayout>
   );
 }
@@ -328,4 +374,20 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.sm },
+  previewContainer: { flex: 1, backgroundColor: colors.surface },
+  previewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  previewTitle: { ...typography.h3 },
+  previewCloseBtn: { padding: spacing.sm },
+  previewCloseText: { ...typography.body, color: colors.primary },
+  previewContent: { flex: 1 },
+  previewImage: { width: '100%', height: '100%' },
+  previewWebView: { flex: 1, backgroundColor: '#444' },
 });

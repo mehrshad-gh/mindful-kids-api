@@ -11,17 +11,34 @@ const ALLOWED_MIMES = [
   'image/webp',
 ];
 
+// Railway volume at /data survives redeploys. Fallback for local/dev when volume isn't mounted.
+const PERSISTENT_PATH = path.resolve('/data', 'uploads', UPLOAD_SUBDIR);
+const localBase = config.uploadDir || path.join(process.cwd(), 'uploads');
+const LOCAL_PATH = path.join(localBase, UPLOAD_SUBDIR);
+
+/** Single source of truth: use persistent path if available, else local. Exported for serving. */
+const uploadsDir = (() => {
+  try {
+    if (!fs.existsSync(PERSISTENT_PATH)) {
+      fs.mkdirSync(PERSISTENT_PATH, { recursive: true });
+    }
+    return path.resolve(PERSISTENT_PATH);
+  } catch {
+    const dir = path.resolve(LOCAL_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    return dir;
+  }
+})();
+
 function getUploadDir() {
-  const base = config.uploadDir || path.join(process.cwd(), 'uploads');
-  return path.join(base, UPLOAD_SUBDIR);
+  return uploadsDir;
 }
 
 function ensureUploadDir() {
-  const dir = getUploadDir();
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
   }
-  return dir;
+  return uploadsDir;
 }
 
 const storage = multer.diskStorage({
@@ -65,18 +82,23 @@ function upload(req, res, next) {
 /**
  * GET /api/therapist/credential-document/:filename
  * Serve a previously uploaded credential document (therapist or admin).
+ * Uses same uploadsDir as multer so files on the volume are found.
  */
 function serve(req, res, next) {
   const { filename } = req.params;
-  if (!filename || filename.includes('..') || filename.includes('/')) {
+  const safeName = path.basename(filename);
+  if (!safeName || filename.includes('..') || filename !== safeName) {
     return res.status(400).json({ error: 'Invalid filename' });
   }
-  const dir = getUploadDir();
-  const filepath = path.join(dir, filename);
+  const resolvedDir = path.resolve(getUploadDir());
+  const filepath = path.join(resolvedDir, safeName);
+  if (!filepath.startsWith(resolvedDir)) {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
   if (!fs.existsSync(filepath) || !fs.statSync(filepath).isFile()) {
     return res.status(404).json({ error: 'File not found' });
   }
-  res.sendFile(filepath, (err) => {
+  res.sendFile(safeName, { root: resolvedDir }, (err) => {
     if (err) next(err);
   });
 }
@@ -85,6 +107,7 @@ module.exports = {
   upload,
   serve,
   multerUpload,
+  uploadsDir,
   getUploadDir: ensureUploadDir,
   ALLOWED_MIMES,
   UPLOAD_SUBDIR,
