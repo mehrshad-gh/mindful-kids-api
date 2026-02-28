@@ -1,4 +1,6 @@
-import { apiClient } from '../lib/apiClient';
+import axios from 'axios';
+import { apiClient, getBaseURL } from '../lib/apiClient';
+import { getToken } from '../services/tokenStorage';
 import type {
   TherapistApplication,
   TherapistCredential,
@@ -45,5 +47,30 @@ export async function submitApplication(): Promise<{ message: string; applicatio
 
 export async function getProfile(): Promise<{ profile: unknown }> {
   const { data } = await apiClient.get<{ profile: unknown }>('/therapist/profile');
+  return data;
+}
+
+/** Upload a credential document (PDF or image). Returns URL to use as document_url. */
+export async function uploadCredentialDocument(file: {
+  uri: string;
+  name: string;
+  mimeType?: string;
+}): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append('document', {
+    uri: file.uri,
+    name: file.name,
+    type: file.mimeType ?? 'application/octet-stream',
+  } as unknown as Blob);
+  const baseURL = getBaseURL();
+  const token = await getToken();
+  const { data } = await axios.post<{ url: string }>(
+    `${baseURL}/therapist/credential-document`,
+    formData,
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      timeout: 20000,
+    }
+  );
   return data;
 }

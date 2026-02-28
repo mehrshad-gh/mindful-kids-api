@@ -4,10 +4,25 @@ const { authenticate } = require('../middleware/auth');
 const { requireRole } = require('../middleware/auth');
 const { handleValidationErrors } = require('../middleware/validate');
 const therapistApplicationController = require('../controllers/therapistApplicationController');
+const credentialUploadController = require('../controllers/credentialUploadController');
 
 const router = express.Router();
 
 router.use(authenticate);
+
+// Credential document: upload (therapist only) or serve (therapist or admin for review)
+router.post(
+  '/credential-document',
+  requireRole('therapist'),
+  (req, res, next) => {
+    credentialUploadController.multerUpload(req, res, (err) => {
+      if (err) return res.status(400).json({ error: err.message || 'Upload failed' });
+      credentialUploadController.upload(req, res, next);
+    });
+  }
+);
+router.get('/credential-document/:filename', requireRole(['therapist', 'admin']), credentialUploadController.serve);
+
 router.use(requireRole('therapist'));
 
 const applicationUpsertValidation = [

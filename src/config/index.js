@@ -3,6 +3,8 @@ require('dotenv').config();
 module.exports = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT, 10) || 8080,
+  baseUrl: process.env.BASE_URL || null, // e.g. https://your-api.up.railway.app (for upload URL in responses)
+  uploadDir: process.env.UPLOAD_DIR || null, // default: ./uploads
   database: {
     url: process.env.DATABASE_URL || 'postgresql://localhost:5432/mindful_kids',
   },

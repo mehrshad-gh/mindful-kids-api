@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Alert, ScrollView, View, Text } from 'react-native';
+import { StyleSheet, Alert, ScrollView, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
-import { getApplication, upsertApplication } from '../../api/therapist';
+import { getApplication, upsertApplication, uploadCredentialDocument } from '../../api/therapist';
 import { spacing } from '../../theme/spacing';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
@@ -21,9 +22,17 @@ function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Something went wrong.';
 }
 
+const ALLOWED_DOCUMENT_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+] as const;
+
 export function TherapistLicenseScreen({ navigation }: { navigation: Nav }) {
   const [documentUrls, setDocumentUrls] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const [fetching, setFetching] = useState(true);
   const [credentialCount, setCredentialCount] = useState(1);
 
@@ -49,6 +58,28 @@ export function TherapistLicenseScreen({ navigation }: { navigation: Nav }) {
     return () => { cancelled = true; };
   }, []);
 
+  const handleUploadDocument = async (index: number) => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ALLOWED_DOCUMENT_TYPES,
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) return;
+      const file = result.assets[0];
+      setUploadingIndex(index);
+      const { url } = await uploadCredentialDocument({
+        uri: file.uri,
+        name: file.name ?? 'document',
+        mimeType: file.mimeType ?? undefined,
+      });
+      setDocumentUrls((prev) => ({ ...prev, [index]: url }));
+    } catch (err) {
+      Alert.alert('Upload failed', getErrorMessage(err));
+    } finally {
+      setUploadingIndex(null);
+    }
+  };
+
   const handleNext = async () => {
     setLoading(true);
     try {
@@ -73,18 +104,29 @@ export function TherapistLicenseScreen({ navigation }: { navigation: Nav }) {
     <ScreenLayout>
       <ScrollView style={styles.container} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text style={styles.subtitle}>
-          Add a link to your license or credential document (e.g. a secure PDF or verification page). This helps us verify your credentials.
+          For each credential, either upload a document (PDF or image) or provide a link to your license or verification page.
         </Text>
         {Array.from({ length: credentialCount }).map((_, i) => (
           <View key={i} style={styles.card}>
-            <Text style={styles.label}>Document link for credential {i + 1}</Text>
+            <Text style={styles.label}>Document for credential {i + 1}</Text>
             <Input
               value={documentUrls[i] ?? ''}
               onChangeText={(v) => setDocumentUrls((prev) => ({ ...prev, [i]: v }))}
-              placeholder="https://..."
+              placeholder="Paste a link (e.g. https://...) or upload below"
               keyboardType="url"
               autoCapitalize="none"
             />
+            <TouchableOpacity
+              style={[styles.uploadBtn, uploadingIndex === i && styles.uploadBtnDisabled]}
+              onPress={() => handleUploadDocument(i)}
+              disabled={uploadingIndex !== null}
+            >
+              {uploadingIndex === i ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Text style={styles.uploadBtnText}>Upload document (PDF or image)</Text>
+              )}
+            </TouchableOpacity>
           </View>
         ))}
         <Button title="Continue" onPress={handleNext} loading={loading} style={styles.button} />
@@ -99,5 +141,16 @@ const styles = StyleSheet.create({
   subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.md },
   card: { marginBottom: spacing.md },
   label: { ...typography.label, color: colors.text, marginBottom: spacing.xs },
+  uploadBtn: {
+    marginTop: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+  },
+  uploadBtnDisabled: { opacity: 0.7 },
+  uploadBtnText: { ...typography.bodySmall, color: colors.primary },
   button: { marginTop: spacing.lg },
 });
