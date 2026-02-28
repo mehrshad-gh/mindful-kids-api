@@ -26,12 +26,14 @@ async function connectDatabase(retries = 3) {
 }
 
 async function start() {
-  await connectDatabase();
-  console.log('Database connected.');
   const port = config.port;
   const host = process.env.HOST || '0.0.0.0';
-  app.listen(port, host, () => {
-    console.log(`Mindful Kids API running on ${host}:${port} (${config.env})`);
+
+  // Bind to port first so Railway/proxy gets a response quickly (avoids 502 on slow DB connect)
+  app.listen(port, host, async () => {
+    console.log(`Mindful Kids API listening on ${host}:${port} (${config.env})`);
+    await connectDatabase();
+    console.log('Database connected.');
   });
 }
 
