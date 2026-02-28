@@ -236,11 +236,14 @@ async function review(req, res, next) {
         .replace(/\s+/g, '-')
         .replace(/[^a-z0-9-]/g, '');
       const uniqueSlug = `${slug}-${application.id.slice(0, 8)}`;
+      const country = application.country
+        ? String(application.country).trim().slice(0, 255) || null
+        : null;
       const clinic = await Clinic.create({
         name: application.clinic_name,
         slug: uniqueSlug,
         description: application.description,
-        country: application.country,
+        country,
         isActive: true,
       });
       await Clinic.update(clinic.id, {
