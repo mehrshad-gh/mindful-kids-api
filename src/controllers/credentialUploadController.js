@@ -56,7 +56,8 @@ function upload(req, res, next) {
     return res.status(400).json({ error: 'No file uploaded. Send a single file in field "document".' });
   }
   const filename = req.file.filename;
-  const baseUrl = config.baseUrl || (req.protocol + '://' + req.get('host'));
+  // Prefer BASE_URL (e.g. https://your-api.up.railway.app). Else use request (respect x-forwarded-proto for HTTPS).
+  const baseUrl = config.baseUrl || `${req.get('x-forwarded-proto') || req.protocol}://${req.get('x-forwarded-host') || req.get('host')}`;
   const url = `${baseUrl}/api/therapist/credential-document/${filename}`;
   res.status(201).json({ url });
 }
