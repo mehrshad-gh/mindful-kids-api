@@ -3,7 +3,7 @@
  */
 
 import { apiClient } from '../lib/apiClient';
-import type { TherapistApplication } from '../types/therapist';
+import type { TherapistApplication, Clinic, ClinicApplication } from '../types/therapist';
 
 export interface AdminApplicationListItem extends TherapistApplication {
   user_email?: string;
@@ -103,5 +103,70 @@ export async function updateReport(
     `/admin/reports/${id}`,
     payload
   );
+  return data;
+}
+
+// Clinics (admin create for therapist affiliation)
+export async function listAdminClinics(): Promise<{ clinics: Clinic[] }> {
+  const { data } = await apiClient.get<{ clinics: Clinic[] }>('/admin/clinics');
+  return data;
+}
+
+export interface CreateClinicPayload {
+  name: string;
+  slug?: string;
+  description?: string;
+  location?: string;
+  address?: string;
+  country?: string;
+  website?: string;
+  logo_url?: string;
+}
+
+export async function createClinic(payload: CreateClinicPayload): Promise<{ clinic: Clinic }> {
+  const { data } = await apiClient.post<{ clinic: Clinic }>('/admin/clinics', payload);
+  return data;
+}
+
+// Clinic applications (onboarding: list, review, approve/reject)
+export async function listClinicApplications(params?: {
+  status?: 'pending' | 'approved' | 'rejected';
+  country?: string;
+  limit?: number;
+}): Promise<{ applications: ClinicApplication[] }> {
+  const { data } = await apiClient.get<{ applications: ClinicApplication[] }>(
+    '/admin/clinic-applications',
+    { params }
+  );
+  return data;
+}
+
+export async function getClinicApplication(id: string): Promise<{ application: ClinicApplication }> {
+  const { data } = await apiClient.get<{ application: ClinicApplication }>(
+    `/admin/clinic-applications/${id}`
+  );
+  return data;
+}
+
+export async function getClinicApplicationDocumentUrl(
+  id: string
+): Promise<{ url: string; expires_in_seconds: number }> {
+  const { data } = await apiClient.get<{ url: string; expires_in_seconds: number }>(
+    `/admin/clinic-applications/${id}/document`
+  );
+  return data;
+}
+
+export async function reviewClinicApplication(
+  id: string,
+  status: 'approved' | 'rejected',
+  rejectionReason?: string
+): Promise<{ message: string; application: ClinicApplication; clinic?: Clinic }> {
+  const { data } = await apiClient.patch<
+    { message: string; application: ClinicApplication; clinic?: Clinic }
+  >(`/admin/clinic-applications/${id}`, {
+    status,
+    ...(status === 'rejected' && rejectionReason ? { rejection_reason: rejectionReason } : {}),
+  });
   return data;
 }

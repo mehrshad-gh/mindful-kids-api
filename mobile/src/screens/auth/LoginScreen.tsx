@@ -96,6 +96,12 @@ export function LoginScreen({ navigation, route }: Props) {
           variant="outline"
           style={styles.therapistBtn}
         />
+        <Button
+          title="Partner with us – Apply as a clinic"
+          onPress={() => navigation.navigate('ClinicApplicationForm')}
+          variant="ghost"
+          style={styles.clinicApplyBtn}
+        />
       </KeyboardAvoidingView>
     </ScreenLayout>
   );
@@ -105,4 +111,5 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.md },
   button: { marginTop: spacing.lg },
   therapistBtn: { marginTop: spacing.sm },
+  clinicApplyBtn: { marginTop: spacing.xs },
 });

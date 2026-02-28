@@ -1,0 +1,8 @@
+# Railway deploy config: run DB migrations before each deploy.
+# DATABASE_URL is provided by Railway when Postgres is linked to this service.
+[build]
+builder = "nixpacks"
+
+[deploy]
+# Run migrations after build, before starting the app. Migrations are idempotent (skip already applied).
+preDeployCommand = "npm run migrate"

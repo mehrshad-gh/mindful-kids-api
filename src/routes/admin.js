@@ -2,15 +2,24 @@ const express = require('express');
 const { authenticate, requireRole } = require('../middleware/auth');
 const adminTherapistController = require('../controllers/adminTherapistController');
 const adminReportsController = require('../controllers/adminReportsController');
+const clinicApplicationController = require('../controllers/clinicApplicationController');
+const adminClinicApplicationsRoutes = require('./adminClinicApplications');
 const Clinic = require('../models/Clinic');
 const ClinicAdmin = require('../models/ClinicAdmin');
 const User = require('../models/User');
 const Psychologist = require('../models/Psychologist');
+const AdminAuditLog = require('../models/AdminAuditLog');
 
 const router = express.Router();
 
+// Signed document URL access (token in query, 5 min expiry) – no auth so link can be opened in new tab
+router.get('/clinic-applications/document', clinicApplicationController.serveDocumentByToken);
+
 router.use(authenticate);
 router.use(requireRole('admin'));
+
+// Clinic onboarding: list, get one, get document URL, approve/reject
+router.use('/clinic-applications', adminClinicApplicationsRoutes);
 
 // Therapist onboarding workflow
 router.get('/therapist-applications', adminTherapistController.list);
@@ -72,6 +81,15 @@ router.patch('/clinics/:id', async (req, res, next) => {
     if (verified_by !== undefined) data.verified_by = verified_by;
     if (documentation_url !== undefined) data.documentation_url = documentation_url;
     const updated = await Clinic.update(req.params.id, data);
+    if (data.verification_status !== undefined) {
+      await AdminAuditLog.insert({
+        adminUserId: req.user.id,
+        actionType: 'clinic_verification_updated',
+        targetType: 'clinic',
+        targetId: req.params.id,
+        details: { verification_status: data.verification_status },
+      });
+    }
     res.json({ message: 'Clinic updated.', clinic: updated });
   } catch (err) {
     next(err);

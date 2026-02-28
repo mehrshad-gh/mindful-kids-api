@@ -3,6 +3,8 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
+  /** Public form for clinics to apply (no auth). */
+  ClinicApplicationForm: undefined;
 };
 
 /** Params for Register/Login when used in onboarding (navigate to AddChild on success). */
@@ -60,12 +62,16 @@ export type TherapistOnboardingStackParamList = {
   TherapistSuccess: undefined;
 };
 
-/** Admin: therapist applications, reports (trust & safety), assign verified. */
+/** Admin: therapist applications, reports (trust & safety), clinics, clinic applications, assign verified. */
 export type AdminStackParamList = {
   AdminMain: undefined;
   TherapistApplicationDetail: { applicationId: string };
   AdminReports: undefined;
   AdminReportDetail: { reportId: string };
+  AdminClinics: undefined;
+  AdminClinicForm: undefined;
+  AdminClinicApplications: undefined;
+  AdminClinicApplicationDetail: { applicationId: string };
 };
 
 /** Therapist: dashboard (application status). */

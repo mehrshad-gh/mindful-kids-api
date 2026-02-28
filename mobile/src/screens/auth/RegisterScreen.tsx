@@ -91,6 +91,12 @@ export function RegisterScreen({ navigation, route }: Props) {
           }
           variant="ghost"
         />
+        <Button
+          title="Partner with us – Apply as a clinic"
+          onPress={() => navigation.navigate('ClinicApplicationForm')}
+          variant="ghost"
+          style={styles.clinicApplyBtn}
+        />
       </KeyboardAvoidingView>
     </ScreenLayout>
   );
@@ -98,5 +104,6 @@ export function RegisterScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.md },
+  clinicApplyBtn: { marginTop: spacing.xs },
   button: { marginTop: spacing.lg },
 });

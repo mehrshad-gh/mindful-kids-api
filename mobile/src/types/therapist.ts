@@ -69,3 +69,23 @@ export interface ClinicTherapist {
   avg_rating?: number;
   review_count?: number;
 }
+
+/** Clinic onboarding application (public submit, admin review). */
+export type ClinicApplicationStatus = 'pending' | 'approved' | 'rejected';
+
+export interface ClinicApplication {
+  id: string;
+  clinic_name: string;
+  country: string;
+  contact_email: string;
+  contact_phone?: string | null;
+  description?: string | null;
+  status: ClinicApplicationStatus;
+  submitted_at?: string | null;
+  reviewed_at?: string | null;
+  reviewed_by?: string | null;
+  rejection_reason?: string | null;
+  created_at: string;
+  updated_at: string;
+  has_document?: boolean;
+}

@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.use(authenticate);
 
-// Credential document: upload (therapist only) or serve (therapist or admin for review)
+// Credential document: upload (therapist only); serve (admin only — for application verification)
 router.post(
   '/credential-document',
   requireRole('therapist'),
@@ -21,7 +21,7 @@ router.post(
     });
   }
 );
-router.get('/credential-document/:filename', requireRole(['therapist', 'admin']), credentialUploadController.serve);
+router.get('/credential-document/:filename', requireRole('admin'), credentialUploadController.serve);
 
 router.use(requireRole('therapist'));
 

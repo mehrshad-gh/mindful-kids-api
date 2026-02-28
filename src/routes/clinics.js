@@ -5,12 +5,13 @@ const Psychologist = require('../models/Psychologist');
 
 const router = express.Router();
 
-/** GET /api/clinics – list active clinics (public) */
+/** GET /api/clinics – list clinics (public directory: verified only). Returns verification_status, verified_at, country. */
 router.get('/', async (req, res, next) => {
   try {
     const { country, search, limit } = req.query;
     const clinics = await Clinic.findAll({
       is_active: true,
+      verification_status: 'verified',
       country: country || undefined,
       search: search || undefined,
       limit: limit ? parseInt(limit, 10) : 100,
@@ -21,11 +22,11 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-/** GET /api/clinics/:id – get one clinic with therapists list (public page) */
+/** GET /api/clinics/:id – get one clinic with therapists list (public: verified only) */
 router.get('/:id', async (req, res, next) => {
   try {
     const clinic = await Clinic.findById(req.params.id);
-    if (!clinic) {
+    if (!clinic || clinic.verification_status !== 'verified') {
       return res.status(404).json({ error: 'Clinic not found' });
     }
     const therapistRows = await TherapistClinic.findByClinicId(req.params.id);

@@ -10,6 +10,10 @@ async function findAll(filters = {}) {
     sql += ` AND is_active = $${i++}`;
     params.push(filters.is_active);
   }
+  if (filters.verification_status) {
+    sql += ` AND verification_status = $${i++}`;
+    params.push(filters.verification_status);
+  }
   if (filters.country) {
     sql += ` AND country = $${i++}`;
     params.push(filters.country);

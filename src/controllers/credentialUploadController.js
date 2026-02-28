@@ -91,7 +91,7 @@ function upload(req, res, next) {
 
 /**
  * GET /api/therapist/credential-document/:filename
- * Serve a previously uploaded credential document (therapist or admin).
+ * Serve a previously uploaded credential document (admin only, for application verification).
  * Uses same uploadsDir as multer so files on the volume are found.
  */
 function serve(req, res, next) {
