@@ -11,35 +11,45 @@ const ALLOWED_MIMES = [
   'image/webp',
 ];
 
-// Railway volume at /data survives redeploys. Fallback for local/dev when volume isn't mounted.
-const PERSISTENT_PATH = path.resolve('/data', 'uploads', UPLOAD_SUBDIR);
+// Railway volume: use RAILWAY_VOLUME_MOUNT_PATH if set (e.g. /data), else /data. Fallback to local when volume not mounted.
+const VOLUME_ROOT = process.env.RAILWAY_VOLUME_MOUNT_PATH || '/data';
+const PERSISTENT_PATH = path.join(VOLUME_ROOT, 'uploads', UPLOAD_SUBDIR);
 const localBase = config.uploadDir || path.join(process.cwd(), 'uploads');
 const LOCAL_PATH = path.join(localBase, UPLOAD_SUBDIR);
 
-/** Single source of truth: use persistent path if available, else local. Exported for serving. */
-const uploadsDir = (() => {
-  try {
-    if (!fs.existsSync(PERSISTENT_PATH)) {
-      fs.mkdirSync(PERSISTENT_PATH, { recursive: true });
+let _uploadsDir = null;
+
+/** Resolve upload dir once on first use (so volume is mounted at runtime). Use persistent path only if volume root exists. */
+function resolveUploadsDir() {
+  if (_uploadsDir) return _uploadsDir;
+  const volumeRoot = path.isAbsolute(VOLUME_ROOT) ? VOLUME_ROOT : path.resolve(process.cwd(), VOLUME_ROOT);
+  if (fs.existsSync(volumeRoot) && fs.statSync(volumeRoot).isDirectory()) {
+    try {
+      if (!fs.existsSync(PERSISTENT_PATH)) {
+        fs.mkdirSync(PERSISTENT_PATH, { recursive: true });
+      }
+      _uploadsDir = path.resolve(PERSISTENT_PATH);
+      return _uploadsDir;
+    } catch {
+      // e.g. read-only volume
     }
-    return path.resolve(PERSISTENT_PATH);
-  } catch {
-    const dir = path.resolve(LOCAL_PATH);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    return dir;
   }
-})();
+  const dir = path.resolve(LOCAL_PATH);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  _uploadsDir = dir;
+  return _uploadsDir;
+}
 
 function getUploadDir() {
-  return uploadsDir;
+  return resolveUploadsDir();
 }
 
 function ensureUploadDir() {
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
-  return uploadsDir;
+  const dir = resolveUploadsDir();
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
 }
+
 
 const storage = multer.diskStorage({
   destination(_req, _file, cb) {
@@ -107,7 +117,9 @@ module.exports = {
   upload,
   serve,
   multerUpload,
-  uploadsDir,
+  get uploadsDir() {
+    return resolveUploadsDir();
+  },
   getUploadDir: ensureUploadDir,
   ALLOWED_MIMES,
   UPLOAD_SUBDIR,
