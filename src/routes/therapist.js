@@ -26,8 +26,8 @@ router.get('/credential-document/:filename', requireRole(['therapist', 'admin'])
 router.use(requireRole('therapist'));
 
 const applicationUpsertValidation = [
-  body('professional_name').trim().notEmpty().withMessage('Professional name is required'),
-  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('professional_name').optional().trim().notEmpty().withMessage('Professional name cannot be empty'),
+  body('email').optional().isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('credentials').optional().isArray().withMessage('Credentials must be an array'),
 ];
 

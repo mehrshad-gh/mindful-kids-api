@@ -84,12 +84,22 @@ export function TherapistLicenseScreen({ navigation }: { navigation: Nav }) {
     setLoading(true);
     try {
       const res = await getApplication();
-      const creds = res.application?.credentials ?? [{ type: 'license', issuer: '', number: '' }];
+      const app = res.application;
+      if (!app) {
+        Alert.alert('Error', 'Please complete the previous steps (professional name and credentials) first.');
+        setLoading(false);
+        return;
+      }
+      const creds = app.credentials ?? [{ type: 'license', issuer: '', number: '' }];
       const updated = creds.map((c, i) => ({
         ...c,
         document_url: documentUrls[i]?.trim() || undefined,
       }));
-      await upsertApplication({ credentials: updated });
+      await upsertApplication({
+        professional_name: app.professional_name,
+        email: app.email,
+        credentials: updated,
+      });
       navigation.navigate('TherapistSpecialties');
     } catch (err) {
       Alert.alert('Error', getErrorMessage(err));

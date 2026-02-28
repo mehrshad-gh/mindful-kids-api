@@ -53,6 +53,9 @@ async function upsert(req, res, next) {
         await TherapistApplication.setApplicationClinics(app.id, payload.clinic_affiliations);
       }
     } else {
+      if (!payload.professional_name?.trim() || !payload.email?.trim()) {
+        return res.status(400).json({ error: 'Professional name and email are required when creating an application.' });
+      }
       app = await TherapistApplication.create(userId, {
         professional_name: payload.professional_name,
         email: payload.email,
