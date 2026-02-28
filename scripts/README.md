@@ -38,3 +38,20 @@ The promotion is logged in the `admin_promotions_log` table for audit (run `npm 
 
 **5. Sign in**  
 Open the app → **Login** with that email and password → you’ll see **Open verification**.
+
+---
+
+## Other way: update the database directly
+
+If you prefer not to run the script, you can promote a user by updating the database:
+
+1. **Connect to Postgres**  
+   Railway → Postgres service → **Connect** tab. Use the public URL with a client (TablePlus, DBeaver, `psql`, or Railway’s **Data** tab / Query if available).
+
+2. **Run this SQL** (replace the email):
+
+```sql
+UPDATE users SET role = 'admin' WHERE email = 'their@email.com';
+```
+
+3. **Sign in** in the app with that user → you’ll see **Open verification**.
