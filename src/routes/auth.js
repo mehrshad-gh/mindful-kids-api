@@ -1,10 +1,20 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
 const { handleValidationErrors } = require('../middleware/validate');
 
 const router = express.Router();
+
+// Limit set-password-from-invite attempts per IP to reduce brute force / token guessing
+const setPasswordFromInviteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many attempts. Try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const registerValidation = [
   body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
@@ -26,6 +36,6 @@ const setPasswordFromInviteValidation = [
 router.post('/register', registerValidation, handleValidationErrors, authController.register);
 router.post('/login', loginValidation, handleValidationErrors, authController.login);
 router.get('/me', authenticate, authController.me);
-router.post('/set-password-from-invite', setPasswordFromInviteValidation, handleValidationErrors, authController.setPasswordFromInvite);
+router.post('/set-password-from-invite', setPasswordFromInviteLimiter, setPasswordFromInviteValidation, handleValidationErrors, authController.setPasswordFromInvite);
 
 module.exports = router;

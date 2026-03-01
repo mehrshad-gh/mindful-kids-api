@@ -36,7 +36,7 @@ async function sendClinicApprovalInvite(to, clinicName, setPasswordUrl) {
     `Set your password to sign in and manage your clinic profile:`,
     setPasswordUrl,
     ``,
-    `This link expires in 7 days. If you didn't apply, you can ignore this email.`,
+    `This link expires in 24 hours. If you didn't apply, you can ignore this email.`,
     ``,
     `Mindful Kids`,
   ].join('\n');

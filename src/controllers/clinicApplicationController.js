@@ -289,7 +289,7 @@ async function review(req, res, next) {
       const updatedClinic = await Clinic.findById(clinic.id);
 
       // Create clinic invite so contact can set password and get a clinic_admin account (before updating application with token)
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
       const token = await ClinicInvite.create({
         clinicId: clinic.id,
         contactEmail: application.contact_email,
