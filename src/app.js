@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -13,6 +14,11 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Clinic invite: set-password redirect page (opens app via mindfulkids://). No auth.
+app.get('/set-password', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'static', 'set-password.html'));
+});
 
 app.use('/api', routes);
 
