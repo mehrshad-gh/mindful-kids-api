@@ -7,7 +7,11 @@ const config = require('../config');
  * - Mobile deep link (when base is mindfulkids://app): mindfulkids://app/set-password?token=...
  */
 function buildSetPasswordUrl(token) {
-  const base = config.clinicInviteBaseUrl || `http://localhost:${config.port}`;
+  let base = config.clinicInviteBaseUrl || `http://localhost:${config.port}`;
+  // Ensure base has a scheme so links work in Safari (e.g. if user set base without https://)
+  if (base && !/^https?:\/\//i.test(base) && !/^mindfulkids:\/\//i.test(base)) {
+    base = 'https://' + base.replace(/^\/*/, '');
+  }
   const path = '/set-password';
   const separator = base.includes('?') ? '&' : '?';
   const baseNormalized = base.replace(/\/$/, '');

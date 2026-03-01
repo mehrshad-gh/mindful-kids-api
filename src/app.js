@@ -15,6 +15,11 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Root: avoid raw 404 when someone opens the API URL in a browser
+app.get('/', (req, res) => {
+  res.redirect(302, '/set-password');
+});
+
 // Clinic invite: set-password redirect page (opens app via mindfulkids://). No auth.
 app.get('/set-password', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'static', 'set-password.html'));
