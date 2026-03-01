@@ -75,6 +75,18 @@ export function AdminClinicApplicationDetailScreen({ route, navigation }: Props)
     }
   }, [applicationId, application?.has_document]);
 
+  const handleCopyInviteLink = useCallback(async () => {
+    if (!application?.invite_link) return;
+    try {
+      await Share.share({
+        message: application.invite_link,
+        title: 'Set password link',
+      });
+    } catch {
+      Alert.alert('Error', 'Could not share link.');
+    }
+  }, [application?.invite_link]);
+
   const handleApprove = () => {
     Alert.alert(
       'Approve application',
@@ -148,18 +160,6 @@ export function AdminClinicApplicationDetailScreen({ route, navigation }: Props)
 
   const isPending = application.status === 'pending';
   const isApproved = application.status === 'approved';
-
-  const handleCopyInviteLink = useCallback(async () => {
-    if (!application.invite_link) return;
-    try {
-      await Share.share({
-        message: application.invite_link,
-        title: 'Set password link',
-      });
-    } catch {
-      Alert.alert('Error', 'Could not share link.');
-    }
-  }, [application.invite_link]);
 
   return (
     <ScreenLayout>

@@ -270,18 +270,31 @@ async function review(req, res, next) {
       const country = application.country
         ? String(application.country).trim().slice(0, 255) || null
         : null;
-      const clinic = await Clinic.create({
-        name: application.clinic_name,
-        slug: uniqueSlug,
-        description: application.description,
-        country,
-        isActive: true,
-      });
+
+      // Use existing clinic if this is a retry after a partial approve (e.g. clinic created then request failed)
+      let clinic = await Clinic.findBySlug(uniqueSlug);
+      if (!clinic) {
+        clinic = await Clinic.create({
+          name: application.clinic_name,
+          slug: uniqueSlug,
+          description: application.description,
+          country,
+          isActive: true,
+        });
+      }
       await Clinic.update(clinic.id, {
         verification_status: 'verified',
         verified_by: adminUserId,
       });
       const updatedClinic = await Clinic.findById(clinic.id);
+
+      // Create clinic invite so contact can set password and get a clinic_admin account (before updating application with token)
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      const token = await ClinicInvite.create({
+        clinicId: clinic.id,
+        contactEmail: application.contact_email,
+        expiresAt,
+      });
 
       await ClinicApplication.update(req.params.id, {
         status: 'approved',
@@ -299,13 +312,6 @@ async function review(req, res, next) {
         details: { clinic_id: clinic.id },
       });
 
-      // Create clinic invite so contact can set password and get a clinic_admin account
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-      const token = await ClinicInvite.create({
-        clinicId: clinic.id,
-        contactEmail: application.contact_email,
-        expiresAt,
-      });
       const setPasswordUrl = buildSetPasswordUrl(token);
       const emailResult = await sendClinicApprovalInvite(
         application.contact_email,

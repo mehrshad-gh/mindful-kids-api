@@ -79,10 +79,32 @@ async function update(id, data) {
   return result.rows[0] || null;
 }
 
+/** Clinic admin: update only profile fields (name, description, location, address, country, website). */
+async function updateProfile(id, data) {
+  const updates = [];
+  const values = [];
+  let i = 1;
+  const allowed = ['name', 'description', 'location', 'address', 'country', 'website'];
+  for (const key of allowed) {
+    if (data[key] !== undefined) {
+      updates.push(`${key} = $${i++}`);
+      values.push(data[key] === '' ? null : data[key]);
+    }
+  }
+  if (updates.length === 0) return findById(id);
+  values.push(id);
+  const result = await query(
+    `UPDATE clinics SET ${updates.join(', ')} WHERE id = $${i} RETURNING ${COLUMNS}`,
+    values
+  );
+  return result.rows[0] || null;
+}
+
 module.exports = {
   findAll,
   findById,
   findBySlug,
   create,
   update,
+  updateProfile,
 };

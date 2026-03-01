@@ -81,6 +81,14 @@ export type TherapistStackParamList = {
   TherapistDashboard: undefined;
 };
 
+/** Clinic admin: list clinics, detail, edit profile, therapists. */
+export type ClinicStackParamList = {
+  ClinicDashboard: undefined;
+  ClinicDetail: { clinicId: string };
+  ClinicEdit: { clinicId: string };
+  ClinicTherapists: { clinicId: string };
+};
+
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList> & {
     initialRouteName?: keyof OnboardingStackParamList;
@@ -102,5 +110,6 @@ declare global {
     interface TherapistOnboardingParamList extends TherapistOnboardingStackParamList {}
     interface AdminParamList extends AdminStackParamList {}
     interface TherapistParamList extends TherapistStackParamList {}
+    interface ClinicParamList extends ClinicStackParamList {}
   }
 }

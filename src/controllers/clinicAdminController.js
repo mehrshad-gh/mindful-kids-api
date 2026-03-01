@@ -56,6 +56,28 @@ async function listTherapists(req, res, next) {
   }
 }
 
+/** PATCH /api/clinic-admin/clinics/:clinicId – update clinic profile (name, description, location, address, country, website) */
+async function updateClinic(req, res, next) {
+  try {
+    const { clinicId } = req.params;
+    const body = req.body || {};
+    const allowed = ['name', 'description', 'location', 'address', 'country', 'website'];
+    const data = {};
+    for (const key of allowed) {
+      if (body[key] !== undefined) {
+        data[key] = typeof body[key] === 'string' ? body[key].trim() : body[key];
+      }
+    }
+    const clinic = await Clinic.updateProfile(clinicId, data);
+    if (!clinic) {
+      return res.status(404).json({ error: 'Clinic not found' });
+    }
+    res.json({ clinic });
+  } catch (err) {
+    next(err);
+  }
+}
+
 /** DELETE /api/clinic-admin/clinics/:clinicId/therapists/:psychologistId – remove therapist from clinic */
 async function removeTherapist(req, res, next) {
   try {
@@ -73,6 +95,7 @@ async function removeTherapist(req, res, next) {
 module.exports = {
   listMyClinics,
   getClinic,
+  updateClinic,
   listTherapists,
   removeTherapist,
 };

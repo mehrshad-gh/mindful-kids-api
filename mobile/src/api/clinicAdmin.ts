@@ -42,3 +42,58 @@ export async function getClinic(clinicId: string): Promise<{
   );
   return data;
 }
+
+export interface ClinicProfileUpdate {
+  name?: string;
+  description?: string | null;
+  location?: string | null;
+  address?: string | null;
+  country?: string | null;
+  website?: string | null;
+}
+
+export async function updateClinic(
+  clinicId: string,
+  body: ClinicProfileUpdate
+): Promise<{ clinic: ClinicWithCount }> {
+  const { data } = await apiClient.patch<{ clinic: ClinicWithCount }>(
+    `/clinic-admin/clinics/${clinicId}`,
+    body
+  );
+  return data;
+}
+
+export interface ClinicTherapist {
+  id: string;
+  name: string;
+  specialty?: string | null;
+  specialization?: string | null;
+  bio?: string | null;
+  location?: string | null;
+  profile_image?: string | null;
+  avatar_url?: string | null;
+  verification_status?: string;
+  is_verified: boolean;
+  role_label?: string | null;
+  is_primary: boolean;
+  avg_rating?: number;
+  review_count?: number;
+}
+
+export async function listTherapists(clinicId: string): Promise<{
+  therapists: ClinicTherapist[];
+}> {
+  const { data } = await apiClient.get<{ therapists: ClinicTherapist[] }>(
+    `/clinic-admin/clinics/${clinicId}/therapists`
+  );
+  return data;
+}
+
+export async function removeTherapist(
+  clinicId: string,
+  psychologistId: string
+): Promise<void> {
+  await apiClient.delete(
+    `/clinic-admin/clinics/${clinicId}/therapists/${psychologistId}`
+  );
+}

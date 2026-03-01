@@ -1,30 +1,30 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
-import { listMyClinics } from '../../api/clinicAdmin';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { listMyClinics, type ClinicAdminClinic } from '../../api/clinicAdmin';
+import type { ClinicStackParamList } from '../../types/navigation';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { layout } from '../../theme';
 
+type Nav = NativeStackNavigationProp<ClinicStackParamList, 'ClinicDashboard'>;
+
 export function ClinicDashboardScreen() {
-  const navigation = useNavigation();
-  const [clinicName, setClinicName] = useState<string | null>(null);
+  const navigation = useNavigation<Nav>();
+  const [clinics, setClinics] = useState<ClinicAdminClinic[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     try {
-      const { clinics } = await listMyClinics();
-      if (clinics.length > 0) {
-        setClinicName(clinics[0].name);
-      } else {
-        setClinicName(null);
-      }
+      const { clinics: list } = await listMyClinics();
+      setClinics(list);
     } catch {
-      setClinicName(null);
+      setClinics([]);
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,7 @@ export function ClinicDashboardScreen() {
     }, [load])
   );
 
-  if (loading && clinicName === null) {
+  if (loading && clinics.length === 0) {
     return (
       <ScreenLayout>
         <View style={styles.centered}>
@@ -48,30 +48,36 @@ export function ClinicDashboardScreen() {
   }
 
   return (
-    <ScreenLayout
-      scroll
-      fabSpacing={false}
-    >
+    <ScreenLayout scroll fabSpacing={false}>
       <View style={styles.container}>
-        <Text style={styles.title}>Clinic Dashboard</Text>
-        {clinicName ? (
-          <Card style={styles.card} variant="elevated" accentColor={colors.primary}>
-            <Text style={styles.clinicName}>{clinicName}</Text>
-            <View style={styles.badgeRow}>
-              <Text style={styles.statusLabel}>Status</Text>
-              <Text style={styles.statusValue}>Verified</Text>
-            </View>
-            <Text style={styles.message}>
-              Management tools coming soon. You can sign in and view your clinic here.
-            </Text>
-          </Card>
+        <Text style={styles.title}>My clinics</Text>
+        {clinics.length > 0 ? (
+          clinics.map((clinic) => (
+            <TouchableOpacity
+              key={clinic.id}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('ClinicDetail', { clinicId: clinic.id })}
+            >
+              <Card style={styles.card} variant="elevated" accentColor={colors.primary}>
+                <Text style={styles.clinicName}>{clinic.name}</Text>
+                <Text style={styles.tapHint}>Tap to manage profile and therapists</Text>
+              </Card>
+            </TouchableOpacity>
+          ))
         ) : (
           <Card style={styles.card}>
-            <Text style={styles.emptyText}>No clinic linked to your account.</Text>
+            <EmptyState
+              title="No clinic linked"
+              message="No clinic is linked to your account. Contact support if you expect access."
+            />
           </Card>
         )}
         <TouchableOpacity
-          onPress={() => (navigation.getParent() as { navigate: (name: string) => void } | undefined)?.navigate('RoleSelect')}
+          onPress={() =>
+            (navigation.getParent() as { navigate: (name: string) => void } | undefined)?.navigate(
+              'RoleSelect'
+            )
+          }
           style={styles.switchLink}
         >
           <Text style={styles.switchLinkText}>Switch mode (Parent / Child / Admin)</Text>
@@ -85,13 +91,13 @@ const styles = StyleSheet.create({
   container: { padding: layout.screenPadding, paddingBottom: spacing.xxl },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   title: { ...typography.h2, marginBottom: layout.sectionGapSmall },
-  card: { marginBottom: layout.sectionGapSmall },
-  clinicName: { ...typography.h3, marginBottom: spacing.md },
-  badgeRow: { marginBottom: spacing.md },
-  statusLabel: { ...typography.overline, color: colors.textTertiary, marginBottom: spacing.xs },
-  statusValue: { ...typography.body, fontWeight: '600', color: colors.success },
-  message: { ...typography.body, color: colors.textSecondary },
-  emptyText: { ...typography.body, color: colors.textSecondary },
-  switchLink: { marginTop: layout.sectionGapSmall, paddingVertical: spacing.sm, alignItems: 'center' },
+  card: { marginBottom: layout.listItemGap },
+  clinicName: { ...typography.h3, marginBottom: spacing.xs },
+  tapHint: { ...typography.subtitle, color: colors.textTertiary },
+  switchLink: {
+    marginTop: layout.sectionGapSmall,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+  },
   switchLinkText: { ...typography.link, fontSize: 14 },
 });
