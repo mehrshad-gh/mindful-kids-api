@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/static/set-password", "destination": "/static/set-password.html" }
+  ]
+}
