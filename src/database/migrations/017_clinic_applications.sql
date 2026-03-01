@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS clinic_applications (
 COMMENT ON TABLE clinic_applications IS 'Clinic onboarding applications; on approve a row is created in clinics with verification_status = verified.';
 COMMENT ON COLUMN clinic_applications.document_storage_path IS 'Server-side path/filename for uploaded document; never exposed to client.';
 COMMENT ON COLUMN clinic_applications.status IS 'pending | approved | rejected.';
+COMMENT ON COLUMN clinic_applications.reviewed_at IS 'Approval audit: when the application was reviewed (approved or rejected).';
+COMMENT ON COLUMN clinic_applications.reviewed_by IS 'Approval audit: admin user id who reviewed (approved or rejected) the application.';
 
 CREATE INDEX idx_clinic_applications_status ON clinic_applications(status);
 CREATE INDEX idx_clinic_applications_country ON clinic_applications(country);

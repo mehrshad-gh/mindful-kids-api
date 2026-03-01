@@ -1,3 +1,13 @@
+/**
+ * Clinic application submission + admin review.
+ *
+ * STORAGE VERIFICATION (security):
+ * 1. Uploaded documents: stored under RAILWAY_VOLUME_MOUNT_PATH/uploads/clinic-applications (or /data when set).
+ *    When Railway volume is mounted, files persist across deploys. Fallback: local ./uploads.
+ * 2. Signed document URL: only admin routes can request it. GET /admin/clinic-applications/:id/document
+ *    is behind authenticate + requireRole('admin'). The returned URL is the only way to access the file.
+ * 3. Signed URL expires in 5 minutes (DOCUMENT_TOKEN_EXPIRY = '5m'). serveDocumentByToken verifies JWT.
+ */
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -177,13 +187,27 @@ async function list(req, res, next) {
 }
 
 /**
- * GET /api/admin/clinic-applications/:id – full application (no document path exposed)
+ * GET /api/admin/clinic-applications/:id – full application (no document path exposed).
+ * When approved: includes invite_link (if invite_token present) and account_created (user set password).
  */
 async function getOne(req, res, next) {
   try {
     const application = await ClinicApplication.findById(req.params.id);
     if (!application) {
       return res.status(404).json({ error: 'Clinic application not found' });
+    }
+    let invite_link = null;
+    let account_created = false;
+    if (application.status === 'approved' && application.invite_token) {
+      invite_link = buildSetPasswordUrl(application.invite_token);
+      if (application.clinic_id) {
+        const User = require('../models/User');
+        const ClinicAdmin = require('../models/ClinicAdmin');
+        const user = await User.findByEmail(application.contact_email);
+        if (user && user.role === 'clinic_admin') {
+          account_created = await ClinicAdmin.isAdminOfClinic(user.id, application.clinic_id);
+        }
+      }
     }
     const safe = {
       id: application.id,
@@ -200,6 +224,8 @@ async function getOne(req, res, next) {
       created_at: application.created_at,
       updated_at: application.updated_at,
       has_document: !!application.document_storage_path,
+      invite_link: invite_link || undefined,
+      account_created: account_created || undefined,
     };
     res.json({ application: safe });
   } catch (err) {
@@ -211,6 +237,9 @@ async function getOne(req, res, next) {
  * PATCH /api/admin/clinic-applications/:id – status = approved | rejected, optional rejection_reason
  * On approve: create clinic row, set verification_status = verified, verified_at, verified_by, audit log.
  * On reject: update status, audit log.
+ *
+ * AUDIT TRAIL: reviewed_by (admin user id) and reviewed_at (timestamp) are set on every review.
+ * These are the approval audit fields (approved_by = reviewed_by, approved_at = reviewed_at when status = approved).
  */
 async function review(req, res, next) {
   try {
@@ -258,6 +287,8 @@ async function review(req, res, next) {
         status: 'approved',
         reviewed_at: reviewedAt,
         reviewed_by: adminUserId,
+        invite_token: token,
+        clinic_id: clinic.id,
       });
 
       await AdminAuditLog.insert({

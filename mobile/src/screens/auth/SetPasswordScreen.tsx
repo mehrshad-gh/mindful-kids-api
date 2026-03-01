@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
@@ -23,6 +23,7 @@ export function SetPasswordScreen({ navigation, route }: Props) {
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [failureState, setFailureState] = useState<'expired' | 'already_exists' | null>(null);
 
   if (!token) {
     return (
@@ -35,8 +36,40 @@ export function SetPasswordScreen({ navigation, route }: Props) {
     );
   }
 
+  if (failureState === 'expired') {
+    return (
+      <ScreenLayout centered>
+        <View style={styles.hero}>
+          <Text style={styles.heroTitle}>Link expired</Text>
+          <Text style={styles.heroSubtitle}>Your link expired. Contact support.</Text>
+        </View>
+        <Card style={styles.card} variant="outlined">
+          <Text style={styles.failureBody}>Request a new set-password link from your admin or support.</Text>
+        </Card>
+      </ScreenLayout>
+    );
+  }
+
+  if (failureState === 'already_exists') {
+    return (
+      <ScreenLayout centered>
+        <View style={styles.hero}>
+          <Text style={styles.heroTitle}>Account already exists</Text>
+          <Text style={styles.heroSubtitle}>An account with this email already exists. Sign in with your password.</Text>
+        </View>
+        <Button
+          title="Go to sign in"
+          onPress={() => navigation.navigate('Login')}
+          fullWidth
+          style={styles.btn}
+        />
+      </ScreenLayout>
+    );
+  }
+
   const handleSubmit = async () => {
     setError('');
+    setFailureState(null);
     if (!password || password.length < 8) {
       setError('Password must be at least 8 characters');
       return;
@@ -51,11 +84,22 @@ export function SetPasswordScreen({ navigation, route }: Props) {
       await refreshAuth();
       // Root will re-render and show App (authenticated)
     } catch (err: unknown) {
+      const status = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { status?: number } }).response?.status
+        : undefined;
       const message = err && typeof err === 'object' && 'response' in err
         ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
         : err instanceof Error ? err.message : 'Something went wrong.';
+      if (status === 401) {
+        setFailureState('expired');
+        return;
+      }
+      if (status === 409) {
+        setFailureState('already_exists');
+        setError(message || 'An account with this email already exists.');
+        return;
+      }
       setError(message || 'Failed to set password. Link may have expired.');
-      Alert.alert('Error', message || 'Failed to set password. Link may have expired.');
     } finally {
       setLoading(false);
     }
@@ -103,5 +147,6 @@ const styles = StyleSheet.create({
   heroTitle: { ...typography.h2, marginBottom: spacing.xs },
   heroSubtitle: { ...typography.body, color: colors.textSecondary },
   card: { marginBottom: layout.sectionGap },
+  failureBody: { ...typography.body, color: colors.textSecondary },
   btn: {},
 });

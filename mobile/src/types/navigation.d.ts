@@ -82,7 +82,10 @@ export type TherapistStackParamList = {
 };
 
 export type RootStackParamList = {
-  Onboarding: NavigatorScreenParams<OnboardingStackParamList> & { initialRouteName?: keyof OnboardingStackParamList };
+  Onboarding: NavigatorScreenParams<OnboardingStackParamList> & {
+    initialRouteName?: keyof OnboardingStackParamList;
+    token?: string;
+  };
   Auth: NavigatorScreenParams<AuthStackParamList>;
   TherapistOnboarding: NavigatorScreenParams<TherapistOnboardingStackParamList> & { initialScreen?: keyof TherapistOnboardingStackParamList };
   RoleSelect: undefined;

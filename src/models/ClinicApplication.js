@@ -1,7 +1,8 @@
 const { query } = require('../database/connection');
 
 const COLUMNS = `id, clinic_name, country, contact_email, contact_phone, description,
-  document_storage_path, status, submitted_at, reviewed_at, reviewed_by, rejection_reason, created_at, updated_at`;
+  document_storage_path, status, submitted_at, reviewed_at, reviewed_by, rejection_reason,
+  invite_token, clinic_id, created_at, updated_at`;
 
 function toCamel(row) {
   if (!row) return null;
@@ -18,6 +19,8 @@ function toCamel(row) {
     reviewed_at: row.reviewed_at,
     reviewed_by: row.reviewed_by,
     rejection_reason: row.rejection_reason,
+    invite_token: row.invite_token || null,
+    clinic_id: row.clinic_id || null,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -74,7 +77,7 @@ async function update(id, data) {
   const updates = [];
   const values = [];
   let i = 1;
-  const allowed = ['status', 'reviewed_at', 'reviewed_by', 'rejection_reason'];
+  const allowed = ['status', 'reviewed_at', 'reviewed_by', 'rejection_reason', 'invite_token', 'clinic_id'];
   for (const key of allowed) {
     if (data[key] !== undefined) {
       updates.push(`${key} = $${i++}`);

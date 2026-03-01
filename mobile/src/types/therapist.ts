@@ -88,4 +88,8 @@ export interface ClinicApplication {
   created_at: string;
   updated_at: string;
   has_document?: boolean;
+  /** When approved: set-password link for admin to copy (if invite not yet used). */
+  invite_link?: string;
+  /** When approved: true if clinic contact has set password and account exists. */
+  account_created?: boolean;
 }

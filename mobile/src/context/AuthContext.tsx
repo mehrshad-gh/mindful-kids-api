@@ -67,7 +67,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const normalized = normalizeUser(me);
         if (!cancelled) {
           setUser(normalized);
-          setAppRoleState(normalized.role === 'admin' ? 'admin' : normalized.role === 'therapist' ? 'therapist' : 'parent');
+          setAppRoleState(
+          normalized.role === 'admin' ? 'admin' :
+          normalized.role === 'therapist' ? 'therapist' :
+          normalized.role === 'clinic_admin' ? 'clinic_admin' : 'parent'
+        );
         }
       } catch {
         if (!cancelled) setUser(null);
@@ -87,7 +91,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { user: me } = await authService.getMe();
       const normalized = normalizeUser(me);
       setUser(normalized);
-      setAppRoleState(normalized.role === 'admin' ? 'admin' : normalized.role === 'therapist' ? 'therapist' : 'parent');
+      setAppRoleState(
+          normalized.role === 'admin' ? 'admin' :
+          normalized.role === 'therapist' ? 'therapist' :
+          normalized.role === 'clinic_admin' ? 'clinic_admin' : 'parent'
+        );
     } catch {
       setUser(null);
     }
@@ -104,7 +112,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { user: u } = await authService.login({ email, password });
       const normalized = normalizeUser(u);
       setUser(normalized);
-      setAppRoleState(normalized.role === 'admin' ? 'admin' : normalized.role === 'therapist' ? 'therapist' : 'parent');
+      setAppRoleState(
+          normalized.role === 'admin' ? 'admin' :
+          normalized.role === 'therapist' ? 'therapist' :
+          normalized.role === 'clinic_admin' ? 'clinic_admin' : 'parent'
+        );
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +129,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { user: u } = await authService.register({ email, password, name, role });
         const normalized = normalizeUser(u);
         setUser(normalized);
-        setAppRoleState(normalized.role === 'admin' ? 'admin' : normalized.role === 'therapist' ? 'therapist' : 'parent');
+        setAppRoleState(
+          normalized.role === 'admin' ? 'admin' :
+          normalized.role === 'therapist' ? 'therapist' :
+          normalized.role === 'clinic_admin' ? 'clinic_admin' : 'parent'
+        );
       } finally {
         setIsLoading(false);
       }

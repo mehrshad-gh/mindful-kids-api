@@ -19,6 +19,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
 export function OnboardingNavigator({ route }: Props) {
   const initialRoute = route.params?.initialRouteName ?? 'Welcome';
+  const setPasswordToken = route.params?.token ?? '';
 
   return (
     <Stack.Navigator
@@ -52,6 +53,7 @@ export function OnboardingNavigator({ route }: Props) {
       <Stack.Screen
         name="SetPassword"
         component={SetPasswordScreen}
+        initialParams={{ token: setPasswordToken }}
         options={{ title: 'Set your password' }}
       />
       <Stack.Screen

@@ -17,11 +17,13 @@ export function RoleSelectScreen({ navigation }: Props) {
   const { user, setAppRole, logout } = useAuth();
   const isAdmin = user?.role === 'admin';
   const isTherapist = user?.role === 'therapist';
+  const isClinicAdmin = user?.role === 'clinic_admin';
 
   const selectParent = () => { setAppRole('parent'); navigation.replace('App'); };
   const selectChild = () => { setAppRole('child'); navigation.replace('App'); };
   const selectTherapist = () => { setAppRole('therapist'); navigation.replace('App'); };
   const selectAdmin = () => { setAppRole('admin'); navigation.replace('App'); };
+  const selectClinic = () => { setAppRole('clinic_admin'); navigation.replace('App'); };
 
   return (
     <ScreenLayout centered>
@@ -46,6 +48,13 @@ export function RoleSelectScreen({ navigation }: Props) {
         <Text style={styles.cardDesc}>Activities, rewards, and calm tools.</Text>
         <Button title="Use as child" onPress={selectChild} fullWidth style={styles.btn} />
       </Card>
+      {isClinicAdmin && (
+        <Card style={styles.card} variant="elevated" accentColor={colors.primary}>
+          <Text style={styles.cardTitle}>Clinic</Text>
+          <Text style={styles.cardDesc}>Manage your clinic profile and settings.</Text>
+          <Button title="Use as clinic" onPress={selectClinic} fullWidth style={styles.btn} />
+        </Card>
+      )}
       {isAdmin && (
         <Card style={styles.card} variant="elevated" accentColor={colors.primary}>
           <Text style={styles.cardTitle}>Admin</Text>

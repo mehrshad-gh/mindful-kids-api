@@ -54,6 +54,7 @@ export function ClinicApplicationFormScreen() {
   } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [picking, setPicking] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const handlePickDocument = async () => {
     setPicking(true);
@@ -100,11 +101,7 @@ export function ClinicApplicationFormScreen() {
         },
         document
       );
-      Alert.alert(
-        'Application submitted',
-        'Thank you. We will review your clinic application and get back to you at the email you provided.',
-        [{ text: 'OK' }]
-      );
+      setSubmitted(true);
       setClinicName('');
       setCountry('');
       setContactEmail('');
@@ -117,6 +114,26 @@ export function ClinicApplicationFormScreen() {
       setSubmitting(false);
     }
   };
+
+  if (submitted) {
+    return (
+      <ScreenLayout centered>
+        <View style={styles.hero}>
+          <Text style={styles.heroTitle}>Application submitted</Text>
+          <Text style={styles.heroSubtitle}>
+            Thank you. We have received your clinic application.
+          </Text>
+        </View>
+        <Card style={styles.successCard} variant="elevated" accentColor={colors.primary}>
+          <Text style={styles.statusLabel}>Status</Text>
+          <Text style={styles.statusValue}>Pending</Text>
+          <Text style={styles.successMessage}>
+            We will review your application within 24–48 hours and contact you at the email you provided.
+          </Text>
+        </Card>
+      </ScreenLayout>
+    );
+  }
 
   return (
     <ScreenLayout centered>
@@ -244,4 +261,8 @@ const styles = StyleSheet.create({
   docButtonText: { ...typography.body, fontWeight: '600', color: colors.text },
   docButtonHint: { ...typography.caption, color: colors.textTertiary, marginTop: spacing.xs },
   submitBtn: { marginTop: spacing.md },
+  successCard: { marginTop: layout.sectionGapSmall },
+  statusLabel: { ...typography.overline, color: colors.textTertiary, marginBottom: spacing.xs },
+  statusValue: { ...typography.h3, color: colors.primary, marginBottom: spacing.md },
+  successMessage: { ...typography.body, color: colors.textSecondary },
 });

@@ -1,3 +1,11 @@
+/**
+ * Therapist credential document upload + serve.
+ *
+ * STORAGE VERIFICATION: Same as clinic-applications — uploads go to
+ * RAILWAY_VOLUME_MOUNT_PATH/uploads/credentials when volume is mounted. Document serve is admin-only
+ * (GET /therapist/credential-document/:filename uses requireRole('admin')). No signed URL; admin
+ * requests the file directly (auth required).
+ */
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');

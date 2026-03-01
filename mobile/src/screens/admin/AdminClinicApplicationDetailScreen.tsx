@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Linking,
+  Share,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -17,6 +18,7 @@ import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { SectionHeader } from '../../components/ui/SectionHeader';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 import {
   getClinicApplication,
   getClinicApplicationDocumentUrl,
@@ -85,8 +87,11 @@ export function AdminClinicApplicationDetailScreen({ route, navigation }: Props)
             setActionLoading(true);
             try {
               await reviewClinicApplication(applicationId, 'approved');
-              Alert.alert('Approved', 'Clinic created and listed as verified.');
-              navigation.goBack();
+              await load();
+              Alert.alert(
+                'Approved',
+                'Clinic created. Invite link is available below — copy and send to the contact email.'
+              );
             } catch (e) {
               Alert.alert('Error', e instanceof Error ? e.message : 'Could not approve');
             } finally {
@@ -142,6 +147,19 @@ export function AdminClinicApplicationDetailScreen({ route, navigation }: Props)
   }
 
   const isPending = application.status === 'pending';
+  const isApproved = application.status === 'approved';
+
+  const handleCopyInviteLink = useCallback(async () => {
+    if (!application.invite_link) return;
+    try {
+      await Share.share({
+        message: application.invite_link,
+        title: 'Set password link',
+      });
+    } catch {
+      Alert.alert('Error', 'Could not share link.');
+    }
+  }, [application.invite_link]);
 
   return (
     <ScreenLayout>
@@ -157,11 +175,35 @@ export function AdminClinicApplicationDetailScreen({ route, navigation }: Props)
 
         <SectionHeader title="Contact" />
         <Card style={styles.section}>
+          <Text style={styles.contactLabel}>Contact email</Text>
           <Text style={styles.body}>{application.contact_email}</Text>
           {application.contact_phone ? (
             <Text style={styles.bodySmall}>{application.contact_phone}</Text>
           ) : null}
         </Card>
+
+        {isApproved && (
+          <>
+            <SectionHeader title="Invite status" />
+            <Card style={styles.section}>
+              <View style={styles.badgeRow}>
+                <StatusBadge
+                  label={application.account_created ? 'Account created' : 'Invited'}
+                  variant={application.account_created ? 'approved' : 'pending'}
+                />
+              </View>
+              {application.invite_link && !application.account_created && (
+                <Button
+                  title="Copy invite link"
+                  onPress={handleCopyInviteLink}
+                  variant="outline"
+                  size="small"
+                  style={styles.copyBtn}
+                />
+              )}
+            </Card>
+          </>
+        )}
 
         {application.has_document && (
           <>
@@ -267,9 +309,12 @@ const styles = StyleSheet.create({
   errorText: { ...typography.body, color: colors.error },
   section: { marginBottom: layout.sectionGap },
   name: { ...typography.h3, marginBottom: spacing.xs },
+  contactLabel: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.xs },
   body: { ...typography.body, marginBottom: spacing.xs },
   bodySmall: { ...typography.bodySmall, color: colors.textSecondary },
   bio: { marginTop: spacing.xs },
+  badgeRow: { marginBottom: spacing.sm },
+  copyBtn: { alignSelf: 'flex-start' },
   docLinkWrap: { marginTop: spacing.xs },
   link: { ...typography.body, color: colors.primary, fontWeight: '600' },
   actions: { marginTop: spacing.lg, gap: spacing.sm },
