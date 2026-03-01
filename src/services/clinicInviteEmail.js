@@ -2,13 +2,16 @@ const config = require('../config');
 
 /**
  * Build the set-password URL for a clinic invite token.
- * Used in email body and returned in API response when SMTP is not configured.
+ * Used in email body and returned in API response.
+ * - Web: https://app.example.com/set-password?token=...
+ * - Mobile deep link (when base is mindfulkids://): mindfulkids:///set-password?token=...
  */
 function buildSetPasswordUrl(token) {
   const base = config.clinicInviteBaseUrl || `http://localhost:${config.port}`;
-  const path = '/set-password'; // client app route; can be deep link for mobile
+  const path = '/set-password';
   const separator = base.includes('?') ? '&' : '?';
-  return `${base.replace(/\/$/, '')}${path}${separator}token=${encodeURIComponent(token)}`;
+  const baseNormalized = base.replace(/\/$/, '');
+  return `${baseNormalized}${path}${separator}token=${encodeURIComponent(token)}`;
 }
 
 /**

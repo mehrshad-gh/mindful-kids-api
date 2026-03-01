@@ -4,8 +4,11 @@ module.exports = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT, 10) || 8080,
   baseUrl: process.env.BASE_URL || null, // e.g. https://your-api.up.railway.app (for upload URL in responses)
-  /** Base URL for clinic set-password links (e.g. https://app.mindfulkids.com or mobile deep link) */
-  clinicInviteBaseUrl: process.env.CLINIC_INVITE_BASE_URL || process.env.BASE_URL || null,
+  /** Base URL for clinic set-password links. In production, defaults to app deep link (mindfulkids://) if unset so invite links open the mobile app. */
+  clinicInviteBaseUrl:
+    process.env.CLINIC_INVITE_BASE_URL ||
+    process.env.BASE_URL ||
+    (process.env.NODE_ENV === 'production' ? 'mindfulkids://' : null),
   uploadDir: process.env.UPLOAD_DIR || null, // default: ./uploads
   database: {
     url: process.env.DATABASE_URL || 'postgresql://localhost:5432/mindful_kids',
