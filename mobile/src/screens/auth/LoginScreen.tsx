@@ -1,13 +1,24 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+} from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Card } from '../../components/ui/Card';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
+import { layout } from '../../theme';
 import type { AuthStackParamList } from '../../types/navigation';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
@@ -20,14 +31,12 @@ function getErrorMessage(err: unknown): string {
     if (Array.isArray(d.details) && d.details[0]?.message) return d.details[0].message;
   }
   if (axios.isAxiosError(err)) {
-    if (err.response?.status === 502)
-      return 'Server is temporarily unavailable (502). Check Railway dashboard or try again in a moment.';
-    if (err.response?.status === 503)
-      return 'Service unavailable. The server may be starting—try again in a moment.';
+    if (err.response?.status === 502) return 'Server temporarily unavailable. Try again in a moment.';
+    if (err.response?.status === 503) return 'Service unavailable. The server may be starting.';
     if (err.code === 'ECONNABORTED' || err.message?.includes('timeout'))
       return 'Request timed out. Check your connection.';
     if (err.code === 'ERR_NETWORK' || !err.response)
-      return 'Cannot reach the server. Check your internet and that the API URL is correct.';
+      return 'Cannot reach the server. Check your internet and API URL.';
   }
   if (err instanceof Error) return err.message;
   return 'Something went wrong. Try again.';
@@ -57,59 +66,100 @@ export function LoginScreen({ navigation, route }: Props) {
   };
 
   return (
-    <ScreenLayout>
+    <ScreenLayout centered>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
-        <Input
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="you@example.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <Input
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="••••••••"
-          secureTextEntry
-        />
-        <Button title="Sign In" onPress={handleLogin} loading={isLoading} style={styles.button} />
-        <Button
-          title="Create account"
-          onPress={() =>
-            navigation.navigate('Register', route.params ? { onSuccessNavigateTo: route.params.onSuccessNavigateTo } : undefined)
-          }
-          variant="ghost"
-        />
-        <Button
-          title="Register as therapist"
-          onPress={() =>
-            (navigation.getParent() as any)?.navigate('TherapistOnboarding', {
-              screen: 'TherapistRegister',
-              params: { fromAuth: true },
-            })
-          }
-          variant="outline"
-          style={styles.therapistBtn}
-        />
-        <Button
-          title="Partner with us – Apply as a clinic"
-          onPress={() => navigation.navigate('ClinicApplicationForm')}
-          variant="ghost"
-          style={styles.clinicApplyBtn}
-        />
+        <View style={styles.hero}>
+          <Text style={styles.heroTitle}>Welcome back</Text>
+          <Text style={styles.heroSubtitle}>Sign in to your Mindful Kids account</Text>
+        </View>
+
+        <Card style={styles.formCard} variant="elevated">
+          <Input
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@example.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <Input
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••••"
+            secureTextEntry
+          />
+          <Button
+            title="Sign in"
+            onPress={handleLogin}
+            loading={isLoading}
+            fullWidth
+            style={styles.primaryBtn}
+          />
+        </Card>
+
+        <View style={styles.secondary}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate(
+                'Register',
+                route.params ? { onSuccessNavigateTo: route.params.onSuccessNavigateTo } : undefined
+              )
+            }
+          >
+            <Text style={styles.linkText}>Create an account</Text>
+          </TouchableOpacity>
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+          <Button
+            title="I'm a therapist – register"
+            onPress={() =>
+              (navigation.getParent() as any)?.navigate('TherapistOnboarding', {
+                screen: 'TherapistRegister',
+                params: { fromAuth: true },
+              })
+            }
+            variant="outline"
+            size="small"
+            fullWidth
+            style={styles.secondaryBtn}
+          />
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ClinicApplicationForm')}
+            style={styles.clinicLink}
+          >
+            <Text style={styles.clinicLinkText}>Partner with us – apply as a clinic</Text>
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.md },
-  button: { marginTop: spacing.lg },
-  therapistBtn: { marginTop: spacing.sm },
-  clinicApplyBtn: { marginTop: spacing.xs },
+  container: { flex: 1, paddingTop: spacing.xl },
+  hero: { marginBottom: layout.sectionGap },
+  heroTitle: { ...typography.h1, marginBottom: spacing.sm },
+  heroSubtitle: { ...typography.body, color: colors.textSecondary },
+  formCard: { marginBottom: layout.sectionGap },
+  primaryBtn: {},
+  secondary: { alignItems: 'center' },
+  linkText: { ...typography.link },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.lg,
+    width: '100%',
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  dividerText: { ...typography.caption, color: colors.textTertiary, marginHorizontal: spacing.md },
+  secondaryBtn: { alignSelf: 'stretch' },
+  clinicLink: { marginTop: spacing.lg, paddingVertical: spacing.sm },
+  clinicLinkText: { ...typography.caption, color: colors.textTertiary },
 });

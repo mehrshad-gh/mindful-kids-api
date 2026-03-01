@@ -43,3 +43,10 @@ export async function getMe(): Promise<{ user: User }> {
 export async function logout(): Promise<void> {
   await removeToken();
 }
+
+/** Clinic invite: set password with one-time token; creates account and returns token. */
+export async function setPasswordFromInvite(token: string, password: string): Promise<AuthResponse> {
+  const { data } = await apiClient.post<AuthResponse>('/auth/set-password-from-invite', { token, password });
+  await storeToken(data.token);
+  return data;
+}

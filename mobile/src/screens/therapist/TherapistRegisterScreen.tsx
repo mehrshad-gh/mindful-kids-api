@@ -30,17 +30,10 @@ export function TherapistRegisterScreen({ navigation, route }: TherapistRegister
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const fromAuth = route.params?.fromAuth;
 
   const goToSignIn = () => {
-    const parent = navigation.getParent() as { navigate: (name: string, params?: object) => void; getState?: () => { routes: { name: string }[] } } | undefined;
-    if (!parent) return;
-    if (fromAuth) {
-      const hasAuth = parent.getState?.()?.routes?.some((r) => r.name === 'Auth');
-      if (hasAuth) parent.navigate('Auth');
-    } else {
-      parent.navigate('Onboarding', { screen: 'Login' });
-    }
+    const parent = navigation.getParent() as { navigate: (name: string, params?: object) => void } | undefined;
+    if (parent) parent.navigate('Onboarding', { screen: 'Login' });
   };
 
   const handleRegister = async () => {

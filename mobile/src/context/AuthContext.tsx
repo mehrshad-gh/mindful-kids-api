@@ -23,6 +23,8 @@ interface AuthContextValue {
   setAppRole: (role: UserRole) => void;
   setSelectedChild: (childId: string | null) => void;
   setPendingActivityId: (activityId: string | null) => void;
+  /** Re-load user from token (e.g. after set-password-from-invite). */
+  refreshAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -62,7 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         const { user: me } = await authService.getMe();
-        if (!cancelled) setUser(normalizeUser(me));
+        const normalized = normalizeUser(me);
+        if (!cancelled) {
+          setUser(normalized);
+          setAppRoleState(normalized.role === 'admin' ? 'admin' : normalized.role === 'therapist' ? 'therapist' : 'parent');
+        }
       } catch {
         if (!cancelled) setUser(null);
       } finally {
@@ -74,6 +80,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const refreshAuth = useCallback(async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const { user: me } = await authService.getMe();
+      const normalized = normalizeUser(me);
+      setUser(normalized);
+      setAppRoleState(normalized.role === 'admin' ? 'admin' : normalized.role === 'therapist' ? 'therapist' : 'parent');
+    } catch {
+      setUser(null);
+    }
+  }, []);
+
   const setOnboardingComplete = useCallback(async (complete: boolean) => {
     setOnboardingCompleteState(complete);
     await persistOnboardingComplete(complete);
@@ -83,7 +102,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const { user: u } = await authService.login({ email, password });
-      setUser(normalizeUser(u));
+      const normalized = normalizeUser(u);
+      setUser(normalized);
+      setAppRoleState(normalized.role === 'admin' ? 'admin' : normalized.role === 'therapist' ? 'therapist' : 'parent');
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +115,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       try {
         const { user: u } = await authService.register({ email, password, name, role });
-        setUser(normalizeUser(u));
+        const normalized = normalizeUser(u);
+        setUser(normalized);
+        setAppRoleState(normalized.role === 'admin' ? 'admin' : normalized.role === 'therapist' ? 'therapist' : 'parent');
       } finally {
         setIsLoading(false);
       }
@@ -139,6 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAppRole,
       setSelectedChild,
       setPendingActivityId,
+      refreshAuth,
     }),
     [
       user,
@@ -155,6 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAppRole,
       setSelectedChild,
       setPendingActivityId,
+      refreshAuth,
     ]
   );
 

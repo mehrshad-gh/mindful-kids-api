@@ -3,7 +3,6 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { OnboardingNavigator } from './OnboardingNavigator';
-import { AuthNavigator } from './AuthNavigator';
 import { TherapistOnboardingNavigator } from './TherapistOnboardingNavigator';
 import { AppSwitch } from './AppSwitch';
 import { RoleSelectScreen } from '../screens/auth/RoleSelectScreen';
@@ -23,19 +22,14 @@ export function RootNavigator() {
     );
   }
 
-  if (!onboardingComplete) {
-    return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
-        <Stack.Screen name="TherapistOnboarding" component={TherapistOnboardingNavigator} />
-      </Stack.Navigator>
-    );
-  }
-
   if (!isAuthenticated) {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Auth" component={AuthNavigator} />
+        <Stack.Screen
+          name="Onboarding"
+          component={OnboardingNavigator}
+          initialParams={{ initialRouteName: onboardingComplete ? 'Login' : 'Welcome' }}
+        />
         <Stack.Screen name="TherapistOnboarding" component={TherapistOnboardingNavigator} />
       </Stack.Navigator>
     );
@@ -57,12 +51,12 @@ export function RootNavigator() {
 
   return (
     <Stack.Navigator
-      key={onboardingComplete ? 'onboarding-complete' : 'onboarding-incomplete'}
+      key="authenticated"
       screenOptions={{ headerShown: false }}
-      initialRouteName="RoleSelect"
+      initialRouteName="App"
     >
-      <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
       <Stack.Screen name="App" component={AppSwitch} />
+      <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
       {user?.role === 'therapist' && (
         <Stack.Screen name="TherapistOnboarding" component={TherapistOnboardingNavigator} />
       )}

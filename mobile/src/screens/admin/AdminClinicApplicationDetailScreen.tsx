@@ -16,6 +16,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { SectionHeader } from '../../components/ui/SectionHeader';
 import {
   getClinicApplication,
   getClinicApplicationDocumentUrl,
@@ -26,6 +27,7 @@ import type { ClinicApplication } from '../../types/therapist';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import { layout } from '../../theme';
 
 type Props = NativeStackScreenProps<AdminStackParamList, 'AdminClinicApplicationDetail'>;
 
@@ -144,8 +146,8 @@ export function AdminClinicApplicationDetailScreen({ route, navigation }: Props)
   return (
     <ScreenLayout>
       <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
+        <SectionHeader title="Clinic" />
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Clinic</Text>
           <Text style={styles.name}>{application.clinic_name}</Text>
           <Text style={styles.body}>{application.country}</Text>
           {application.description ? (
@@ -153,8 +155,8 @@ export function AdminClinicApplicationDetailScreen({ route, navigation }: Props)
           ) : null}
         </Card>
 
+        <SectionHeader title="Contact" />
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact</Text>
           <Text style={styles.body}>{application.contact_email}</Text>
           {application.contact_phone ? (
             <Text style={styles.bodySmall}>{application.contact_phone}</Text>
@@ -162,8 +164,9 @@ export function AdminClinicApplicationDetailScreen({ route, navigation }: Props)
         </Card>
 
         {application.has_document && (
-          <Card style={styles.section}>
-            <Text style={styles.sectionTitle}>Document</Text>
+          <>
+            <SectionHeader title="Document" subtitle="Opens in browser (link valid 5 minutes)" />
+            <Card style={styles.section}>
             <TouchableOpacity
               onPress={handleViewDocument}
               disabled={openingDoc}
@@ -175,8 +178,8 @@ export function AdminClinicApplicationDetailScreen({ route, navigation }: Props)
                 <Text style={styles.link}>View attached document</Text>
               )}
             </TouchableOpacity>
-            <Text style={styles.bodySmall}>Opens in browser (link valid 5 minutes)</Text>
           </Card>
+          </>
         )}
 
         {isPending && (
@@ -262,13 +265,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorCard: { margin: spacing.md },
   errorText: { ...typography.body, color: colors.error },
-  section: { marginBottom: spacing.md },
-  sectionTitle: {
-    ...typography.bodySmall,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: spacing.sm,
-  },
+  section: { marginBottom: layout.sectionGap },
   name: { ...typography.h3, marginBottom: spacing.xs },
   body: { ...typography.body, marginBottom: spacing.xs },
   bodySmall: { ...typography.bodySmall, color: colors.textSecondary },

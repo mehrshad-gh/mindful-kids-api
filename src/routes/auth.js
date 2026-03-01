@@ -18,8 +18,14 @@ const loginValidation = [
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
+const setPasswordFromInviteValidation = [
+  body('token').notEmpty().trim().withMessage('Invite token is required'),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+];
+
 router.post('/register', registerValidation, handleValidationErrors, authController.register);
 router.post('/login', loginValidation, handleValidationErrors, authController.login);
 router.get('/me', authenticate, authController.me);
+router.post('/set-password-from-invite', setPasswordFromInviteValidation, handleValidationErrors, authController.setPasswordFromInvite);
 
 module.exports = router;

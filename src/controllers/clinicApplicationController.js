@@ -6,7 +6,9 @@ const jwt = require('jsonwebtoken');
 const config = require('../config');
 const ClinicApplication = require('../models/ClinicApplication');
 const Clinic = require('../models/Clinic');
+const ClinicInvite = require('../models/ClinicInvite');
 const AdminAuditLog = require('../models/AdminAuditLog');
+const { buildSetPasswordUrl, sendClinicApprovalInvite } = require('../services/clinicInviteEmail');
 
 const UPLOAD_SUBDIR = 'clinic-applications';
 const ALLOWED_MIMES = [
@@ -266,10 +268,26 @@ async function review(req, res, next) {
         details: { clinic_id: clinic.id },
       });
 
+      // Create clinic invite so contact can set password and get a clinic_admin account
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      const token = await ClinicInvite.create({
+        clinicId: clinic.id,
+        contactEmail: application.contact_email,
+        expiresAt,
+      });
+      const setPasswordUrl = buildSetPasswordUrl(token);
+      const emailResult = await sendClinicApprovalInvite(
+        application.contact_email,
+        application.clinic_name,
+        setPasswordUrl
+      );
+
       return res.json({
-        message: 'Application approved and clinic created.',
+        message: 'Application approved and clinic created. Invite sent so clinic can set password and sign in.',
         application: await ClinicApplication.findById(req.params.id),
         clinic: updatedClinic,
+        set_password_link: setPasswordUrl,
+        invite_email_sent: emailResult.sent,
       });
     }
 

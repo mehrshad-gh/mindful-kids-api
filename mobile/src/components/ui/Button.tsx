@@ -10,9 +10,10 @@ import {
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import { layout } from '../../theme';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'outline';
-type Size = 'medium' | 'small';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'soft';
+type Size = 'medium' | 'small' | 'large';
 
 interface ButtonProps {
   title: string;
@@ -21,6 +22,7 @@ interface ButtonProps {
   size?: Size;
   loading?: boolean;
   disabled?: boolean;
+  fullWidth?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
 }
@@ -32,42 +34,40 @@ export function Button({
   size = 'medium',
   loading = false,
   disabled = false,
+  fullWidth,
   style,
   textStyle,
 }: ButtonProps) {
-  const variantStyles = {
-    primary: [styles.base, styles.primary],
-    secondary: [styles.base, styles.secondary],
-    ghost: [styles.base, styles.ghost],
-    outline: [styles.base, styles.outline],
-  };
-  const sizeStyles = {
-    medium: styles.sizeMedium,
-    small: styles.sizeSmall,
-  };
-  const textVariantStyles = {
-    primary: styles.textPrimary,
-    secondary: styles.textSecondary,
-    ghost: styles.textGhost,
-    outline: styles.textOutline,
-  };
-
   return (
     <TouchableOpacity
       style={[
-        variantStyles[variant],
-        sizeStyles[size],
+        styles.base,
+        styles[`size_${size}`],
+        styles[`variant_${variant}`],
         disabled && styles.disabled,
+        fullWidth && styles.fullWidth,
         style,
       ]}
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.82}
+      activeOpacity={0.78}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'ghost' ? colors.primary : colors.surface} size="small" />
+        <ActivityIndicator
+          color={variant === 'ghost' || variant === 'soft' ? colors.primary : colors.textInverse}
+          size="small"
+        />
       ) : (
-        <Text style={[styles.text, size === 'small' && styles.textSmall, textVariantStyles[variant], textStyle]}>
+        <Text
+          style={[
+            styles.text,
+            size === 'small' && styles.textSmall,
+            size === 'large' && styles.textLarge,
+            styles[`text_${variant}`],
+            textStyle,
+          ]}
+          numberOfLines={1}
+        >
           {title}
         </Text>
       )}
@@ -77,33 +77,42 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: layout.touchTargetMin,
   },
-  sizeMedium: {
-    paddingVertical: spacing.sm + 4,
-    paddingHorizontal: spacing.lg,
-    minHeight: 52,
-  },
-  sizeSmall: {
+  size_small: {
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    minHeight: 42,
+    minHeight: 40,
   },
-  primary: { backgroundColor: colors.primary },
-  secondary: { backgroundColor: colors.secondary },
-  ghost: { backgroundColor: 'transparent' },
-  outline: {
+  size_medium: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  size_large: {
+    paddingVertical: spacing.md + 4,
+    paddingHorizontal: spacing.xl,
+    minHeight: 52,
+  },
+  fullWidth: { width: '100%' },
+  variant_primary: { backgroundColor: colors.primary },
+  variant_secondary: { backgroundColor: colors.secondary },
+  variant_ghost: { backgroundColor: 'transparent' },
+  variant_outline: {
     backgroundColor: 'transparent',
     borderWidth: 2,
     borderColor: colors.primary,
   },
+  variant_soft: { backgroundColor: colors.primaryMuted },
   disabled: { opacity: 0.5 },
   text: { ...typography.body, fontWeight: '600' },
   textSmall: { fontSize: 14 },
-  textPrimary: { color: colors.surface },
-  textSecondary: { color: colors.text },
-  textGhost: { color: colors.primary },
-  textOutline: { color: colors.primary },
+  textLarge: { fontSize: 17 },
+  text_primary: { color: colors.textInverse },
+  text_secondary: { color: colors.textInverse },
+  text_ghost: { color: colors.primary },
+  text_outline: { color: colors.primary },
+  text_soft: { color: colors.primaryDark },
 });

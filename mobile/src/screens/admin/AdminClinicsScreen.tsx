@@ -12,6 +12,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { listAdminClinics } from '../../api/admin';
 import type { AdminStackParamList } from '../../types/navigation';
 import type { Clinic } from '../../types/therapist';
@@ -91,9 +92,10 @@ export function AdminClinicsScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} colors={[colors.primary]} />
           }
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text style={styles.emptyText}>No clinics yet. Tap "Add clinic" to create one.</Text>
-            </View>
+            <EmptyState
+              title="No clinics yet"
+              message='Tap "Add clinic" to create one. Therapists can then affiliate with clinics.'
+            />
           }
         />
       )}
@@ -102,17 +104,15 @@ export function AdminClinicsScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { paddingHorizontal: spacing.md, paddingBottom: spacing.md },
+  header: { paddingBottom: spacing.md },
   title: { ...typography.h2, marginBottom: spacing.xs },
   subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.md },
   addBtn: { alignSelf: 'flex-start' },
   listContainer: { flex: 1 },
-  list: { padding: spacing.md, paddingTop: 0 },
+  list: { paddingTop: 12 },
   card: { marginBottom: spacing.md },
   name: { ...typography.h3, marginBottom: spacing.xs },
   meta: { ...typography.bodySmall, color: colors.textSecondary },
   desc: { ...typography.bodySmall, color: colors.textSecondary, marginTop: spacing.xs },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  empty: { padding: spacing.xl, alignItems: 'center' },
-  emptyText: { ...typography.body, color: colors.textSecondary },
 });

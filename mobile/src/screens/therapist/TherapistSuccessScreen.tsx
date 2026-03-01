@@ -18,7 +18,7 @@ export function TherapistSuccessScreen({ navigation }: { navigation: Nav }) {
     await setOnboardingComplete(true);
     const rootNav = (navigation.getParent() as { navigate: (name: string) => void } | undefined);
     if (rootNav?.navigate) {
-      rootNav.navigate('RoleSelect');
+      rootNav.navigate('App');
     }
   };
 

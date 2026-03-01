@@ -76,8 +76,58 @@ async function me(req, res, next) {
   }
 }
 
+/**
+ * POST /auth/set-password-from-invite
+ * Body: { token, password }
+ * For clinic invites: creates user (clinic_admin), links to clinic, returns JWT.
+ */
+async function setPasswordFromInvite(req, res, next) {
+  try {
+    const { token, password } = req.body;
+    const ClinicInvite = require('../models/ClinicInvite');
+    const ClinicAdmin = require('../models/ClinicAdmin');
+
+    const invite = await ClinicInvite.findByToken(token);
+    if (!invite) {
+      return res.status(401).json({ error: 'Invalid or expired invite link. Request a new one from the admin.' });
+    }
+
+    const existing = await User.findByEmail(invite.contact_email);
+    if (existing) {
+      await ClinicInvite.removeByToken(token);
+      return res.status(409).json({
+        error: 'An account with this email already exists. Sign in with your password.',
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const name = `Clinic (${invite.contact_email})`;
+    const user = await User.create({
+      email: invite.contact_email,
+      passwordHash,
+      name,
+      role: 'clinic_admin',
+    });
+
+    await ClinicAdmin.add(user.id, invite.clinic_id);
+    await ClinicInvite.removeByToken(token);
+
+    const jwtToken = generateToken(user);
+    const expiresIn = config.jwt.expiresIn;
+    res.status(201).json({
+      message: 'Password set. You can now sign in.',
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      token: jwtToken,
+      expiresIn,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   register,
   login,
   me,
+  setPasswordFromInvite,
 };

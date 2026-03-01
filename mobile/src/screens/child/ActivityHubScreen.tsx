@@ -57,6 +57,7 @@ export function ActivityHubScreen() {
   return (
     <ScreenLayout scroll={false}>
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
@@ -70,22 +71,22 @@ export function ActivityHubScreen() {
             <ActivityIndicator size="large" color={colors.childAccent} />
           </View>
         ) : error ? (
-          <Card style={styles.card}>
+          <Card style={styles.card} variant="outlined">
             <Text style={styles.errorText}>{error}</Text>
             <Button title="Retry" onPress={load} variant="outline" style={styles.retryBtn} />
           </Card>
         ) : activities.length === 0 ? (
-          <Card style={styles.card}>
+          <Card style={styles.card} variant="glow" accentColor={colors.childAccent}>
             <Text style={styles.emptyText}>No activities yet. Check back later!</Text>
           </Card>
         ) : (
           activities.map((activity) => (
             <TouchableOpacity
               key={activity.id}
-              activeOpacity={0.8}
+              activeOpacity={0.82}
               onPress={() => navigation.navigate('Activity', { activityId: activity.id })}
             >
-              <Card style={styles.card}>
+              <Card style={styles.card} variant="elevated" accentColor={colors.childAccent}>
                 <Text style={styles.activityTitle}>{activity.title}</Text>
                 {activity.description ? (
                   <Text style={styles.activityDesc} numberOfLines={2}>
@@ -115,9 +116,13 @@ export function ActivityHubScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { padding: layout.screenPadding, paddingBottom: spacing.xxl },
+  scroll: { flex: 1 },
+  scrollContent: {
+    padding: layout.screenPadding,
+    paddingBottom: layout.fabContentPaddingBottom,
+  },
   title: { ...typography.h2, marginBottom: spacing.xs },
-  subtitle: { ...typography.subtitle, marginBottom: spacing.lg },
+  subtitle: { ...typography.subtitle, marginBottom: layout.sectionGapSmall },
   card: { marginBottom: layout.listItemGap },
   activityTitle: { ...typography.h3 },
   activityDesc: { ...typography.subtitle, marginTop: spacing.xs },

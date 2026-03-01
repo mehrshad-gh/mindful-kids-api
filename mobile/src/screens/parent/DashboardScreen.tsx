@@ -10,6 +10,7 @@ import { fetchFeaturedAdvice, type AdviceItem } from '../../api/advice';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { FAB } from '../../components/ui/FAB';
 import { colors } from '../../theme/colors';
 import { spacing, layout } from '../../theme';
 import { typography } from '../../theme/typography';
@@ -164,13 +165,14 @@ export function DashboardScreen() {
   return (
     <ScreenLayout scroll={false}>
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={colors.parentAccent} />}
       >
         <Text style={styles.title}>Dashboard</Text>
         <Text style={styles.subtitle}>Hello, {user?.name ?? 'Parent'}!</Text>
 
-        <Card style={styles.insightCard} variant="elevated">
+        <Card style={styles.insightCard} variant="elevated" accentColor={colors.primary}>
           <Text style={styles.insightLabel}>Insight for you</Text>
           {children.length === 0 ? (
             <Text style={styles.insightText}>Add a child to see a personalized insight based on their activities and check-ins.</Text>
@@ -185,7 +187,7 @@ export function DashboardScreen() {
           )}
         </Card>
 
-        <Card style={styles.adviceCard}>
+        <Card style={styles.adviceCard} variant="glow" accentColor={colors.parentAccent}>
           <Text style={styles.adviceCardLabel}>Daily advice</Text>
           {adviceLoading && !featuredAdvice ? (
             <ActivityIndicator size="small" color={colors.parentAccent} style={styles.adviceLoader} />
@@ -208,7 +210,7 @@ export function DashboardScreen() {
         </Card>
 
         {children.length > 0 && selectedChild && (
-          <Card style={styles.dashboardCard}>
+          <Card style={styles.dashboardCard} variant="elevated">
             <Text style={styles.dashboardChildName}>{selectedChild.name}</Text>
             {summaryLoading && !summary ? (
               <ActivityIndicator size="small" color={colors.parentAccent} style={styles.summaryLoader} />
@@ -342,6 +344,13 @@ export function DashboardScreen() {
           style={styles.switchBtn}
         />
 
+        <TouchableOpacity
+          onPress={() => (parentStack?.getParent() as { navigate: (name: string) => void } | undefined)?.navigate('RoleSelect')}
+          style={styles.switchModeLink}
+        >
+          <Text style={styles.switchModeText}>Switch mode (Parent / Child / Therapist / Admin)</Text>
+        </TouchableOpacity>
+
         <Button title="Sign out" onPress={logout} variant="ghost" style={styles.signOutBtn} />
 
         <View style={styles.disclaimerFooter}>
@@ -356,16 +365,21 @@ export function DashboardScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <FAB label="Add child" onPress={handleAddChild} icon="+" />
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { padding: layout.screenPadding, paddingBottom: spacing.xxl },
+  scroll: { flex: 1 },
+  scrollContent: {
+    padding: layout.screenPadding,
+    paddingBottom: layout.fabContentPaddingBottom,
+  },
   title: { ...typography.h2, marginBottom: spacing.xs },
-  subtitle: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.md },
+  subtitle: { ...typography.body, color: colors.textSecondary, marginBottom: layout.sectionGapSmall },
   insightCard: {
-    marginBottom: spacing.lg,
+    marginBottom: layout.sectionGapSmall,
     backgroundColor: colors.primary + '0C',
     borderColor: colors.primary + '24',
   },
@@ -383,7 +397,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginVertical: spacing.xs,
   },
-  adviceCard: { marginBottom: spacing.lg },
+  adviceCard: { marginBottom: layout.sectionGapSmall },
   adviceCardLabel: { ...typography.label, color: colors.parentAccent, marginBottom: spacing.xs },
   adviceCardTitle: { ...typography.h3, marginBottom: spacing.sm },
   adviceCardSummary: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.md },
@@ -435,6 +449,8 @@ const styles = StyleSheet.create({
   removeChildLink: { marginTop: -spacing.sm, marginBottom: spacing.sm, paddingVertical: spacing.xs },
   removeChildText: { ...typography.caption, color: colors.error },
   switchBtn: { marginTop: spacing.md },
+  switchModeLink: { marginTop: spacing.sm, paddingVertical: spacing.sm, alignItems: 'center' },
+  switchModeText: { ...typography.link, fontSize: 14 },
   signOutBtn: { marginTop: spacing.sm },
   disclaimerFooter: {
     marginTop: spacing.xl,

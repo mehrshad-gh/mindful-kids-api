@@ -1,19 +1,28 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
+import { ClinicApplicationFormScreen } from '../screens/auth/ClinicApplicationFormScreen';
+import { SetPasswordScreen } from '../screens/auth/SetPasswordScreen';
 import { DisclaimerConsentScreen } from '../screens/onboarding/DisclaimerConsentScreen';
 import { OnboardingAddChildScreen } from '../screens/onboarding/OnboardingAddChildScreen';
 import { ParentChildExplainScreen } from '../screens/onboarding/ParentChildExplainScreen';
 import type { OnboardingStackParamList } from '../types/navigation';
+import type { RootStackParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 
-export function OnboardingNavigator() {
+type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
+
+export function OnboardingNavigator({ route }: Props) {
+  const initialRoute = route.params?.initialRouteName ?? 'Welcome';
+
   return (
     <Stack.Navigator
+      initialRouteName={initialRoute}
       screenOptions={{
         headerShown: true,
         headerStyle: { backgroundColor: colors.surface },
@@ -34,6 +43,16 @@ export function OnboardingNavigator() {
         name="Login"
         component={LoginScreen}
         options={{ title: 'Sign in' }}
+      />
+      <Stack.Screen
+        name="ClinicApplicationForm"
+        component={ClinicApplicationFormScreen}
+        options={{ title: 'Apply as a clinic' }}
+      />
+      <Stack.Screen
+        name="SetPassword"
+        component={SetPasswordScreen}
+        options={{ title: 'Set your password' }}
       />
       <Stack.Screen
         name="DisclaimerConsent"

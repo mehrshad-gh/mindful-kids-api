@@ -45,6 +45,8 @@ export type OnboardingStackParamList = {
   Welcome: undefined;
   Register: AuthOnSuccessParams | undefined;
   Login: AuthOnSuccessParams | undefined;
+  ClinicApplicationForm: undefined;
+  SetPassword: { token: string };
   DisclaimerConsent: { next: 'AddChild' } | undefined;
   AddChild: undefined;
   ParentChildExplain: undefined;
@@ -80,7 +82,7 @@ export type TherapistStackParamList = {
 };
 
 export type RootStackParamList = {
-  Onboarding: NavigatorScreenParams<OnboardingStackParamList>;
+  Onboarding: NavigatorScreenParams<OnboardingStackParamList> & { initialRouteName?: keyof OnboardingStackParamList };
   Auth: NavigatorScreenParams<AuthStackParamList>;
   TherapistOnboarding: NavigatorScreenParams<TherapistOnboardingStackParamList> & { initialScreen?: keyof TherapistOnboardingStackParamList };
   RoleSelect: undefined;
