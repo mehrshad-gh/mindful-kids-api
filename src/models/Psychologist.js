@@ -74,6 +74,16 @@ async function findByUserId(userId) {
   return toPsychologist(result.rows[0] || null);
 }
 
+async function findByEmail(email) {
+  if (!email || typeof email !== 'string') return null;
+  const normalized = email.trim().toLowerCase();
+  const result = await query(
+    `SELECT ${PSYCHOLOGIST_COLUMNS} FROM psychologists WHERE LOWER(TRIM(email)) = $1 AND is_active = true`,
+    [normalized]
+  );
+  return toPsychologist(result.rows[0] || null);
+}
+
 async function getAverageRating(psychologistId) {
   const result = await query(
     'SELECT COALESCE(AVG(rating), 0)::numeric(3,2) as avg_rating, COUNT(*)::int as review_count FROM reviews WHERE psychologist_id = $1',
@@ -160,6 +170,7 @@ module.exports = {
   findAll,
   findById,
   findByUserId,
+  findByEmail,
   getAverageRating,
   create,
   update,

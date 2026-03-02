@@ -77,6 +77,23 @@ function requireRole(roleOrRoles) {
 }
 
 /**
+ * Resolve "me" to the clinic_admin's first managed clinic. Use before requireClinicAccess.
+ */
+async function resolveClinicMe(ClinicAdminModel) {
+  return async (req, res, next) => {
+    const clinicId = req.params.clinicId || req.params.id;
+    if (clinicId === 'me' && req.user?.role === 'clinic_admin') {
+      const rows = await ClinicAdminModel.findByUserId(req.user.id);
+      if (rows.length === 0) {
+        return res.status(404).json({ error: 'No clinic linked to your account' });
+      }
+      req.params.clinicId = rows[0].clinic_id;
+    }
+    next();
+  };
+}
+
+/**
  * Require that the user can access the clinic (admin or clinic_admin for this clinic).
  * Expects req.params.clinicId to be set (e.g. from route /clinics/:clinicId/...).
  */
@@ -105,4 +122,5 @@ module.exports = {
   optionalAuth,
   requireRole,
   requireClinicAccess,
+  resolveClinicMe,
 };

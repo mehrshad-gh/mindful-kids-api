@@ -26,6 +26,7 @@ export interface ClinicWithCount {
   country?: string | null;
   website?: string | null;
   logo_url?: string | null;
+  phone?: string | null;
   is_active: boolean;
   verification_status?: string;
   verified_at?: string | null;
@@ -50,6 +51,28 @@ export interface ClinicProfileUpdate {
   address?: string | null;
   country?: string | null;
   website?: string | null;
+  phone?: string | null;
+  logo_url?: string | null;
+}
+
+/** GET /clinic-admin/clinics/me – get first managed clinic (convenience for single-clinic admins) */
+export async function getClinicMe(): Promise<{
+  clinic: ClinicWithCount;
+  therapist_count: number;
+}> {
+  const { data } = await apiClient.get<{ clinic: ClinicWithCount; therapist_count: number }>(
+    '/clinic-admin/clinics/me'
+  );
+  return data;
+}
+
+/** PATCH /clinic-admin/clinics/me – update first managed clinic */
+export async function updateClinicMe(body: ClinicProfileUpdate): Promise<{ clinic: ClinicWithCount }> {
+  const { data } = await apiClient.patch<{ clinic: ClinicWithCount }>(
+    '/clinic-admin/clinics/me',
+    body
+  );
+  return data;
 }
 
 export async function updateClinic(
@@ -85,6 +108,17 @@ export async function listTherapists(clinicId: string): Promise<{
 }> {
   const { data } = await apiClient.get<{ therapists: ClinicTherapist[] }>(
     `/clinic-admin/clinics/${clinicId}/therapists`
+  );
+  return data;
+}
+
+export async function addTherapist(
+  clinicId: string,
+  email: string
+): Promise<{ message: string; therapist: ClinicTherapist }> {
+  const { data } = await apiClient.post<{ message: string; therapist: ClinicTherapist }>(
+    `/clinic-admin/clinics/${clinicId}/therapists`,
+    { email }
   );
   return data;
 }

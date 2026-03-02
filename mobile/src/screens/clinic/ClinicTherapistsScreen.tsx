@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import axios from 'axios';
 import {
   View,
   Text,
@@ -7,13 +8,15 @@ import {
   TouchableOpacity,
   Alert,
   FlatList,
+  TextInput,
 } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { listTherapists, removeTherapist, type ClinicTherapist } from '../../api/clinicAdmin';
+import { listTherapists, addTherapist, removeTherapist, type ClinicTherapist } from '../../api/clinicAdmin';
 import type { ClinicStackParamList } from '../../types/navigation';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
@@ -30,6 +33,8 @@ export function ClinicTherapistsScreen() {
   const [therapists, setTherapists] = useState<ClinicTherapist[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [addEmail, setAddEmail] = useState('');
+  const [adding, setAdding] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -48,6 +53,27 @@ export function ClinicTherapistsScreen() {
       load();
     }, [load])
   );
+
+  const handleAdd = async () => {
+    const email = addEmail.trim();
+    if (!email) {
+      Alert.alert('Required', 'Enter the therapist\'s email address.');
+      return;
+    }
+    setAdding(true);
+    try {
+      const { therapist } = await addTherapist(clinicId, email);
+      setTherapists((prev) => [therapist, ...prev]);
+      setAddEmail('');
+    } catch (e: unknown) {
+      const msg = axios.isAxiosError(e) && e.response?.data
+        ? (e.response.data as { error?: string }).error
+        : null;
+      Alert.alert('Error', msg || 'Could not add therapist. They must be a verified therapist with an account.');
+    } finally {
+      setAdding(false);
+    }
+  };
 
   const handleRemove = (therapist: ClinicTherapist) => {
     Alert.alert(
@@ -120,9 +146,30 @@ export function ClinicTherapistsScreen() {
     <ScreenLayout scroll={false}>
       {therapists.length === 0 ? (
         <View style={styles.emptyWrap}>
+          <Card style={styles.addCard} variant="outlined">
+            <Text style={styles.addLabel}>Add therapist by email</Text>
+            <Text style={styles.addHint}>Therapist must be verified and have an account.</Text>
+            <TextInput
+              style={styles.emailInput}
+              value={addEmail}
+              onChangeText={setAddEmail}
+              placeholder="therapist@example.com"
+              placeholderTextColor={colors.textTertiary}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <Button
+              title="Add"
+              onPress={handleAdd}
+              loading={adding}
+              size="small"
+              variant="outline"
+            />
+          </Card>
           <EmptyState
             title="No therapists"
-            message="No therapists are currently affiliated with this clinic."
+            message="Add a verified therapist by their email above."
           />
         </View>
       ) : (
@@ -132,10 +179,32 @@ export function ClinicTherapistsScreen() {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           ListHeaderComponent={
-            <Text style={styles.header}>
-              Therapists at this clinic can be removed below. They will no longer appear under this
-              clinic in the directory.
-            </Text>
+            <>
+              <Card style={styles.addCard} variant="outlined">
+                <Text style={styles.addLabel}>Add therapist by email</Text>
+                <Text style={styles.addHint}>Therapist must be verified and have an account.</Text>
+                <TextInput
+                  style={styles.emailInput}
+                  value={addEmail}
+                  onChangeText={setAddEmail}
+                  placeholder="therapist@example.com"
+                  placeholderTextColor={colors.textTertiary}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <Button
+                  title="Add"
+                  onPress={handleAdd}
+                  loading={adding}
+                  size="small"
+                  variant="outline"
+                />
+              </Card>
+              <Text style={styles.header}>
+                Therapists at this clinic. Remove below to unlink from the directory.
+              </Text>
+            </>
           }
         />
       )}
@@ -145,6 +214,19 @@ export function ClinicTherapistsScreen() {
 
 const styles = StyleSheet.create({
   list: { padding: layout.screenPadding, paddingBottom: spacing.xxl },
+  addCard: { marginBottom: layout.sectionGapSmall },
+  addLabel: { ...typography.label, marginBottom: spacing.xs },
+  addHint: { ...typography.subtitle, color: colors.textTertiary, marginBottom: spacing.sm },
+  emailInput: {
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
   header: {
     ...typography.subtitle,
     color: colors.textSecondary,

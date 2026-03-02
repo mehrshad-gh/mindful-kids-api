@@ -1,6 +1,6 @@
 const { query } = require('../database/connection');
 
-const COLUMNS = 'id, name, slug, description, location, address, country, website, logo_url, is_active, verification_status, verified_at, verified_by, documentation_url, created_at, updated_at';
+const COLUMNS = 'id, name, slug, description, location, address, country, website, logo_url, phone, is_active, verification_status, verified_at, verified_by, documentation_url, created_at, updated_at';
 
 async function findAll(filters = {}) {
   let sql = `SELECT ${COLUMNS} FROM clinics WHERE 1=1`;
@@ -84,7 +84,7 @@ async function updateProfile(id, data) {
   const updates = [];
   const values = [];
   let i = 1;
-  const allowed = ['name', 'description', 'location', 'address', 'country', 'website'];
+  const allowed = ['name', 'description', 'location', 'address', 'country', 'website', 'phone', 'logo_url'];
   for (const key of allowed) {
     if (data[key] !== undefined) {
       updates.push(`${key} = $${i++}`);

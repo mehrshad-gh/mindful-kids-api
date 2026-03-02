@@ -31,6 +31,8 @@ export function ClinicEditScreen() {
   const [address, setAddress] = useState('');
   const [country, setCountry] = useState('');
   const [website, setWebsite] = useState('');
+  const [phone, setPhone] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
@@ -43,6 +45,8 @@ export function ClinicEditScreen() {
       setAddress(clinic.address ?? '');
       setCountry(clinic.country ?? '');
       setWebsite(clinic.website ?? '');
+      setPhone(clinic.phone ?? '');
+      setLogoUrl(clinic.logo_url ?? '');
     } catch {
       Alert.alert('Error', 'Could not load clinic.', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -74,6 +78,8 @@ export function ClinicEditScreen() {
         address: address.trim() || null,
         country: country.trim() || null,
         website: website.trim() || null,
+        phone: phone.trim() || null,
+        logo_url: logoUrl.trim() || null,
       });
       Alert.alert('Saved', 'Clinic profile updated.', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -145,6 +151,21 @@ export function ClinicEditScreen() {
             label="Website"
             value={website}
             onChangeText={setWebsite}
+            placeholder="https://..."
+            keyboardType="url"
+            autoCapitalize="none"
+          />
+          <Input
+            label="Phone"
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="e.g. +1 234 567 8900"
+            keyboardType="phone-pad"
+          />
+          <Input
+            label="Logo URL"
+            value={logoUrl}
+            onChangeText={setLogoUrl}
             placeholder="https://..."
             keyboardType="url"
             autoCapitalize="none"

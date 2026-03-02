@@ -102,6 +102,9 @@ export function ClinicDetailScreen() {
           {clinic.country ? (
             <Text style={styles.meta}>Country: {clinic.country}</Text>
           ) : null}
+          {clinic.phone ? (
+            <Text style={styles.meta}>Phone: {clinic.phone}</Text>
+          ) : null}
           {clinic.website ? (
             <TouchableOpacity
               onPress={() => Linking.openURL(clinic.website!.startsWith('http') ? clinic.website! : `https://${clinic.website!}`)}

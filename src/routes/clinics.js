@@ -23,7 +23,8 @@ router.get('/', async (req, res, next) => {
 });
 
 /** GET /api/clinics/:id – get one clinic with therapists list (public: verified only) */
-router.get('/:id', async (req, res, next) => {
+/** GET /api/clinics/:id/public – same as above (explicit public endpoint) */
+const getClinicPublic = async (req, res, next) => {
   try {
     const clinic = await Clinic.findById(req.params.id);
     if (!clinic || clinic.verification_status !== 'verified') {
@@ -53,6 +54,9 @@ router.get('/:id', async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-});
+};
+
+router.get('/:id/public', getClinicPublic);
+router.get('/:id', getClinicPublic);
 
 module.exports = router;
