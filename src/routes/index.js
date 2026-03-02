@@ -13,6 +13,7 @@ const clinicAdminRoutes = require('./clinicAdmin');
 const clinicsRoutes = require('./clinics');
 const clinicApplicationsRoutes = require('./clinicApplications');
 const reportsRoutes = require('./reports');
+const searchRoutes = require('./search');
 
 const router = express.Router();
 
@@ -30,6 +31,7 @@ router.use('/clinic-admin', clinicAdminRoutes);
 router.use('/clinics', clinicsRoutes);
 router.use('/clinic-applications', clinicApplicationsRoutes);
 router.use('/reports', reportsRoutes);
+router.use('/search', searchRoutes);
 
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

@@ -53,9 +53,47 @@ async function remove(psychologistId, clinicId) {
   return result.rowCount > 0;
 }
 
+/** Return map psychologist_id -> array of clinic names (active affiliations only). */
+async function getClinicNamesByPsychologistIds(psychologistIds) {
+  if (!psychologistIds || psychologistIds.length === 0) return {};
+  const result = await query(
+    `SELECT tc.psychologist_id, c.name
+     FROM therapist_clinics tc
+     JOIN clinics c ON c.id = tc.clinic_id
+     WHERE tc.psychologist_id = ANY($1) AND tc.status = 'active'
+     ORDER BY tc.is_primary DESC, c.name`,
+    [psychologistIds]
+  );
+  const map = {};
+  for (const row of result.rows) {
+    if (!map[row.psychologist_id]) map[row.psychologist_id] = [];
+    map[row.psychologist_id].push(row.name);
+  }
+  return map;
+}
+
+/** Return map clinic_id -> therapist count (active only). */
+async function getTherapistCountByClinicIds(clinicIds) {
+  if (!clinicIds || clinicIds.length === 0) return {};
+  const result = await query(
+    `SELECT clinic_id, COUNT(*)::int AS cnt
+     FROM therapist_clinics
+     WHERE clinic_id = ANY($1) AND status = 'active'
+     GROUP BY clinic_id`,
+    [clinicIds]
+  );
+  const map = {};
+  for (const row of result.rows) {
+    map[row.clinic_id] = row.cnt;
+  }
+  return map;
+}
+
 module.exports = {
   add,
   findByPsychologistId,
   findByClinicId,
   remove,
+  getClinicNamesByPsychologistIds,
+  getTherapistCountByClinicIds,
 };

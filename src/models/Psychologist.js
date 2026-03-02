@@ -58,6 +58,52 @@ async function findAll(filters = {}) {
   return result.rows.map(toPsychologist);
 }
 
+/**
+ * Search for public directory: verified + active only.
+ * Filters: country (via verified credential issuing_country), language, specialty, clinic_id.
+ */
+async function search(filters = {}) {
+  let sql = `
+    SELECT ${PSYCHOLOGIST_COLUMNS}
+    FROM psychologists p
+    WHERE p.is_active = true AND p.verification_status = 'verified'`;
+  const params = [];
+  let i = 1;
+  if (filters.country && String(filters.country).trim()) {
+    sql += ` AND EXISTS (
+      SELECT 1 FROM professional_credentials pc
+      WHERE pc.psychologist_id = p.id AND pc.verification_status = 'verified' AND pc.issuing_country = $${i++}
+    )`;
+    params.push(String(filters.country).trim());
+  }
+  if (filters.language && String(filters.language).trim()) {
+    sql += ` AND p.languages && $${i++}::text[]`;
+    params.push([String(filters.language).trim()]);
+  }
+  if (filters.specialty && String(filters.specialty).trim()) {
+    sql += ` AND (p.specialty ILIKE $${i++} OR $${i} = ANY(p.specialization))`;
+    params.push(`%${String(filters.specialty).trim()}%`, String(filters.specialty).trim());
+  }
+  if (filters.clinic_id && String(filters.clinic_id).trim()) {
+    sql += ` AND EXISTS (
+      SELECT 1 FROM therapist_clinics tc
+      WHERE tc.psychologist_id = p.id AND tc.clinic_id = $${i++} AND tc.status = 'active'
+    )`;
+    params.push(filters.clinic_id.trim());
+  }
+  sql += ' ORDER BY p.verified_at DESC NULLS LAST, p.name ASC';
+  if (filters.limit != null) {
+    sql += ` LIMIT $${i++}`;
+    params.push(Math.min(Math.max(parseInt(filters.limit, 10) || 20, 1), 100));
+  }
+  if (filters.offset != null) {
+    sql += ` OFFSET $${i++}`;
+    params.push(Math.max(parseInt(filters.offset, 10) || 0, 0));
+  }
+  const result = await query(sql, params);
+  return result.rows.map(toPsychologist);
+}
+
 async function findById(id) {
   const result = await query(
     `SELECT ${PSYCHOLOGIST_COLUMNS} FROM psychologists WHERE id = $1`,
@@ -168,6 +214,7 @@ async function update(id, data) {
 
 module.exports = {
   findAll,
+  search,
   findById,
   findByUserId,
   findByEmail,

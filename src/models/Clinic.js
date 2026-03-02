@@ -23,9 +23,13 @@ async function findAll(filters = {}) {
     params.push(`%${filters.search}%`, `%${filters.search}%`);
   }
   sql += ' ORDER BY name ASC';
-  if (filters.limit) {
+  if (filters.limit != null) {
     sql += ` LIMIT $${i++}`;
     params.push(filters.limit);
+  }
+  if (filters.offset != null) {
+    sql += ` OFFSET $${i++}`;
+    params.push(filters.offset);
   }
   const result = await query(sql, params);
   return result.rows;

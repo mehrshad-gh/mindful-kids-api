@@ -16,6 +16,7 @@ export type ParentTabParamList = {
   Dashboard: undefined;
   AdviceFeed: undefined;
   ContentLibrary: undefined;
+  Search: undefined;
   PsychologistDirectory: undefined;
   Clinics: undefined;
   ChildProgress: undefined;
