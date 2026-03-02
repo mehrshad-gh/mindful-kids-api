@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
@@ -24,6 +24,8 @@ import type {
   TherapistMeClinicAffiliation,
 } from '../../api/therapist';
 import type { ApplicationStatus } from '../../types/therapist';
+import type { TherapistStackParamList } from '../../types/navigation';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -40,9 +42,11 @@ const SUSPENDED_MESSAGE =
 const REVOKED_MESSAGE =
   'Your verification has been revoked. Your profile is not shown as verified in the directory. Contact support if you have questions.';
 
+type Nav = NativeStackNavigationProp<TherapistStackParamList, 'TherapistDashboard'>;
+
 export function TherapistDashboardScreen() {
   const { user, setAppRole, logout } = useAuth();
-  const navigation = useNavigation();
+  const navigation = useNavigation<Nav>();
   const [status, setStatus] = useState<ApplicationStatus | null>(null);
   const [psychologistVerificationStatus, setPsychologistVerificationStatus] = useState<string | null>(null);
   const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
@@ -368,6 +372,19 @@ export function TherapistDashboardScreen() {
             style={styles.btn}
           />
         )}
+        <Card style={styles.card}>
+          <Text style={styles.cardTitle}>Legal</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('TermsOfService')} style={styles.legalLink}>
+            <Text style={styles.legalLinkText}>Terms of Service</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')} style={styles.legalLink}>
+            <Text style={styles.legalLinkText}>Privacy Policy</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ProfessionalDisclaimer')} style={styles.legalLink}>
+            <Text style={styles.legalLinkText}>Professional Disclaimer</Text>
+          </TouchableOpacity>
+        </Card>
+
         <Button title="Use app as Parent" onPress={useAsParent} style={styles.btn} />
         <Button title="Sign out" onPress={logout} variant="ghost" style={styles.signOutBtn} />
       </ScrollView>
@@ -424,6 +441,8 @@ const styles = StyleSheet.create({
   clinicMeta: { flex: 1 },
   clinicName: { ...typography.body, fontWeight: '600', color: colors.text },
   clinicRole: { ...typography.bodySmall, color: colors.textSecondary },
+  legalLink: { marginTop: spacing.xs },
+  legalLinkText: { ...typography.body, color: colors.primary, textDecorationLine: 'underline' },
   btn: { alignSelf: 'flex-start', marginBottom: spacing.sm },
   signOutBtn: {},
 });

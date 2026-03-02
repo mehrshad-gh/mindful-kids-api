@@ -15,6 +15,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
+import { recordLegalAcceptance } from '../../services/authService';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -61,6 +62,12 @@ export function RegisterScreen({ navigation, route }: Props) {
     }
     try {
       await register(email.trim(), password, name.trim());
+      try {
+        await recordLegalAcceptance('terms');
+        await recordLegalAcceptance('privacy_policy');
+      } catch {
+        // Non-blocking: acceptance recording failed; user is still registered
+      }
       if (onSuccessNavigateTo === 'AddChild') {
         (navigation as any).navigate('DisclaimerConsent', { next: 'AddChild' });
       } else if (onSuccessNavigateTo) {
@@ -99,6 +106,17 @@ export function RegisterScreen({ navigation, route }: Props) {
             placeholder="At least 8 characters"
             secureTextEntry
           />
+          <Text style={styles.agreement}>
+            By creating an account you agree to our{' '}
+            <Text style={styles.link} onPress={() => (navigation as any).navigate('TermsOfService')}>
+              Terms of Service
+            </Text>
+            {' '}and{' '}
+            <Text style={styles.link} onPress={() => (navigation as any).navigate('PrivacyPolicy')}>
+              Privacy Policy
+            </Text>
+            .
+          </Text>
           <Button
             title="Create account"
             onPress={handleRegister}
@@ -137,6 +155,8 @@ const styles = StyleSheet.create({
   heroTitle: { ...typography.h1, marginBottom: spacing.sm },
   heroSubtitle: { ...typography.body, color: colors.textSecondary },
   formCard: { marginBottom: layout.sectionGap },
+  agreement: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.md },
+  link: { ...typography.bodySmall, color: colors.primary, textDecorationLine: 'underline' },
   primaryBtn: {},
   secondary: { alignItems: 'center' },
   linkText: { ...typography.link },

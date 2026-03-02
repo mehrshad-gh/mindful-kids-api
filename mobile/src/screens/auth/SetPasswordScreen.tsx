@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
-import { setPasswordFromInvite } from '../../services/authService';
+import { setPasswordFromInvite, recordLegalAcceptance } from '../../services/authService';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -81,6 +81,13 @@ export function SetPasswordScreen({ navigation, route }: Props) {
     setLoading(true);
     try {
       await setPasswordFromInvite(token, password);
+      try {
+        await recordLegalAcceptance('terms');
+        await recordLegalAcceptance('privacy_policy');
+        await recordLegalAcceptance('professional_disclaimer');
+      } catch {
+        // Non-blocking
+      }
       await refreshAuth();
       // Root will re-render and show App (authenticated)
     } catch (err: unknown) {
@@ -130,6 +137,21 @@ export function SetPasswordScreen({ navigation, route }: Props) {
           secureTextEntry
           error={password !== confirm && confirm ? 'Passwords do not match' : undefined}
         />
+        <Text style={styles.agreement}>
+          By setting your password you agree to our{' '}
+          <Text style={styles.link} onPress={() => (navigation as any).navigate('TermsOfService')}>
+            Terms of Service
+          </Text>
+          ,{' '}
+          <Text style={styles.link} onPress={() => (navigation as any).navigate('PrivacyPolicy')}>
+            Privacy Policy
+          </Text>
+          , and{' '}
+          <Text style={styles.link} onPress={() => (navigation as any).navigate('ProfessionalDisclaimer')}>
+            Professional Disclaimer
+          </Text>
+          .
+        </Text>
         <Button
           title="Set password and sign in"
           onPress={handleSubmit}
@@ -147,6 +169,8 @@ const styles = StyleSheet.create({
   heroTitle: { ...typography.h2, marginBottom: spacing.xs },
   heroSubtitle: { ...typography.body, color: colors.textSecondary },
   card: { marginBottom: layout.sectionGap },
+  agreement: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.md },
+  link: { ...typography.bodySmall, color: colors.primary, textDecorationLine: 'underline' },
   failureBody: { ...typography.body, color: colors.textSecondary },
   btn: {},
 });

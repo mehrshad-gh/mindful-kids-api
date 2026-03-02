@@ -12,6 +12,9 @@ import { AddChildScreen } from '../screens/parent/AddChildScreen';
 import { PsychologistDetailScreen } from '../screens/parent/PsychologistDetailScreen';
 import { ClinicDetailScreen } from '../screens/parent/ClinicDetailScreen';
 import { TrustAndSafetyScreen } from '../screens/parent/TrustAndSafetyScreen';
+import { TermsOfServiceScreen } from '../screens/legal/TermsOfServiceScreen';
+import { PrivacyPolicyScreen } from '../screens/legal/PrivacyPolicyScreen';
+import { ProfessionalDisclaimerScreen } from '../screens/legal/ProfessionalDisclaimerScreen';
 import type { ParentStackParamList, ParentTabParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
 
@@ -50,6 +53,9 @@ export function ParentNavigator() {
       <Stack.Screen name="PsychologistDetail" component={PsychologistDetailScreen} options={{ title: 'Profile' }} />
       <Stack.Screen name="ClinicDetail" component={ClinicDetailScreen} options={{ title: 'Clinic' }} />
       <Stack.Screen name="TrustAndSafety" component={TrustAndSafetyScreen} options={{ title: 'Trust & safety' }} />
+      <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} options={{ title: 'Terms of Service' }} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
+      <Stack.Screen name="ProfessionalDisclaimer" component={ProfessionalDisclaimerScreen} options={{ title: 'Professional Disclaimer' }} />
     </Stack.Navigator>
   );
 }

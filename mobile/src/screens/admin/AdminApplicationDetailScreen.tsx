@@ -22,6 +22,7 @@ import { Button } from '../../components/ui/Button';
 import {
   getTherapistApplication,
   reviewTherapistApplication,
+  setPsychologistStatus,
   type AdminApplicationDetailResponse,
 } from '../../api/admin';
 import axios from 'axios';
@@ -69,6 +70,7 @@ export function AdminApplicationDetailScreen({ route, navigation }: Props) {
   const [documentPreview, setDocumentPreview] = useState<DocumentPreview | null>(null);
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [statusLoading, setStatusLoading] = useState(false);
 
   const handleViewDocument = useCallback(async (documentUrl: string) => {
     const base = getBaseURL();
@@ -153,6 +155,33 @@ export function AdminApplicationDetailScreen({ route, navigation }: Props) {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handlePsychologistStatus = (status: 'active' | 'suspended' | 'rejected') => {
+    if (!app.psychologist_id) return;
+    const label = status === 'active' ? 'Active' : status === 'suspended' ? 'Suspended' : 'Rejected';
+    Alert.alert(
+      'Set psychologist status',
+      `Set this professional's status to "${label}"? This affects their visibility and verification badge.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Update',
+          onPress: async () => {
+            setStatusLoading(true);
+            try {
+              await setPsychologistStatus(app.psychologist_id!, status);
+              Alert.alert('Updated', `Status set to ${label}.`);
+              load();
+            } catch (e) {
+              Alert.alert('Error', e instanceof Error ? e.message : 'Could not update status');
+            } finally {
+              setStatusLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (loading && !data) {
@@ -267,6 +296,41 @@ export function AdminApplicationDetailScreen({ route, navigation }: Props) {
           </View>
         )}
 
+        {app.psychologist_id && app.status === 'approved' && (
+          <Card style={styles.section}>
+            <Text style={styles.sectionTitle}>Psychologist status</Text>
+            <Text style={styles.bodySmall}>
+              Current: {app.psychologist_verification_status === 'verified' ? 'Active' : app.psychologist_verification_status === 'suspended' ? 'Suspended' : app.psychologist_verification_status === 'rejected' ? 'Rejected' : app.psychologist_verification_status ?? '—'}
+            </Text>
+            <View style={styles.statusButtons}>
+              <Button
+                title="Active"
+                variant={app.psychologist_verification_status === 'verified' ? 'primary' : 'outline'}
+                size="small"
+                onPress={() => handlePsychologistStatus('active')}
+                disabled={statusLoading}
+                style={styles.statusBtn}
+              />
+              <Button
+                title="Suspended"
+                variant={app.psychologist_verification_status === 'suspended' ? 'primary' : 'outline'}
+                size="small"
+                onPress={() => handlePsychologistStatus('suspended')}
+                disabled={statusLoading}
+                style={styles.statusBtn}
+              />
+              <Button
+                title="Rejected"
+                variant={app.psychologist_verification_status === 'rejected' ? 'primary' : 'outline'}
+                size="small"
+                onPress={() => handlePsychologistStatus('rejected')}
+                disabled={statusLoading}
+                style={styles.statusBtn}
+              />
+            </View>
+          </Card>
+        )}
+
         {app.status !== 'pending' && (
           <View style={styles.statusRow}>
             <Text style={styles.bodySmall}>Status: {app.status}</Text>
@@ -356,6 +420,8 @@ const styles = StyleSheet.create({
   actions: { marginTop: spacing.lg },
   approveBtn: { marginBottom: spacing.sm },
   rejectBtn: {},
+  statusButtons: { flexDirection: 'row', flexWrap: 'wrap', marginTop: spacing.sm },
+  statusBtn: { marginRight: spacing.sm, marginBottom: spacing.sm },
   statusRow: { marginTop: spacing.lg, padding: spacing.md, backgroundColor: colors.surface, borderRadius: 12 },
   rejection: { color: colors.error, marginTop: spacing.sm },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: spacing.lg },

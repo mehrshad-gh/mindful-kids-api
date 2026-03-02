@@ -1,15 +1,35 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme';
 import { typography } from '../../theme/typography';
+import type { ParentStackParamList } from '../../types/navigation';
+
+type Nav = NativeStackNavigationProp<ParentStackParamList, 'TrustAndSafety'>;
 
 export function TrustAndSafetyScreen() {
+  const navigation = useNavigation<Nav>();
+
   return (
     <ScreenLayout>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <Card style={styles.card}>
+          <Text style={styles.heading}>Legal</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('TermsOfService')} style={styles.linkRow}>
+            <Text style={styles.link}>Terms of Service</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')} style={styles.linkRow}>
+            <Text style={styles.link}>Privacy Policy</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ProfessionalDisclaimer')} style={styles.linkRow}>
+            <Text style={styles.link}>Professional Disclaimer</Text>
+          </TouchableOpacity>
+        </Card>
+
         <Text style={styles.lead}>
           Mindful Kids supports emotional skill development and parent education. It does not diagnose, treat, or replace professional care.
         </Text>
@@ -73,4 +93,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 22,
   },
+  linkRow: { marginTop: spacing.sm },
+  link: { ...typography.body, color: colors.primary, textDecorationLine: 'underline' },
 });

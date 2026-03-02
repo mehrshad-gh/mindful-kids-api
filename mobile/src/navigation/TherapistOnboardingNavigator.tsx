@@ -9,6 +9,9 @@ import { TherapistSpecialtiesScreen } from '../screens/therapist/TherapistSpecia
 import { TherapistClinicScreen } from '../screens/therapist/TherapistClinicScreen';
 import { TherapistSubmitScreen } from '../screens/therapist/TherapistSubmitScreen';
 import { TherapistSuccessScreen } from '../screens/therapist/TherapistSuccessScreen';
+import { TermsOfServiceScreen } from '../screens/legal/TermsOfServiceScreen';
+import { PrivacyPolicyScreen } from '../screens/legal/PrivacyPolicyScreen';
+import { ProfessionalDisclaimerScreen } from '../screens/legal/ProfessionalDisclaimerScreen';
 import type { TherapistOnboardingStackParamList } from '../types/navigation';
 import type { RootStackParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
@@ -37,6 +40,9 @@ export function TherapistOnboardingNavigator({ route }: Props) {
       <Stack.Screen name="TherapistClinic" component={TherapistClinicScreen} options={{ title: 'Clinic affiliation' }} />
       <Stack.Screen name="TherapistSubmit" component={TherapistSubmitScreen} options={{ title: 'Review & submit' }} />
       <Stack.Screen name="TherapistSuccess" component={TherapistSuccessScreen} options={{ title: 'Thank you', headerBackVisible: false }} />
+      <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} options={{ title: 'Terms of Service' }} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
+      <Stack.Screen name="ProfessionalDisclaimer" component={ProfessionalDisclaimerScreen} options={{ title: 'Professional Disclaimer' }} />
     </Stack.Navigator>
   );
 }

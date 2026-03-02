@@ -5,6 +5,9 @@ export type AuthStackParamList = {
   Register: undefined;
   /** Public form for clinics to apply (no auth). */
   ClinicApplicationForm: undefined;
+  TermsOfService: undefined;
+  PrivacyPolicy: undefined;
+  ProfessionalDisclaimer: undefined;
 };
 
 /** Params for Register/Login when used in onboarding (navigate to AddChild on success). */
@@ -28,6 +31,9 @@ export type ParentStackParamList = {
   PsychologistDetail: { psychologistId: string };
   ClinicDetail: { clinicId: string };
   TrustAndSafety: undefined;
+  TermsOfService: undefined;
+  PrivacyPolicy: undefined;
+  ProfessionalDisclaimer: undefined;
 };
 
 export type ChildTabParamList = {
@@ -51,6 +57,9 @@ export type OnboardingStackParamList = {
   DisclaimerConsent: { next: 'AddChild' } | undefined;
   AddChild: undefined;
   ParentChildExplain: undefined;
+  TermsOfService: undefined;
+  PrivacyPolicy: undefined;
+  ProfessionalDisclaimer: undefined;
 };
 
 /** Therapist onboarding: linear steps after register (or when therapist has no application). */
@@ -63,11 +72,15 @@ export type TherapistOnboardingStackParamList = {
   TherapistClinic: undefined;
   TherapistSubmit: undefined;
   TherapistSuccess: undefined;
+  TermsOfService: undefined;
+  PrivacyPolicy: undefined;
+  ProfessionalDisclaimer: undefined;
 };
 
-/** Admin: therapist applications, reports (trust & safety), clinics, clinic applications, assign verified. */
+/** Admin: dashboard, therapist applications, reports (trust & safety), clinics, clinic applications. */
 export type AdminStackParamList = {
   AdminMain: undefined;
+  TherapistApplications: undefined;
   TherapistApplicationDetail: { applicationId: string };
   AdminReports: undefined;
   AdminReportDetail: { reportId: string };
@@ -77,17 +90,23 @@ export type AdminStackParamList = {
   AdminClinicApplicationDetail: { applicationId: string };
 };
 
-/** Therapist: dashboard (application status). */
+/** Therapist: dashboard (application status), legal. */
 export type TherapistStackParamList = {
   TherapistDashboard: undefined;
+  TermsOfService: undefined;
+  PrivacyPolicy: undefined;
+  ProfessionalDisclaimer: undefined;
 };
 
-/** Clinic admin: list clinics, detail, edit profile, therapists. */
+/** Clinic admin: list clinics, detail, edit profile, therapists, legal. */
 export type ClinicStackParamList = {
   ClinicDashboard: undefined;
   ClinicDetail: { clinicId: string };
   ClinicEdit: { clinicId: string };
   ClinicTherapists: { clinicId: string };
+  TermsOfService: undefined;
+  PrivacyPolicy: undefined;
+  ProfessionalDisclaimer: undefined;
 };
 
 export type RootStackParamList = {

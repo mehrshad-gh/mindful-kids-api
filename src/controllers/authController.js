@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 const User = require('../models/User');
+const LegalAcceptance = require('../models/LegalAcceptance');
 
 function generateToken(user) {
   const expiresIn = user.role === 'admin' ? config.jwt.expiresInAdmin : config.jwt.expiresIn;
@@ -125,9 +126,37 @@ async function setPasswordFromInvite(req, res, next) {
   }
 }
 
+/** POST /auth/me/legal-acceptance – record that current user accepted a document (terms | privacy_policy | professional_disclaimer). */
+async function recordLegalAcceptance(req, res, next) {
+  try {
+    const { document_type: documentType } = req.body;
+    if (!documentType || !LegalAcceptance.DOCUMENT_TYPES.includes(documentType)) {
+      return res.status(400).json({
+        error: `document_type must be one of: ${LegalAcceptance.DOCUMENT_TYPES.join(', ')}`,
+      });
+    }
+    await LegalAcceptance.record(req.user.id, documentType);
+    res.status(201).json({ message: 'Acceptance recorded', document_type: documentType });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** GET /auth/me/legal-acceptances – return latest acceptance timestamp per document type for current user. */
+async function getLegalAcceptances(req, res, next) {
+  try {
+    const acceptances = await LegalAcceptance.getLatestByUserId(req.user.id);
+    res.json({ acceptances });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   register,
   login,
   me,
   setPasswordFromInvite,
+  recordLegalAcceptance,
+  getLegalAcceptances,
 };

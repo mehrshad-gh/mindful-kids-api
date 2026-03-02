@@ -74,6 +74,10 @@ async function update(id, data) {
     updates.push(`documentation_url = $${i++}`);
     values.push(data.documentation_url);
   }
+  if (data.is_active !== undefined) {
+    updates.push(`is_active = $${i++}`);
+    values.push(!!data.is_active);
+  }
   if (updates.length === 0) return findById(id);
   values.push(id);
   const result = await query(

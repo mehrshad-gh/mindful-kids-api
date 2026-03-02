@@ -50,3 +50,16 @@ export async function setPasswordFromInvite(token: string, password: string): Pr
   await storeToken(data.token);
   return data;
 }
+
+export type LegalDocumentType = 'terms' | 'privacy_policy' | 'professional_disclaimer';
+
+/** Record that the current user accepted a legal document (call after login/register; requires token). */
+export async function recordLegalAcceptance(documentType: LegalDocumentType): Promise<void> {
+  await apiClient.post('/auth/me/legal-acceptance', { document_type: documentType });
+}
+
+/** Get latest acceptance timestamps per document type for the current user. */
+export async function getLegalAcceptances(): Promise<Record<string, string>> {
+  const { data } = await apiClient.get<{ acceptances: Record<string, string> }>('/auth/me/legal-acceptances');
+  return data.acceptances ?? {};
+}

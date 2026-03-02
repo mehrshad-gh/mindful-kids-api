@@ -16,6 +16,7 @@ import { Button } from '../../components/ui/Button';
 import {
   getReport,
   updateReport,
+  setPsychologistStatus,
   type AdminReportListItem,
   type ProfessionalReportStatus,
   type ProfessionalReportActionTaken,
@@ -53,6 +54,7 @@ export function AdminReportDetailScreen({ route }: Props) {
   const [report, setReport] = useState<AdminReportListItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -89,6 +91,32 @@ export function AdminReportDetailScreen({ route }: Props) {
               Alert.alert('Error', e instanceof Error ? e.message : 'Could not update');
             } finally {
               setSaving(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handlePsychologistStatus = (status: 'active' | 'suspended' | 'rejected') => {
+    const label = status === 'active' ? 'Active' : status === 'suspended' ? 'Suspended' : 'Rejected';
+    Alert.alert(
+      'Set professional status',
+      `Set this professional's profile status to "${label}"? This affects their visibility and verification badge.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Update',
+          onPress: async () => {
+            setStatusLoading(true);
+            try {
+              await setPsychologistStatus(report!.psychologist_id, status);
+              Alert.alert('Updated', `Professional status set to ${label}.`);
+              load();
+            } catch (e) {
+              Alert.alert('Error', e instanceof Error ? e.message : 'Could not update status');
+            } finally {
+              setStatusLoading(false);
             }
           },
         },
@@ -176,7 +204,33 @@ export function AdminReportDetailScreen({ route }: Props) {
           ) : null}
         </Card>
 
-        <Text style={styles.sectionTitle}>Status</Text>
+        <Text style={styles.sectionTitle}>Professional status</Text>
+        <Text style={styles.value}>Moderate the reported professional's profile (visibility and verification).</Text>
+        <View style={styles.chips}>
+          <TouchableOpacity
+            style={styles.chip}
+            onPress={() => handlePsychologistStatus('active')}
+            disabled={statusLoading}
+          >
+            <Text style={styles.chipText}>Active</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.chip}
+            onPress={() => handlePsychologistStatus('suspended')}
+            disabled={statusLoading}
+          >
+            <Text style={styles.chipText}>Suspended</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.chip}
+            onPress={() => handlePsychologistStatus('rejected')}
+            disabled={statusLoading}
+          >
+            <Text style={styles.chipText}>Rejected</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.sectionTitle}>Report status</Text>
         <View style={styles.chips}>
           {STATUS_OPTIONS.map((opt) => (
             <TouchableOpacity

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
+import { recordLegalAcceptance } from '../../services/authService';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { colors } from '../../theme/colors';
@@ -47,6 +48,13 @@ export function TherapistRegisterScreen({ navigation, route }: TherapistRegister
     }
     try {
       await register(email.trim(), password, name.trim(), 'therapist');
+      try {
+        await recordLegalAcceptance('terms');
+        await recordLegalAcceptance('privacy_policy');
+        await recordLegalAcceptance('professional_disclaimer');
+      } catch {
+        // Non-blocking
+      }
       // RootNavigator will re-render (user is now authenticated) and show TherapistOnboarding
       // with initialScreen TherapistProfessional, so no need to replace here.
     } catch (err) {
@@ -77,6 +85,17 @@ export function TherapistRegisterScreen({ navigation, route }: TherapistRegister
           placeholder="At least 8 characters"
           secureTextEntry
         />
+        <View style={styles.agreementWrap}>
+          <Text style={styles.agreement}>
+            By creating an account you agree to our{' '}
+            <Text style={styles.link} onPress={() => navigation.navigate('TermsOfService')}>Terms of Service</Text>
+            ,{' '}
+            <Text style={styles.link} onPress={() => navigation.navigate('PrivacyPolicy')}>Privacy Policy</Text>
+            , and{' '}
+            <Text style={styles.link} onPress={() => navigation.navigate('ProfessionalDisclaimer')}>Professional Disclaimer</Text>
+            .
+          </Text>
+        </View>
         <Button title="Create professional account" onPress={handleRegister} loading={isLoading} style={styles.button} />
       </KeyboardAvoidingView>
     </ScreenLayout>
@@ -86,5 +105,8 @@ export function TherapistRegisterScreen({ navigation, route }: TherapistRegister
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.md },
   signIn: { alignSelf: 'flex-start', marginBottom: spacing.lg },
+  agreementWrap: { marginTop: spacing.sm },
+  agreement: { ...typography.bodySmall, color: colors.textSecondary },
+  link: { ...typography.bodySmall, color: colors.primary, textDecorationLine: 'underline' },
   button: { marginTop: spacing.lg },
 });

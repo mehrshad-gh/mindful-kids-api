@@ -5,6 +5,19 @@
 import { apiClient } from '../lib/apiClient';
 import type { TherapistApplication, Clinic, ClinicApplication } from '../types/therapist';
 
+export interface AdminDashboard {
+  pending_therapist_applications: number;
+  pending_clinic_applications: number;
+  verified_therapists_count: number;
+  verified_clinics_count: number;
+  reports_pending_review: number;
+}
+
+export async function getDashboard(): Promise<AdminDashboard> {
+  const { data } = await apiClient.get<AdminDashboard>('/admin/dashboard');
+  return data;
+}
+
 export interface AdminApplicationListItem extends TherapistApplication {
   user_email?: string;
   user_name?: string;
@@ -56,6 +69,30 @@ export async function setPsychologistVerified(
   const { data } = await apiClient.patch<{ message: string; psychologist: unknown }>(
     `/admin/psychologists/${psychologistId}`,
     { is_verified: isVerified }
+  );
+  return data;
+}
+
+/** PATCH /admin/psychologists/:id/status – active | suspended | rejected */
+export async function setPsychologistStatus(
+  psychologistId: string,
+  status: 'active' | 'suspended' | 'rejected'
+): Promise<{ message: string; psychologist: unknown }> {
+  const { data } = await apiClient.patch<{ message: string; psychologist: unknown }>(
+    `/admin/psychologists/${psychologistId}/status`,
+    { status }
+  );
+  return data;
+}
+
+/** PATCH /admin/clinics/:id/status – active | suspended | rejected */
+export async function setClinicStatus(
+  clinicId: string,
+  status: 'active' | 'suspended' | 'rejected'
+): Promise<{ message: string; clinic: Clinic }> {
+  const { data } = await apiClient.patch<{ message: string; clinic: Clinic }>(
+    `/admin/clinics/${clinicId}/status`,
+    { status }
   );
   return data;
 }

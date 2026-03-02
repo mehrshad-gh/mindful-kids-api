@@ -36,6 +36,14 @@ const setPasswordFromInviteValidation = [
 router.post('/register', registerValidation, handleValidationErrors, authController.register);
 router.post('/login', loginValidation, handleValidationErrors, authController.login);
 router.get('/me', authenticate, authController.me);
+router.post(
+  '/me/legal-acceptance',
+  authenticate,
+  [body('document_type').isIn(['terms', 'privacy_policy', 'professional_disclaimer']).withMessage('document_type must be terms, privacy_policy, or professional_disclaimer')],
+  handleValidationErrors,
+  authController.recordLegalAcceptance
+);
+router.get('/me/legal-acceptances', authenticate, authController.getLegalAcceptances);
 router.post('/set-password-from-invite', setPasswordFromInviteLimiter, setPasswordFromInviteValidation, handleValidationErrors, authController.setPasswordFromInvite);
 
 module.exports = router;

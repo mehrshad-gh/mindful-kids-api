@@ -2,6 +2,7 @@ const express = require('express');
 const { authenticate, requireRole } = require('../middleware/auth');
 const adminTherapistController = require('../controllers/adminTherapistController');
 const adminReportsController = require('../controllers/adminReportsController');
+const adminDashboardController = require('../controllers/adminDashboardController');
 const clinicApplicationController = require('../controllers/clinicApplicationController');
 const adminClinicApplicationsRoutes = require('./adminClinicApplications');
 const Clinic = require('../models/Clinic');
@@ -17,6 +18,9 @@ router.get('/clinic-applications/document', clinicApplicationController.serveDoc
 
 router.use(authenticate);
 router.use(requireRole('admin'));
+
+// Dashboard overview (counts)
+router.get('/dashboard', adminDashboardController.getDashboard);
 
 // Clinic onboarding: list, get one, get document URL, approve/reject
 router.use('/clinic-applications', adminClinicApplicationsRoutes);
@@ -171,6 +175,66 @@ router.patch('/psychologists/:id', async (req, res, next) => {
       });
     }
     return res.status(400).json({ error: 'Body must include is_verified (boolean) or verification_status' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** PATCH /admin/psychologists/:id/status – set status (active | suspended | rejected). Logged in admin_audit_log. */
+const STATUS_PSYCHOLOGIST = { active: 'verified', suspended: 'suspended', rejected: 'rejected' };
+router.patch('/psychologists/:id/status', async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    if (!status || !STATUS_PSYCHOLOGIST[status]) {
+      return res.status(400).json({ error: 'status must be one of: active, suspended, rejected' });
+    }
+    const psychologist = await Psychologist.findById(req.params.id);
+    if (!psychologist) {
+      return res.status(404).json({ error: 'Psychologist not found' });
+    }
+    const verification_status = STATUS_PSYCHOLOGIST[status];
+    const updated = await Psychologist.update(req.params.id, {
+      verification_status,
+      is_active: status === 'active',
+    });
+    await AdminAuditLog.insert({
+      adminUserId: req.user.id,
+      actionType: 'psychologist_status_updated',
+      targetType: 'psychologist',
+      targetId: req.params.id,
+      details: { status, verification_status },
+    });
+    res.json({ message: 'Status updated.', psychologist: updated });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** PATCH /admin/clinics/:id/status – set status (active | suspended | rejected). Logged in admin_audit_log. */
+const STATUS_CLINIC = { active: 'verified', suspended: 'suspended', rejected: 'rejected' };
+router.patch('/clinics/:id/status', async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    if (!status || !STATUS_CLINIC[status]) {
+      return res.status(400).json({ error: 'status must be one of: active, suspended, rejected' });
+    }
+    const clinic = await Clinic.findById(req.params.id);
+    if (!clinic) {
+      return res.status(404).json({ error: 'Clinic not found' });
+    }
+    const verification_status = STATUS_CLINIC[status];
+    const updated = await Clinic.update(req.params.id, {
+      verification_status,
+      is_active: status === 'active',
+    });
+    await AdminAuditLog.insert({
+      adminUserId: req.user.id,
+      actionType: 'clinic_status_updated',
+      targetType: 'clinic',
+      targetId: req.params.id,
+      details: { status, verification_status },
+    });
+    res.json({ message: 'Status updated.', clinic: updated });
   } catch (err) {
     next(err);
   }

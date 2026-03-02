@@ -72,6 +72,20 @@ export function ClinicDashboardScreen() {
             />
           </Card>
         )}
+
+        <Card style={styles.card}>
+          <Text style={styles.legalHeading}>Legal</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('TermsOfService')} style={styles.legalLink}>
+            <Text style={styles.legalLinkText}>Terms of Service</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')} style={styles.legalLink}>
+            <Text style={styles.legalLinkText}>Privacy Policy</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ProfessionalDisclaimer')} style={styles.legalLink}>
+            <Text style={styles.legalLinkText}>Professional Disclaimer</Text>
+          </TouchableOpacity>
+        </Card>
+
         <TouchableOpacity
           onPress={() =>
             (navigation.getParent() as { navigate: (name: string) => void } | undefined)?.navigate(
@@ -94,6 +108,9 @@ const styles = StyleSheet.create({
   card: { marginBottom: layout.listItemGap },
   clinicName: { ...typography.h3, marginBottom: spacing.xs },
   tapHint: { ...typography.subtitle, color: colors.textTertiary },
+  legalHeading: { ...typography.label, color: colors.primary, marginBottom: spacing.sm },
+  legalLink: { marginTop: spacing.xs },
+  legalLinkText: { ...typography.body, color: colors.primary, textDecorationLine: 'underline' },
   switchLink: {
     marginTop: layout.sectionGapSmall,
     paddingVertical: spacing.sm,

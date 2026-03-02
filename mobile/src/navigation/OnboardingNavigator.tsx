@@ -9,6 +9,9 @@ import { SetPasswordScreen } from '../screens/auth/SetPasswordScreen';
 import { DisclaimerConsentScreen } from '../screens/onboarding/DisclaimerConsentScreen';
 import { OnboardingAddChildScreen } from '../screens/onboarding/OnboardingAddChildScreen';
 import { ParentChildExplainScreen } from '../screens/onboarding/ParentChildExplainScreen';
+import { TermsOfServiceScreen } from '../screens/legal/TermsOfServiceScreen';
+import { PrivacyPolicyScreen } from '../screens/legal/PrivacyPolicyScreen';
+import { ProfessionalDisclaimerScreen } from '../screens/legal/ProfessionalDisclaimerScreen';
 import type { OnboardingStackParamList } from '../types/navigation';
 import type { RootStackParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
@@ -71,6 +74,9 @@ export function OnboardingNavigator({ route }: Props) {
         component={ParentChildExplainScreen}
         options={{ title: 'You\'re all set' }}
       />
+      <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} options={{ title: 'Terms of Service' }} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
+      <Stack.Screen name="ProfessionalDisclaimer" component={ProfessionalDisclaimerScreen} options={{ title: 'Professional Disclaimer' }} />
     </Stack.Navigator>
   );
 }

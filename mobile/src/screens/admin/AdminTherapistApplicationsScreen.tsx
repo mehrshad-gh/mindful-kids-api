@@ -23,7 +23,7 @@ import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
-type Nav = NativeStackNavigationProp<AdminStackParamList, 'AdminMain'>;
+type Nav = NativeStackNavigationProp<AdminStackParamList, 'TherapistApplications'>;
 
 function getStatusVariant(
   item: AdminApplicationListItem

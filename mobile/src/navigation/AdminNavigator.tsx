@@ -1,5 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { AdminDashboardScreen } from '../screens/admin/AdminDashboardScreen';
 import { AdminTherapistApplicationsScreen } from '../screens/admin/AdminTherapistApplicationsScreen';
 import { AdminApplicationDetailScreen } from '../screens/admin/AdminApplicationDetailScreen';
 import { AdminReportsScreen } from '../screens/admin/AdminReportsScreen';
@@ -25,8 +26,13 @@ export function AdminNavigator() {
     >
       <Stack.Screen
         name="AdminMain"
+        component={AdminDashboardScreen}
+        options={{ title: 'Admin' }}
+      />
+      <Stack.Screen
+        name="TherapistApplications"
         component={AdminTherapistApplicationsScreen}
-        options={{ title: 'Verification' }}
+        options={{ title: 'Therapist applications' }}
       />
       <Stack.Screen
         name="TherapistApplicationDetail"
