@@ -1,7 +1,14 @@
 /**
  * Static legal and safety content for in-app display.
  * Replace with full legal text or load from API/CMS when available.
+ *
+ * When you publish new Terms/Privacy/Disclaimer, bump LEGAL_DOCUMENT_VERSION
+ * (e.g. to '2026-03-01'). Backend stores which version the user accepted;
+ * later you can force re-accept when current version > stored version.
  */
+
+/** Version of legal documents. Bump when terms/privacy/disclaimer change; used when recording acceptance. */
+export const LEGAL_DOCUMENT_VERSION = '2026-02-01';
 
 export const TERMS_OF_SERVICE = `
 Terms of Service

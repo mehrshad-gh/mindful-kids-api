@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { recordLegalAcceptance } from '../../services/authService';
+import { LEGAL_DOCUMENT_VERSION } from '../../constants/legalContent';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { colors } from '../../theme/colors';
@@ -49,9 +50,9 @@ export function TherapistRegisterScreen({ navigation, route }: TherapistRegister
     try {
       await register(email.trim(), password, name.trim(), 'therapist');
       try {
-        await recordLegalAcceptance('terms');
-        await recordLegalAcceptance('privacy_policy');
-        await recordLegalAcceptance('professional_disclaimer');
+        await recordLegalAcceptance('terms', LEGAL_DOCUMENT_VERSION);
+        await recordLegalAcceptance('privacy_policy', LEGAL_DOCUMENT_VERSION);
+        await recordLegalAcceptance('professional_disclaimer', LEGAL_DOCUMENT_VERSION);
       } catch {
         // Non-blocking
       }

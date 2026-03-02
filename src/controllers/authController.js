@@ -126,23 +126,27 @@ async function setPasswordFromInvite(req, res, next) {
   }
 }
 
-/** POST /auth/me/legal-acceptance – record that current user accepted a document (terms | privacy_policy | professional_disclaimer). */
+/** POST /auth/me/legal-acceptance – record that current user accepted a document (terms | privacy_policy | professional_disclaimer). Optional document_version (e.g. 2026-03-01); if omitted, server default is used. */
 async function recordLegalAcceptance(req, res, next) {
   try {
-    const { document_type: documentType } = req.body;
+    const { document_type: documentType, document_version: documentVersion } = req.body;
     if (!documentType || !LegalAcceptance.DOCUMENT_TYPES.includes(documentType)) {
       return res.status(400).json({
         error: `document_type must be one of: ${LegalAcceptance.DOCUMENT_TYPES.join(', ')}`,
       });
     }
-    await LegalAcceptance.record(req.user.id, documentType);
-    res.status(201).json({ message: 'Acceptance recorded', document_type: documentType });
+    await LegalAcceptance.record(req.user.id, documentType, documentVersion);
+    res.status(201).json({
+      message: 'Acceptance recorded',
+      document_type: documentType,
+      document_version: documentVersion || LegalAcceptance.DEFAULT_DOCUMENT_VERSION,
+    });
   } catch (err) {
     next(err);
   }
 }
 
-/** GET /auth/me/legal-acceptances – return latest acceptance timestamp per document type for current user. */
+/** GET /auth/me/legal-acceptances – return latest acceptance per document type (accepted_at, document_version) for current user. For future use: if current terms version > stored document_version, show "Please review and accept updated Terms" and optionally block until accepted. */
 async function getLegalAcceptances(req, res, next) {
   try {
     const acceptances = await LegalAcceptance.getLatestByUserId(req.user.id);

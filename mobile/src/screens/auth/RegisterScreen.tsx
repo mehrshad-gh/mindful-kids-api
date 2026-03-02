@@ -16,6 +16,7 @@ import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { recordLegalAcceptance } from '../../services/authService';
+import { LEGAL_DOCUMENT_VERSION } from '../../constants/legalContent';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -63,8 +64,8 @@ export function RegisterScreen({ navigation, route }: Props) {
     try {
       await register(email.trim(), password, name.trim());
       try {
-        await recordLegalAcceptance('terms');
-        await recordLegalAcceptance('privacy_policy');
+        await recordLegalAcceptance('terms', LEGAL_DOCUMENT_VERSION);
+        await recordLegalAcceptance('privacy_policy', LEGAL_DOCUMENT_VERSION);
       } catch {
         // Non-blocking: acceptance recording failed; user is still registered
       }

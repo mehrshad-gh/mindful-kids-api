@@ -53,13 +53,23 @@ export async function setPasswordFromInvite(token: string, password: string): Pr
 
 export type LegalDocumentType = 'terms' | 'privacy_policy' | 'professional_disclaimer';
 
-/** Record that the current user accepted a legal document (call after login/register; requires token). */
-export async function recordLegalAcceptance(documentType: LegalDocumentType): Promise<void> {
-  await apiClient.post('/auth/me/legal-acceptance', { document_type: documentType });
+export type LegalAcceptanceEntry = { accepted_at: string; document_version: string };
+
+/** Record that the current user accepted a legal document (call after login/register; requires token). Pass documentVersion when recording so backend knows which version was accepted (for future re-accept flow). */
+export async function recordLegalAcceptance(
+  documentType: LegalDocumentType,
+  documentVersion?: string
+): Promise<void> {
+  await apiClient.post('/auth/me/legal-acceptance', {
+    document_type: documentType,
+    ...(documentVersion != null && { document_version: documentVersion }),
+  });
 }
 
-/** Get latest acceptance timestamps per document type for the current user. */
-export async function getLegalAcceptances(): Promise<Record<string, string>> {
-  const { data } = await apiClient.get<{ acceptances: Record<string, string> }>('/auth/me/legal-acceptances');
+/** Get latest acceptance per document type (accepted_at, document_version) for the current user. */
+export async function getLegalAcceptances(): Promise<Record<string, LegalAcceptanceEntry>> {
+  const { data } = await apiClient.get<{
+    acceptances: Record<string, LegalAcceptanceEntry>;
+  }>('/auth/me/legal-acceptances');
   return data.acceptances ?? {};
 }
