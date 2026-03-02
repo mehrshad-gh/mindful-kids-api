@@ -2,125 +2,95 @@ const jwt = require('jsonwebtoken');
 const config = require('../config');
 const User = require('../models/User');
 
-/**
- * Verify JWT and attach user id and role to req.user.
- * Use on routes that require authentication.
- */
+/** Verify JWT and set req.user. Returns 401 if missing or invalid. */
 function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
   if (!token) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-
   try {
     const decoded = jwt.verify(token, config.jwt.secret);
-    req.user = { id: decoded.sub, role: decoded.role };
-    next();
-  } catch (err) {
-    if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({ error: 'Token expired' });
-    }
-    return res.status(401).json({ error: 'Invalid token' });
+    User.findById(decoded.sub)
+      .then((user) => {
+        if (!user) {
+          return res.status(401).json({ error: 'User not found' });
+        }
+        req.user = user;
+        next();
+      })
+      .catch(() => res.status(401).json({ error: 'Authentication failed' }));
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired token' });
   }
 }
 
-/**
- * Optional auth: attach user if token present, don't fail if missing.
- */
-function optionalAuth(req, res, next) {
+/** Optional auth: set req.user if valid token, otherwise leave req.user undefined. Never 401. */
+function optionalAuthenticate(req, res, next) {
   const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
   if (!token) {
     req.user = null;
     return next();
   }
-
   try {
     const decoded = jwt.verify(token, config.jwt.secret);
-    req.user = { id: decoded.sub, role: decoded.role };
+    User.findById(decoded.sub)
+      .then((user) => {
+        req.user = user || null;
+        next();
+      })
+      .catch(() => {
+        req.user = null;
+        next();
+      });
   } catch {
     req.user = null;
+    next();
   }
-  next();
 }
 
-/**
- * Require one of the given roles (e.g. 'admin' or ['admin', 'therapist']).
- * When 'admin' is among allowed roles, current role is verified against the DB
- * so that revoking admin (role change to parent) takes effect immediately.
- */
-function requireRole(roleOrRoles) {
-  const allowed = Array.isArray(roleOrRoles) ? roleOrRoles : [roleOrRoles];
-  const needsDbRoleCheck = allowed.includes('admin');
-
-  return async (req, res, next) => {
+function requireRole(allowedRole) {
+  const allowed = Array.isArray(allowedRole) ? allowedRole : [allowedRole];
+  return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    if (needsDbRoleCheck) {
-      const dbUser = await User.findById(req.user.id);
-      if (!dbUser) {
-        return res.status(401).json({ error: 'User not found' });
-      }
-      if (!allowed.includes(dbUser.role)) {
-        return res.status(403).json({ error: 'Insufficient permissions' });
-      }
-      req.user.role = dbUser.role;
-    } else if (!allowed.includes(req.user.role)) {
+    if (!allowed.includes(req.user.role)) {
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
     next();
   };
 }
 
-/**
- * Resolve "me" to the clinic_admin's first managed clinic. Use before requireClinicAccess.
- */
-async function resolveClinicMe(ClinicAdminModel) {
+/** Resolve /clinics/me to the first clinic the user manages. Sets req.clinicId. */
+function resolveClinicMe(ClinicAdmin) {
   return async (req, res, next) => {
-    const clinicId = req.params.clinicId || req.params.id;
-    if (clinicId === 'me' && req.user?.role === 'clinic_admin') {
-      const rows = await ClinicAdminModel.findByUserId(req.user.id);
-      if (rows.length === 0) {
-        return res.status(404).json({ error: 'No clinic linked to your account' });
-      }
-      req.params.clinicId = rows[0].clinic_id;
+    const ids = await ClinicAdmin.getManagedClinicIds(req.user.id);
+    req.clinicId = ids[0] || null;
+    next();
+  };
+}
+
+/** Ensure user can access the clinic (req.params.clinicId or req.clinicId). */
+function requireClinicAccess(ClinicAdmin) {
+  return async (req, res, next) => {
+    const clinicId = req.params.clinicId || req.clinicId;
+    if (!clinicId) {
+      return res.status(400).json({ error: 'Clinic not specified' });
+    }
+    const ok = await ClinicAdmin.isAdminOfClinic(req.user.id, clinicId);
+    if (!ok) {
+      return res.status(403).json({ error: 'Access denied to this clinic' });
     }
     next();
   };
 }
 
-/**
- * Require that the user can access the clinic (admin or clinic_admin for this clinic).
- * Expects req.params.clinicId to be set (e.g. from route /clinics/:clinicId/...).
- */
-function requireClinicAccess(ClinicAdminModel) {
-  return async (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-    const clinicId = req.params.clinicId || req.params.id;
-    if (!clinicId) {
-      return res.status(400).json({ error: 'Clinic ID required' });
-    }
-    if (req.user.role === 'admin') {
-      return next();
-    }
-    if (req.user.role === 'clinic_admin') {
-      const isAdmin = await ClinicAdminModel.isAdminOfClinic(req.user.id, clinicId);
-      if (isAdmin) return next();
-    }
-    res.status(403).json({ error: 'You do not have access to this clinic' });
-  };
-}
-
 module.exports = {
   authenticate,
-  optionalAuth,
+  optionalAuthenticate,
   requireRole,
-  requireClinicAccess,
   resolveClinicMe,
+  requireClinicAccess,
 };

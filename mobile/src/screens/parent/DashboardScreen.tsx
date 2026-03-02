@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, RefreshControl, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, RefreshControl, ScrollView, ActivityIndicator, Modal, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useChildren } from '../../hooks/useChildren';
 import { useProgressSummary } from '../../hooks/useProgressSummary';
 import { fetchFeaturedAdvice, type AdviceItem } from '../../api/advice';
+import { fetchDailyTip, recordDailyTipViewed, type DailyTip } from '../../api/dailyTip';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -19,11 +20,18 @@ import type { ParentTabParamList } from '../../types/navigation';
 import type { ParentStackParamList } from '../../types/navigation';
 
 const ADVICE_SUMMARY_LENGTH = 120;
+const TIP_PREVIEW_LENGTH = 100;
 
 function getAdviceSummary(content: string): string {
   const trimmed = content.trim();
   if (trimmed.length <= ADVICE_SUMMARY_LENGTH) return trimmed;
   return trimmed.slice(0, ADVICE_SUMMARY_LENGTH).trim() + '…';
+}
+
+function getTipPreview(content: string): string {
+  const trimmed = content.trim();
+  if (trimmed.length <= TIP_PREVIEW_LENGTH) return trimmed;
+  return trimmed.slice(0, TIP_PREVIEW_LENGTH).trim() + '…';
 }
 
 type TabNav = NativeStackNavigationProp<ParentTabParamList, 'Dashboard'>;
@@ -96,6 +104,10 @@ export function DashboardScreen() {
   const { summary, loading: summaryLoading, refresh: refreshSummary } = useProgressSummary(selectedChildId);
   const [featuredAdvice, setFeaturedAdvice] = useState<AdviceItem | null>(null);
   const [adviceLoading, setAdviceLoading] = useState(true);
+  const [dailyTip, setDailyTip] = useState<DailyTip | null>(null);
+  const [dailyTipViewed, setDailyTipViewed] = useState(false);
+  const [dailyTipLoading, setDailyTipLoading] = useState(true);
+  const [tipModalVisible, setTipModalVisible] = useState(false);
 
   const loadAdvice = useCallback(async () => {
     setAdviceLoading(true);
@@ -109,12 +121,38 @@ export function DashboardScreen() {
     }
   }, []);
 
+  const loadDailyTip = useCallback(async () => {
+    setDailyTipLoading(true);
+    try {
+      const { tip, viewed_today } = await fetchDailyTip();
+      setDailyTip(tip);
+      setDailyTipViewed(viewed_today ?? false);
+    } catch {
+      setDailyTip(null);
+      setDailyTipViewed(false);
+    } finally {
+      setDailyTipLoading(false);
+    }
+  }, []);
+
+  const openTipDetail = useCallback(async () => {
+    if (!dailyTip) return;
+    setTipModalVisible(true);
+    try {
+      await recordDailyTipViewed();
+      setDailyTipViewed(true);
+    } catch {
+      // non-blocking
+    }
+  }, [dailyTip]);
+
   useFocusEffect(
     useCallback(() => {
       refresh();
       refreshSummary();
       loadAdvice();
-    }, [refresh, refreshSummary, loadAdvice])
+      loadDailyTip();
+    }, [refresh, refreshSummary, loadAdvice, loadDailyTip])
   );
 
   const selectedChild = children.find((c) => c.id === selectedChildId);
@@ -160,7 +198,8 @@ export function DashboardScreen() {
     refresh();
     refreshSummary();
     loadAdvice();
-  }, [refresh, refreshSummary, loadAdvice]);
+    loadDailyTip();
+  }, [refresh, refreshSummary, loadAdvice, loadDailyTip]);
 
   return (
     <ScreenLayout scroll={false}>
@@ -184,6 +223,37 @@ export function DashboardScreen() {
             <Text style={styles.insightText}>
               {getParentInsight(summary ?? null, selectedChild.name)}
             </Text>
+          )}
+        </Card>
+
+        <Card style={styles.tipCard} variant="glow" accentColor={colors.primary}>
+          <Text style={styles.tipCardLabel}>Today’s parenting tip</Text>
+          {dailyTipLoading && !dailyTip ? (
+            <ActivityIndicator size="small" color={colors.primary} style={styles.tipLoader} />
+          ) : dailyTip ? (
+            <>
+              {dailyTipViewed ? (
+                <Text style={styles.tipSeenToday}>✔ Seen today</Text>
+              ) : null}
+              <Text style={styles.tipCardTitle}>{dailyTip.title}</Text>
+              <Text style={styles.tipCardPreview} numberOfLines={2}>
+                {getTipPreview(dailyTip.content)}
+              </Text>
+              {dailyTip.psychology_basis ? (
+                <Text style={styles.tipCardBasis}>{dailyTip.psychology_basis}</Text>
+              ) : null}
+              {dailyTipViewed ? (
+                <Text style={styles.tipEncouragement}>You’re building a habit of small, supportive moments.</Text>
+              ) : null}
+              <Button
+                title="Try this today"
+                onPress={openTipDetail}
+                variant="outline"
+                style={styles.tipCardButton}
+              />
+            </>
+          ) : (
+            <Text style={styles.tipCardEmpty}>No tip for today. Check back tomorrow.</Text>
           )}
         </Card>
 
@@ -366,6 +436,30 @@ export function DashboardScreen() {
         </View>
       </ScrollView>
       <FAB label="Add child" onPress={handleAddChild} icon="+" />
+
+      <Modal
+        visible={tipModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setTipModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setTipModalVisible(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{dailyTip?.title ?? 'Tip'}</Text>
+              <TouchableOpacity onPress={() => setTipModalVisible(false)} hitSlop={12}>
+                <Text style={styles.modalClose}>Close</Text>
+              </TouchableOpacity>
+            </View>
+            {dailyTip?.psychology_basis ? (
+              <Text style={styles.modalBasis}>{dailyTip.psychology_basis}</Text>
+            ) : null}
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalBody}>{dailyTip?.content ?? ''}</Text>
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ScreenLayout>
   );
 }
@@ -397,6 +491,34 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginVertical: spacing.xs,
   },
+  tipCard: { marginBottom: layout.sectionGapSmall },
+  tipCardLabel: { ...typography.label, color: colors.primary, marginBottom: spacing.xs },
+  tipSeenToday: { ...typography.caption, color: colors.success, marginBottom: spacing.xs },
+  tipCardTitle: { ...typography.h3, marginBottom: spacing.sm },
+  tipCardPreview: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.xs },
+  tipCardBasis: { ...typography.caption, color: colors.primary, marginBottom: spacing.sm },
+  tipEncouragement: { ...typography.subtitle, color: colors.textSecondary, fontStyle: 'italic', marginBottom: spacing.sm },
+  tipCardButton: { alignSelf: 'flex-start' },
+  tipCardEmpty: { ...typography.bodySmall, color: colors.textSecondary },
+  tipLoader: { marginVertical: spacing.sm },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    maxHeight: '80%',
+    padding: spacing.lg,
+  },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
+  modalTitle: { ...typography.h3, flex: 1, paddingRight: spacing.sm },
+  modalClose: { ...typography.body, color: colors.primary, fontWeight: '600' },
+  modalBasis: { ...typography.caption, color: colors.primary, marginBottom: spacing.md },
+  modalScroll: { maxHeight: 320 },
+  modalBody: { ...typography.body, color: colors.text, lineHeight: 24 },
   adviceCard: { marginBottom: layout.sectionGapSmall },
   adviceCardLabel: { ...typography.label, color: colors.parentAccent, marginBottom: spacing.xs },
   adviceCardTitle: { ...typography.h3, marginBottom: spacing.sm },
