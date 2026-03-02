@@ -3,6 +3,7 @@ const { authenticate, requireRole } = require('../middleware/auth');
 const adminTherapistController = require('../controllers/adminTherapistController');
 const adminReportsController = require('../controllers/adminReportsController');
 const adminDashboardController = require('../controllers/adminDashboardController');
+const adminContentController = require('../controllers/adminContentController');
 const clinicApplicationController = require('../controllers/clinicApplicationController');
 const adminClinicApplicationsRoutes = require('./adminClinicApplications');
 const Clinic = require('../models/Clinic');
@@ -21,6 +22,12 @@ router.use(requireRole('admin'));
 
 // Dashboard overview (counts)
 router.get('/dashboard', adminDashboardController.getDashboard);
+
+// Content (articles, videos, activities)
+router.get('/content', adminContentController.list);
+router.get('/content/:id', adminContentController.getOne);
+router.post('/content', adminContentController.create);
+router.patch('/content/:id', adminContentController.update);
 
 // Clinic onboarding: list, get one, get document URL, approve/reject
 router.use('/clinic-applications', adminClinicApplicationsRoutes);

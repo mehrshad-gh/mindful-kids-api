@@ -1,25 +1,47 @@
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
+import type { ParentStackParamList } from '../../types/navigation';
 import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { spacing, typography } from '../../theme';
 
 export function ContentLibraryScreen() {
+  const navigation = useNavigation();
+  const parentStack = navigation.getParent<NativeStackNavigationProp<ParentStackParamList>>();
+
   return (
     <ScreenLayout>
-      <Text style={styles.title}>Content Library</Text>
-      <Card style={styles.card}>
-        <Text style={styles.cardTitle}>Articles & resources</Text>
-        <Text style={styles.cardDesc}>Age-appropriate content and activity guides.</Text>
-      </Card>
+      <Text style={styles.title}>Library</Text>
+      <Text style={styles.subtitle}>Articles, videos, and activities for you and your child.</Text>
+      <TouchableOpacity
+        onPress={() => parentStack?.navigate('ParentResources')}
+        activeOpacity={0.7}
+      >
+        <Card style={styles.card}>
+          <Text style={styles.cardTitle}>Parent resources</Text>
+          <Text style={styles.cardDesc}>Articles and videos on parenting and emotional support.</Text>
+        </Card>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => parentStack?.navigate('KidsActivities')}
+        activeOpacity={0.7}
+      >
+        <Card style={styles.card}>
+          <Text style={styles.cardTitle}>Kids activities</Text>
+          <Text style={styles.cardDesc}>Age-appropriate activities to build emotional skills together.</Text>
+        </Card>
+      </TouchableOpacity>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: colors.text, marginBottom: spacing.lg },
+  title: { ...typography.h2, color: colors.text, marginBottom: spacing.xs },
+  subtitle: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.lg },
   card: { marginBottom: spacing.md },
-  cardTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
-  cardDesc: { color: colors.textSecondary, marginTop: spacing.xs },
+  cardTitle: { ...typography.body, fontWeight: '600', color: colors.text },
+  cardDesc: { ...typography.subtitle, color: colors.textSecondary, marginTop: spacing.xs },
 });

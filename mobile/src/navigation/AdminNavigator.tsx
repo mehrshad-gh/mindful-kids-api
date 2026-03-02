@@ -9,6 +9,8 @@ import { AdminClinicsScreen } from '../screens/admin/AdminClinicsScreen';
 import { AdminClinicFormScreen } from '../screens/admin/AdminClinicFormScreen';
 import { AdminClinicApplicationsScreen } from '../screens/admin/AdminClinicApplicationsScreen';
 import { AdminClinicApplicationDetailScreen } from '../screens/admin/AdminClinicApplicationDetailScreen';
+import { AdminContentScreen } from '../screens/admin/AdminContentScreen';
+import { AdminContentDetailScreen } from '../screens/admin/AdminContentDetailScreen';
 import type { AdminStackParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
 
@@ -68,6 +70,16 @@ export function AdminNavigator() {
         name="AdminClinicApplicationDetail"
         component={AdminClinicApplicationDetailScreen}
         options={{ title: 'Clinic application' }}
+      />
+      <Stack.Screen
+        name="AdminContent"
+        component={AdminContentScreen}
+        options={{ title: 'Content' }}
+      />
+      <Stack.Screen
+        name="AdminContentDetail"
+        component={AdminContentDetailScreen}
+        options={{ title: 'Content detail' }}
       />
     </Stack.Navigator>
   );

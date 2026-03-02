@@ -34,6 +34,9 @@ export type ParentStackParamList = {
   TermsOfService: undefined;
   PrivacyPolicy: undefined;
   ProfessionalDisclaimer: undefined;
+  ParentResources: undefined;
+  ContentDetail: { contentId: string };
+  KidsActivities: undefined;
 };
 
 export type ChildTabParamList = {
@@ -77,7 +80,7 @@ export type TherapistOnboardingStackParamList = {
   ProfessionalDisclaimer: undefined;
 };
 
-/** Admin: dashboard, therapist applications, reports (trust & safety), clinics, clinic applications. */
+/** Admin: dashboard, therapist applications, reports (trust & safety), clinics, clinic applications, content. */
 export type AdminStackParamList = {
   AdminMain: undefined;
   TherapistApplications: undefined;
@@ -88,6 +91,8 @@ export type AdminStackParamList = {
   AdminClinicForm: undefined;
   AdminClinicApplications: undefined;
   AdminClinicApplicationDetail: { applicationId: string };
+  AdminContent: undefined;
+  AdminContentDetail: { contentId: string };
 };
 
 /** Therapist: dashboard (application status), legal. */

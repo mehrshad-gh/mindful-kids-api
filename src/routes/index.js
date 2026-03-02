@@ -14,6 +14,7 @@ const clinicsRoutes = require('./clinics');
 const clinicApplicationsRoutes = require('./clinicApplications');
 const reportsRoutes = require('./reports');
 const searchRoutes = require('./search');
+const contentRoutes = require('./content');
 
 const router = express.Router();
 
@@ -32,6 +33,7 @@ router.use('/clinics', clinicsRoutes);
 router.use('/clinic-applications', clinicApplicationsRoutes);
 router.use('/reports', reportsRoutes);
 router.use('/search', searchRoutes);
+router.use('/content', contentRoutes);
 
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

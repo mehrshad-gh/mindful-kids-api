@@ -207,3 +207,49 @@ export async function reviewClinicApplication(
   });
   return data;
 }
+
+// Content (articles, videos, activities) – admin list, get one, update (publish/unpublish)
+export type AdminContentType = 'article' | 'video' | 'activity';
+
+export interface AdminContentItem {
+  id: string;
+  type: AdminContentType;
+  title: string;
+  summary: string | null;
+  body_markdown: string | null;
+  video_url: string | null;
+  age_range: string | null;
+  tags: string[];
+  psychology_basis: string[];
+  for_parents_notes: string | null;
+  evidence_notes: string | null;
+  is_published: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listAdminContent(params?: {
+  type?: AdminContentType;
+}): Promise<{ items: AdminContentItem[] }> {
+  const { data } = await apiClient.get<{ items: AdminContentItem[] }>('/admin/content', {
+    params: params?.type ? { type: params.type } : undefined,
+  });
+  return data;
+}
+
+export async function getAdminContent(id: string): Promise<{ item: AdminContentItem }> {
+  const { data } = await apiClient.get<{ item: AdminContentItem }>(`/admin/content/${id}`);
+  return data;
+}
+
+export async function updateAdminContent(
+  id: string,
+  payload: Partial<Pick<AdminContentItem, 'title' | 'summary' | 'body_markdown' | 'video_url' | 'age_range' | 'tags' | 'psychology_basis' | 'for_parents_notes' | 'evidence_notes' | 'is_published'>>
+): Promise<{ item: AdminContentItem }> {
+  const { data } = await apiClient.patch<{ item: AdminContentItem }>(
+    `/admin/content/${id}`,
+    payload
+  );
+  return data;
+}

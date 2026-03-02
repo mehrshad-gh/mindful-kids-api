@@ -125,6 +125,15 @@ export function AdminDashboardScreen() {
                 onPress={() => navigation.navigate('AdminClinics')}
                 accent="success"
               />
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('AdminContent')}
+              >
+                <Card style={[styles.dashboardCard, { borderWidth: 1, borderColor: colors.border }]}>
+                  <Text style={styles.cardTitle}>Content (articles, videos, activities)</Text>
+                  <Text style={styles.cardSubtitle}>Manage and publish library content</Text>
+                </Card>
+              </TouchableOpacity>
             </View>
           </>
         ) : null}
@@ -146,6 +155,7 @@ const styles = StyleSheet.create({
   },
   cardCount: { ...typography.h1, color: colors.text, marginBottom: spacing.xs },
   cardTitle: { ...typography.body, color: colors.textSecondary },
+  cardSubtitle: { ...typography.caption, color: colors.textTertiary, marginTop: spacing.xs },
   errorCard: { marginBottom: spacing.md },
   errorText: { ...typography.body, color: colors.error },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg },
