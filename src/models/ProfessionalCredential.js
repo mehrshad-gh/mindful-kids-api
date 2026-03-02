@@ -1,15 +1,15 @@
 const { query } = require('../database/connection');
 
 const COLS = `id, psychologist_id, credential_type, issuing_country, issuer, license_number, expires_at,
-  verification_status, verified_by, verified_at, document_url, created_at, updated_at`;
+  verification_status, verified_by, verified_at, document_url, renewal_requested_at, created_at, updated_at`;
 
-/** Insert a credential (from application approval or admin add). */
+/** Insert a credential (from application approval, admin add, or therapist upload). */
 async function create(data) {
   const result = await query(
     `INSERT INTO professional_credentials (
       psychologist_id, credential_type, issuing_country, issuer, license_number, expires_at,
-      verification_status, verified_by, verified_at, document_url
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      verification_status, verified_by, verified_at, document_url, renewal_requested_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING ${COLS}`,
     [
       data.psychologist_id,
@@ -22,6 +22,7 @@ async function create(data) {
       data.verified_by || null,
       data.verified_at || null,
       data.document_url || null,
+      data.renewal_requested_at || null,
     ]
   );
   return result.rows[0];
@@ -57,6 +58,38 @@ async function findByPsychologistId(psychologistId) {
   return result.rows;
 }
 
+/** Update credential (document_url, or set renewal_requested_at for re-verification). */
+async function update(id, data) {
+  const updates = [];
+  const values = [];
+  let i = 1;
+  if (data.document_url !== undefined) {
+    updates.push(`document_url = $${i++}`);
+    values.push(data.document_url);
+  }
+  if (data.verification_status !== undefined) {
+    updates.push(`verification_status = $${i++}`);
+    values.push(data.verification_status);
+  }
+  if (data.renewal_requested_at !== undefined) {
+    updates.push(`renewal_requested_at = $${i++}`);
+    values.push(data.renewal_requested_at);
+  }
+  if (updates.length === 0) return null;
+  values.push(id);
+  const result = await query(
+    `UPDATE professional_credentials SET updated_at = NOW(), ${updates.join(', ')} WHERE id = $${i} RETURNING ${COLS}`,
+    values
+  );
+  return result.rows[0] || null;
+}
+
+/** Get credential by id (for ownership check). */
+async function findById(id) {
+  const result = await query(`SELECT ${COLS} FROM professional_credentials WHERE id = $1`, [id]);
+  return result.rows[0] || null;
+}
+
 /** Get first issuing_country per psychologist (for verified_country in list/detail). */
 async function getVerifiedCountryByPsychologistIds(psychologistIds) {
   if (!psychologistIds || psychologistIds.length === 0) return {};
@@ -78,5 +111,7 @@ module.exports = {
   create,
   createFromApplicationCredentials,
   findByPsychologistId,
+  findById,
+  update,
   getVerifiedCountryByPsychologistIds,
 };

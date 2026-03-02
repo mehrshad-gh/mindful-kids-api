@@ -31,6 +31,14 @@ const applicationUpsertValidation = [
   body('credentials').optional().isArray().withMessage('Credentials must be an array'),
 ];
 
+// Dashboard / me endpoints (must come before generic routes)
+router.get('/me/profile', therapistApplicationController.getProfile);
+router.get('/me/verification-status', therapistApplicationController.getVerificationStatus);
+router.get('/me/credentials', therapistApplicationController.getCredentials);
+router.post('/me/credentials', therapistApplicationController.postCredentials);
+router.get('/me/reports', therapistApplicationController.getReports);
+router.get('/me/clinic-affiliations', therapistApplicationController.getClinicAffiliations);
+
 router.get('/profile', therapistApplicationController.getProfile);
 router.get('/application', therapistApplicationController.getMine);
 router.put('/application', applicationUpsertValidation, handleValidationErrors, therapistApplicationController.upsert);
