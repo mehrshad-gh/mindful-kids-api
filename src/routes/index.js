@@ -16,6 +16,7 @@ const reportsRoutes = require('./reports');
 const searchRoutes = require('./search');
 const contentRoutes = require('./content');
 const dailyTipRoutes = require('./dailyTip');
+const parentRoutes = require('./parent');
 
 const router = express.Router();
 
@@ -36,6 +37,7 @@ router.use('/reports', reportsRoutes);
 router.use('/search', searchRoutes);
 router.use('/content', contentRoutes);
 router.use('/daily-tip', dailyTipRoutes);
+router.use('/parent', parentRoutes);
 
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

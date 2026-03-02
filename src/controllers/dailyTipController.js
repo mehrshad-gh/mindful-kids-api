@@ -1,5 +1,6 @@
 const DailyTip = require('../models/DailyTip');
 const DailyTipView = require('../models/DailyTipView');
+const ParentStreak = require('../models/ParentStreak');
 
 /** GET /daily-tip – today’s tip (rotated daily). Response: title, content, psychology_basis. Optional: viewed_today if authenticated. */
 async function getDailyTip(req, res, next) {
@@ -23,10 +24,12 @@ async function getDailyTip(req, res, next) {
   }
 }
 
-/** POST /daily-tip/viewed – (authenticated) record that the user viewed the tip today. */
+/** POST /daily-tip/viewed – (authenticated) record that the user viewed the tip today; update streak. */
 async function recordViewed(req, res, next) {
   try {
-    await DailyTipView.record(req.user.id, new Date());
+    const viewedDate = new Date();
+    await DailyTipView.record(req.user.id, viewedDate);
+    await ParentStreak.updateStreak(req.user.id, viewedDate);
     res.json({ message: 'Viewed recorded' });
   } catch (err) {
     next(err);

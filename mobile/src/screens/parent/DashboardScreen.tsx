@@ -8,6 +8,7 @@ import { useChildren } from '../../hooks/useChildren';
 import { useProgressSummary } from '../../hooks/useProgressSummary';
 import { fetchFeaturedAdvice, type AdviceItem } from '../../api/advice';
 import { fetchDailyTip, recordDailyTipViewed, type DailyTip } from '../../api/dailyTip';
+import { fetchParentStreak, type ParentStreak } from '../../api/parentStreak';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -108,6 +109,7 @@ export function DashboardScreen() {
   const [dailyTipViewed, setDailyTipViewed] = useState(false);
   const [dailyTipLoading, setDailyTipLoading] = useState(true);
   const [tipModalVisible, setTipModalVisible] = useState(false);
+  const [streak, setStreak] = useState<ParentStreak | null>(null);
 
   const loadAdvice = useCallback(async () => {
     setAdviceLoading(true);
@@ -135,16 +137,26 @@ export function DashboardScreen() {
     }
   }, []);
 
+  const loadParentStreak = useCallback(async () => {
+    try {
+      const s = await fetchParentStreak();
+      setStreak(s);
+    } catch {
+      setStreak(null);
+    }
+  }, []);
+
   const openTipDetail = useCallback(async () => {
     if (!dailyTip) return;
     setTipModalVisible(true);
     try {
       await recordDailyTipViewed();
       setDailyTipViewed(true);
+      await loadParentStreak();
     } catch {
       // non-blocking
     }
-  }, [dailyTip]);
+  }, [dailyTip, loadParentStreak]);
 
   useFocusEffect(
     useCallback(() => {
@@ -152,7 +164,8 @@ export function DashboardScreen() {
       refreshSummary();
       loadAdvice();
       loadDailyTip();
-    }, [refresh, refreshSummary, loadAdvice, loadDailyTip])
+      loadParentStreak();
+    }, [refresh, refreshSummary, loadAdvice, loadDailyTip, loadParentStreak])
   );
 
   const selectedChild = children.find((c) => c.id === selectedChildId);
@@ -199,7 +212,8 @@ export function DashboardScreen() {
     refreshSummary();
     loadAdvice();
     loadDailyTip();
-  }, [refresh, refreshSummary, loadAdvice, loadDailyTip]);
+    loadParentStreak();
+  }, [refresh, refreshSummary, loadAdvice, loadDailyTip, loadParentStreak]);
 
   return (
     <ScreenLayout scroll={false}>
@@ -233,7 +247,15 @@ export function DashboardScreen() {
           ) : dailyTip ? (
             <>
               {dailyTipViewed ? (
-                <Text style={styles.tipSeenToday}>✔ Seen today</Text>
+                <>
+                  <Text style={styles.tipSeenToday}>✔ Seen today</Text>
+                  {streak && streak.current_streak > 0 ? (
+                    <Text style={styles.tipStreak}>🔥 {streak.current_streak}-day streak</Text>
+                  ) : null}
+                  {streak && streak.current_streak >= 7 ? (
+                    <Text style={styles.tipMilestone}>🎉 {streak.current_streak}-day milestone! You’re building a strong habit.</Text>
+                  ) : null}
+                </>
               ) : null}
               <Text style={styles.tipCardTitle}>{dailyTip.title}</Text>
               <Text style={styles.tipCardPreview} numberOfLines={2}>
@@ -494,6 +516,8 @@ const styles = StyleSheet.create({
   tipCard: { marginBottom: layout.sectionGapSmall },
   tipCardLabel: { ...typography.label, color: colors.primary, marginBottom: spacing.xs },
   tipSeenToday: { ...typography.caption, color: colors.success, marginBottom: spacing.xs },
+  tipStreak: { ...typography.caption, color: colors.text, marginBottom: spacing.xs },
+  tipMilestone: { ...typography.subtitle, color: colors.primary, fontWeight: '600', marginBottom: spacing.sm },
   tipCardTitle: { ...typography.h3, marginBottom: spacing.sm },
   tipCardPreview: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.xs },
   tipCardBasis: { ...typography.caption, color: colors.primary, marginBottom: spacing.sm },
