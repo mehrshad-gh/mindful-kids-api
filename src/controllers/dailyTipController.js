@@ -72,11 +72,15 @@ async function getSuggestions(req, res, next) {
     const selfRegulationSlugOrder = ['calm-breathing-dbt', 'grounding_54321', 'pause_and_choose', 'calm_body_reset'];
     const emotionalAwarenessSlugOrder = ['emotion_match_game', 'feeling_intensity_check', 'body_signals_map', 'emotion-wheel', 'emotion-identification-cbt'];
     const problemSolvingSlugOrder = ['problem_ladder', 'fix_it_plan', 'try_again_tool'];
+    const socialConnectionSlugOrder = ['repair_script', 'kind_words_builder', 'listening_game'];
+    const resilienceSlugOrder = ['try_again_plan', 'small_wins', 'brave_steps'];
     let suggested_tool = null;
     if (domainTools.length > 0) {
       const order = tip.domain_id === 'self_regulation' ? selfRegulationSlugOrder
         : tip.domain_id === 'emotional_awareness' ? emotionalAwarenessSlugOrder
         : tip.domain_id === 'problem_solving' ? problemSolvingSlugOrder
+        : tip.domain_id === 'social_connection' ? socialConnectionSlugOrder
+        : tip.domain_id === 'resilience' ? resilienceSlugOrder
         : null;
       const first = order
         ? (order.map((slug) => domainTools.find((t) => t.slug === slug)).find(Boolean) || domainTools[0])

@@ -18,8 +18,9 @@ export function WelcomeScreen({ navigation }: Props) {
     <ScreenLayout centered>
       <View style={styles.hero}>
         <Text style={styles.title}>Mindful Kids</Text>
+        <Text style={styles.headline}>Structured emotional skill practice for families.</Text>
         <Text style={styles.subtitle}>
-          Evidence-based activities and tips to support your child's emotional wellbeing. Track progress, get daily advice, and connect with experts when you need them.
+          Practice five core emotional skills through guided activities. Designed for home use and aligned with professional support when present.
         </Text>
       </View>
       <View style={styles.actions}>
@@ -56,6 +57,7 @@ export function WelcomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   hero: { marginBottom: layout.sectionGap },
   title: { ...typography.display, textAlign: 'center', marginBottom: spacing.md },
+  headline: { ...typography.h2, textAlign: 'center', marginBottom: spacing.sm, color: colors.text },
   subtitle: {
     ...typography.body,
     color: colors.textSecondary,

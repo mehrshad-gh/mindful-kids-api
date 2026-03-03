@@ -19,6 +19,9 @@ export function TrustAndSafetyScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <Card style={styles.card}>
           <Text style={styles.heading}>Legal</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('About')} style={styles.linkRow}>
+            <Text style={styles.link}>About Mindful Kids</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('TermsOfService')} style={styles.linkRow}>
             <Text style={styles.link}>Terms of Service</Text>
           </TouchableOpacity>
@@ -30,9 +33,19 @@ export function TrustAndSafetyScreen() {
           </TouchableOpacity>
         </Card>
 
-        <Text style={styles.lead}>
-          Mindful Kids supports emotional skill development and parent education. It does not diagnose, treat, or replace professional care.
-        </Text>
+        <Card style={styles.card}>
+          <Text style={styles.heading}>What this app is</Text>
+          <Text style={styles.body}>
+            This app is an educational tool designed to support emotional skill development through structured practice.
+          </Text>
+        </Card>
+
+        <Card style={styles.card}>
+          <Text style={styles.heading}>What this app is not</Text>
+          <Text style={styles.body}>
+            This app does not provide diagnosis, therapy, or clinical care. If you have concerns about mental health, consult a qualified professional.
+          </Text>
+        </Card>
 
         <Card style={styles.card}>
           <Text style={styles.heading}>Platform positioning</Text>

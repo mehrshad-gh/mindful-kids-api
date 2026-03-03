@@ -12,6 +12,7 @@ import { AddChildScreen } from '../screens/parent/AddChildScreen';
 import { PsychologistDetailScreen } from '../screens/parent/PsychologistDetailScreen';
 import { ClinicDetailScreen } from '../screens/parent/ClinicDetailScreen';
 import { TrustAndSafetyScreen } from '../screens/parent/TrustAndSafetyScreen';
+import { AboutScreen } from '../screens/parent/AboutScreen';
 import { ParentResourcesScreen } from '../screens/parent/ParentResourcesScreen';
 import { ContentDetailScreen } from '../screens/parent/ContentDetailScreen';
 import { KidsActivitiesScreen } from '../screens/parent/KidsActivitiesScreen';
@@ -58,6 +59,7 @@ export function ParentNavigator() {
       <Stack.Screen name="PsychologistDetail" component={PsychologistDetailScreen} options={{ title: 'Profile' }} />
       <Stack.Screen name="ClinicDetail" component={ClinicDetailScreen} options={{ title: 'Clinic' }} />
       <Stack.Screen name="TrustAndSafety" component={TrustAndSafetyScreen} options={{ title: 'Trust & safety' }} />
+      <Stack.Screen name="About" component={AboutScreen} options={{ title: 'About' }} />
       <Stack.Screen name="ParentResources" component={ParentResourcesScreen} options={{ title: 'Parent resources' }} />
       <Stack.Screen name="ContentDetail" component={ContentDetailScreen} options={{ title: 'Detail' }} />
       <Stack.Screen name="KidsActivities" component={KidsActivitiesScreen} options={{ title: 'Kids activities' }} />

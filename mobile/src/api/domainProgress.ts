@@ -8,6 +8,9 @@ export interface DomainProgressItem {
   domain_id: string;
   sessions_completed: number;
   total_stars: number;
+  stars_earned: number;
+  level: number;
+  level_label: string;
   last_practiced_at: string | null;
 }
 

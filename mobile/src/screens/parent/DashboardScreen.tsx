@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, RefreshControl, ScrollView, ActivityIndicator, Modal, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -11,6 +11,7 @@ import { fetchDailyTip, recordDailyTipViewed, fetchDailyTipSuggestions, type Dai
 import { fetchParentStreak, type ParentStreak } from '../../api/parentStreak';
 import { fetchDomainProgress, type DomainProgressItem } from '../../api/domainProgress';
 import { EMOTIONAL_DOMAINS } from '../../constants/emotionalDomains';
+import { DOMAIN_INSIGHTS } from '../../constants/domainInsights';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -115,6 +116,9 @@ export function DashboardScreen() {
   const [tipSuggestions, setTipSuggestions] = useState<{ suggested_activity: DailyTipSuggestion | null; suggested_article: DailyTipSuggestion | null; suggested_tool?: DailyTipSuggestedTool | null } | null>(null);
   const [domainProgress, setDomainProgress] = useState<DomainProgressItem[] | null>(null);
   const [domainProgressLoading, setDomainProgressLoading] = useState(false);
+  const [levelUpCelebration, setLevelUpCelebration] = useState<{ childName: string; domainTitle: string; levelLabel: string } | null>(null);
+  const [expandedInsightDomainId, setExpandedInsightDomainId] = useState<string | null>(null);
+  const previousDomainLevels = useRef<Record<string, Record<string, number>>>({});
 
   const loadAdvice = useCallback(async () => {
     setAdviceLoading(true);
@@ -159,13 +163,28 @@ export function DashboardScreen() {
     setDomainProgressLoading(true);
     try {
       const { domains } = await fetchDomainProgress(selectedChildId);
+      const childName = children.find((c) => c.id === selectedChildId)?.name ?? 'Your child';
+      const prevLevels = previousDomainLevels.current[selectedChildId] ?? {};
+      for (const d of domains) {
+        const prev = prevLevels[d.domain_id];
+        if (prev !== undefined && d.level > prev && d.level >= 1) {
+          const domainTitle = EMOTIONAL_DOMAINS.find((x) => x.id === d.domain_id)?.title ?? d.domain_id;
+          setLevelUpCelebration({ childName, domainTitle, levelLabel: d.level_label });
+          break;
+        }
+      }
+      const next: Record<string, number> = {};
+      for (const d of domains) {
+        next[d.domain_id] = d.level;
+      }
+      previousDomainLevels.current[selectedChildId] = next;
       setDomainProgress(domains);
     } catch {
       setDomainProgress(null);
     } finally {
       setDomainProgressLoading(false);
     }
-  }, [selectedChildId]);
+  }, [selectedChildId, children]);
 
   const openTipDetail = useCallback(async () => {
     if (!dailyTip) return;
@@ -417,26 +436,68 @@ export function DashboardScreen() {
           </Card>
         )}
 
+        {levelUpCelebration ? (
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => setLevelUpCelebration(null)}
+            style={styles.levelUpBanner}
+          >
+            <Text style={styles.levelUpBannerText}>
+              🎉 {levelUpCelebration.childName} reached {levelUpCelebration.levelLabel} in {levelUpCelebration.domainTitle}!
+            </Text>
+          </TouchableOpacity>
+        ) : null}
         {selectedChild && (
           <Card style={styles.domainCard} variant="outlined">
             <Text style={styles.domainCardTitle}>Emotional Growth Overview</Text>
-            <Text style={styles.domainCardSubtitle}>Skills practice by area</Text>
+            <Text style={styles.domainCardSubtitle}>Emotional skills grow through consistent practice.</Text>
             {domainProgressLoading && !domainProgress ? (
               <ActivityIndicator size="small" color={colors.parentAccent} style={styles.domainLoader} />
             ) : domainProgress ? (
               EMOTIONAL_DOMAINS.map((domain) => {
                 const prog = domainProgress.find((d) => d.domain_id === domain.id);
                 const sessions = prog?.sessions_completed ?? 0;
-                const stars = prog?.total_stars ?? 0;
+                const stars = prog?.total_stars ?? prog?.stars_earned ?? 0;
+                const levelLabel = prog?.level_label ?? 'Starting';
                 const barMax = 10;
                 const barPct = Math.min(1, sessions / barMax);
+                const insightConfig = DOMAIN_INSIGHTS[domain.id];
+                const showInsight = sessions >= 5 && insightConfig;
+                const insightTier = sessions >= 10 ? 'strong' : 'growing';
+                const insight = showInsight ? insightConfig[insightTier] : null;
+                const isExpanded = expandedInsightDomainId === domain.id;
                 return (
                   <View key={domain.id} style={styles.domainRow}>
                     <Text style={styles.domainLabel}>{domain.title}</Text>
+                    <Text style={styles.domainLevelLabel}>{levelLabel}</Text>
                     <View style={styles.domainBarBg}>
                       <View style={[styles.domainBarFill, { width: `${barPct * 100}%` }]} />
                     </View>
                     <Text style={styles.domainMeta}>{stars} stars · {sessions} session{sessions !== 1 ? 's' : ''}</Text>
+                    {showInsight && insight && (
+                      <>
+                        <TouchableOpacity
+                          style={styles.insightToggle}
+                          onPress={() => setExpandedInsightDomainId(isExpanded ? null : domain.id)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.insightToggleText}>
+                            {isExpanded ? 'Hide' : 'Show'} Growth Insight
+                          </Text>
+                        </TouchableOpacity>
+                        {isExpanded && (
+                          <View style={styles.insightCard}>
+                            <Text style={styles.insightTitle}>Growth Insight</Text>
+                            <Text style={styles.insightMessage}>{insight.message}</Text>
+                            <Text style={styles.insightExplanation}>{insight.explanation}</Text>
+                            <View style={styles.insightPromptBox}>
+                              <Text style={styles.insightPromptLabel}>Conversation prompt</Text>
+                              <Text style={styles.insightPrompt}>{insight.prompt}</Text>
+                            </View>
+                          </View>
+                        )}
+                      </>
+                    )}
                   </View>
                 );
               })
@@ -699,16 +760,28 @@ const styles = StyleSheet.create({
   recentActivity: { ...typography.subtitle, fontWeight: '600', color: colors.text },
   recentMeta: { ...typography.caption, marginTop: 2 },
   noActivity: { ...typography.subtitle },
+  levelUpBanner: { backgroundColor: colors.primaryLight, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: 8, marginBottom: spacing.sm },
+  levelUpBannerText: { ...typography.subtitle, color: colors.text, textAlign: 'center' },
   domainCard: { marginBottom: layout.listItemGap },
   domainCardTitle: { ...typography.h3, marginBottom: spacing.xs },
   domainCardSubtitle: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.md },
   domainRow: { marginBottom: spacing.sm },
   domainLabel: { ...typography.subtitle, marginBottom: spacing.xs },
+  domainLevelLabel: { ...typography.caption, color: colors.parentAccent, marginBottom: spacing.xs },
   domainBarBg: { height: 8, backgroundColor: colors.border, borderRadius: 4, overflow: 'hidden', marginBottom: spacing.xs },
   domainBarFill: { height: '100%', backgroundColor: colors.parentAccent, borderRadius: 4 },
   domainMeta: { ...typography.caption, color: colors.textSecondary },
   domainEmpty: { ...typography.bodySmall, color: colors.textSecondary },
   domainLoader: { marginVertical: spacing.sm },
+  insightToggle: { marginTop: spacing.sm },
+  insightToggleText: { ...typography.caption, color: colors.primary, textDecorationLine: 'underline' },
+  insightCard: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+  insightTitle: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm },
+  insightMessage: { ...typography.subtitle, fontWeight: '600', color: colors.text, marginBottom: spacing.xs },
+  insightExplanation: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.sm, lineHeight: 20 },
+  insightPromptBox: { backgroundColor: colors.surfaceSubtle, padding: spacing.md, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: colors.parentAccent },
+  insightPromptLabel: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.xs },
+  insightPrompt: { ...typography.bodySmall, color: colors.text, fontStyle: 'italic' },
   sectionTitle: { ...typography.h3, fontSize: 16, marginBottom: spacing.sm },
   card: { marginBottom: layout.listItemGap },
   cardSelected: { borderColor: colors.parentAccent, borderWidth: 2 },

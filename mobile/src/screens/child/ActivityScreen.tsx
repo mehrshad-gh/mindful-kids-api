@@ -23,6 +23,12 @@ import { FeelingIntensityCheckActivity } from '../../components/FeelingIntensity
 import { ProblemLadderActivity } from '../../components/ProblemLadderActivity';
 import { FixItPlanActivity } from '../../components/FixItPlanActivity';
 import { TryAgainToolActivity } from '../../components/TryAgainToolActivity';
+import { KindWordsBuilderActivity } from '../../components/KindWordsBuilderActivity';
+import { ListeningGameActivity } from '../../components/ListeningGameActivity';
+import { RepairScriptActivity } from '../../components/RepairScriptActivity';
+import { SmallWinsActivity } from '../../components/SmallWinsActivity';
+import { TryAgainPlanActivity } from '../../components/TryAgainPlanActivity';
+import { BraveStepsActivity } from '../../components/BraveStepsActivity';
 import { useAuth } from '../../context/AuthContext';
 import { fetchActivityById, type Activity } from '../../services/activitiesService';
 import { colors } from '../../theme/colors';
@@ -311,6 +317,132 @@ export function ActivityScreen({ navigation, route }: Props) {
           showsVerticalScrollIndicator={false}
         >
           <TryAgainToolActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'kind_words_builder') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <KindWordsBuilderActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'listening_game') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <ListeningGameActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'repair_script') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <RepairScriptActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'small_wins') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <SmallWinsActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'try_again_plan') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <TryAgainPlanActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'brave_steps') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <BraveStepsActivity
             activityId={activity.id}
             activityTitle={activity.title}
             childId={selectedChildId}

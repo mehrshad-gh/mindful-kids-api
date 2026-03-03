@@ -31,6 +31,7 @@ export type ParentStackParamList = {
   PsychologistDetail: { psychologistId: string };
   ClinicDetail: { clinicId: string };
   TrustAndSafety: undefined;
+  About: undefined;
   TermsOfService: undefined;
   PrivacyPolicy: undefined;
   ProfessionalDisclaimer: undefined;

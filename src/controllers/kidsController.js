@@ -10,13 +10,27 @@ const TOOL_TYPE_SLUGS = [
   'calm-breathing-dbt', 'grounding_54321', 'calm_body_reset', 'pause_and_choose',
   'emotion-wheel', 'emotion-identification-cbt', 'emotion_match_game', 'body_signals_map', 'feeling_intensity_check',
   'problem_ladder', 'fix_it_plan', 'try_again_tool',
+  'kind_words_builder', 'listening_game', 'repair_script',
+  'small_wins', 'try_again_plan', 'brave_steps',
 ];
 
-const TOOL_ALLOWED_DOMAINS = ['self_regulation', 'emotional_awareness', 'problem_solving'];
+const TOOL_ALLOWED_DOMAINS = ['self_regulation', 'emotional_awareness', 'problem_solving', 'social_connection', 'resilience'];
 
 function normalizeToolType(toolType) {
   if (toolType === 'breathing') return 'calm-breathing-dbt';
   return toolType;
+}
+
+/**
+ * Compute level and label from sessions_completed (growth tracking only; not stored in DB).
+ * Level 0 = Starting, 1 = Explorer (1+), 2 = Builder (5+), 3 = Confident (10+).
+ */
+function getDomainLevel(sessionsCompleted) {
+  const n = Number(sessionsCompleted) || 0;
+  if (n >= 10) return { level: 3, level_label: 'Confident' };
+  if (n >= 5) return { level: 2, level_label: 'Builder' };
+  if (n >= 1) return { level: 1, level_label: 'Explorer' };
+  return { level: 0, level_label: 'Starting' };
 }
 
 /** GET /kids/domain-progress?child_id= – domain progress for a child (parent auth). */
@@ -40,12 +54,20 @@ async function getDomainProgress(req, res, next) {
         last_practiced_at: r.last_practiced_at || null,
       };
     }
-    const domains = DOMAIN_IDS.map((id) => ({
-      domain_id: id,
-      sessions_completed: byDomain[id]?.sessions_completed ?? 0,
-      total_stars: byDomain[id]?.total_stars ?? 0,
-      last_practiced_at: byDomain[id]?.last_practiced_at ?? null,
-    }));
+    const domains = DOMAIN_IDS.map((id) => {
+      const sessions_completed = byDomain[id]?.sessions_completed ?? 0;
+      const total_stars = byDomain[id]?.total_stars ?? 0;
+      const { level, level_label } = getDomainLevel(sessions_completed);
+      return {
+        domain_id: id,
+        sessions_completed,
+        total_stars,
+        stars_earned: total_stars,
+        level,
+        level_label,
+        last_practiced_at: byDomain[id]?.last_practiced_at ?? null,
+      };
+    });
     res.json({ domains });
   } catch (err) {
     next(err);
@@ -68,7 +90,7 @@ async function toolsStart(req, res, next) {
     const slug = normalizeToolType(toolType);
     if (!TOOL_TYPE_SLUGS.includes(slug)) {
       return res.status(400).json({
-        error: 'Invalid tool_type. Use one of: breathing, grounding_54321, calm_body_reset, pause_and_choose, emotion_match_game, body_signals_map, feeling_intensity_check, emotion-wheel, emotion-identification-cbt, problem_ladder, fix_it_plan, try_again_tool',
+        error: 'Invalid tool_type. Use one of: breathing, grounding_54321, calm_body_reset, pause_and_choose, emotion_match_game, body_signals_map, feeling_intensity_check, emotion-wheel, emotion-identification-cbt, problem_ladder, fix_it_plan, try_again_tool, kind_words_builder, listening_game, repair_script, small_wins, try_again_plan, brave_steps',
       });
     }
     const activity = await Activity.findBySlug(slug);
@@ -108,7 +130,7 @@ async function toolsComplete(req, res, next) {
     const slug = normalizeToolType(toolType);
     if (!TOOL_TYPE_SLUGS.includes(slug)) {
       return res.status(400).json({
-        error: 'Invalid tool_type. Use one of: breathing, grounding_54321, calm_body_reset, pause_and_choose, emotion_match_game, body_signals_map, feeling_intensity_check, emotion-wheel, emotion-identification-cbt, problem_ladder, fix_it_plan, try_again_tool',
+        error: 'Invalid tool_type. Use one of: breathing, grounding_54321, calm_body_reset, pause_and_choose, emotion_match_game, body_signals_map, feeling_intensity_check, emotion-wheel, emotion-identification-cbt, problem_ladder, fix_it_plan, try_again_tool, kind_words_builder, listening_game, repair_script, small_wins, try_again_plan, brave_steps',
       });
     }
     const activity = await Activity.findBySlug(slug);
