@@ -131,3 +131,53 @@ export async function removeTherapist(
     `/clinic-admin/clinics/${clinicId}/therapists/${psychologistId}`
   );
 }
+
+// --- Clinic-admin availability (slots on behalf of affiliated psychologists) ---
+
+export interface ClinicAvailabilitySlot {
+  id: string;
+  owner_type: string;
+  owner_id: string;
+  starts_at_utc: string;
+  ends_at_utc: string;
+  status: string;
+  created_by_user_id?: string | null;
+  created_by_role?: string | null;
+  managed_by_clinic_id?: string | null;
+  version?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listPsychologistAvailability(
+  psychologistId: string,
+  params?: { from?: string; to?: string }
+): Promise<{ slots: ClinicAvailabilitySlot[] }> {
+  const { data } = await apiClient.get<{ slots: ClinicAvailabilitySlot[] }>(
+    `/clinic-admin/psychologists/${psychologistId}/availability`,
+    { params }
+  );
+  return data;
+}
+
+export async function createPsychologistSlot(
+  psychologistId: string,
+  body: { starts_at_utc: string; ends_at_utc: string }
+): Promise<{ slot: ClinicAvailabilitySlot }> {
+  const { data } = await apiClient.post<{ slot: ClinicAvailabilitySlot }>(
+    `/clinic-admin/psychologists/${psychologistId}/availability`,
+    body
+  );
+  return data;
+}
+
+export async function deleteClinicAvailabilitySlot(
+  slotId: string,
+  expectedVersion?: number | null
+): Promise<void> {
+  const url =
+    expectedVersion != null
+      ? `/clinic-admin/availability/${slotId}?expectedVersion=${expectedVersion}`
+      : `/clinic-admin/availability/${slotId}`;
+  await apiClient.delete(url);
+}

@@ -12,7 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#4A90A4"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mindfulkids.app"
@@ -23,6 +25,9 @@
         "backgroundColor": "#4A90A4"
       },
       "package": "com.mindfulkids.app"
-    }
+    },
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ]
   }
 }

@@ -231,6 +231,13 @@ export function PsychologistDetailScreen({ route, navigation }: Props) {
         {data.location ? (
           <Text style={styles.location}>📍 {data.location}</Text>
         ) : null}
+        {data.is_verified ? (
+          <Button
+            title="Book a session"
+            onPress={() => navigation.navigate('Booking', { psychologistId: data.id })}
+            style={styles.bookButton}
+          />
+        ) : null}
       </View>
 
       <Card style={styles.section}>
@@ -440,6 +447,9 @@ const styles = StyleSheet.create({
   location: {
     ...typography.subtitle,
     marginTop: 6,
+  },
+  bookButton: {
+    marginTop: spacing.md,
   },
   reviewSummaryRow: {
     flexDirection: 'row',

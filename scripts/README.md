@@ -55,3 +55,15 @@ UPDATE users SET role = 'admin' WHERE email = 'their@email.com';
 ```
 
 3. **Sign in** in the app with that user → you’ll see **Open verification**.
+
+---
+
+## Mark appointments completed (automation)
+
+Appointments that have ended stay `confirmed` until a job marks them `completed`. Run this script periodically (e.g. cron every 15 minutes):
+
+```bash
+npm run mark-appointments-completed
+```
+
+It updates any appointment with `status = 'confirmed'` and `ends_at_utc < NOW()` to `status = 'completed'`. No env flags required; uses `DATABASE_URL` from `.env`.

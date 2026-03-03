@@ -20,3 +20,22 @@ export async function fetchDailyTip(): Promise<{ tip: DailyTip; viewed_today?: b
 export async function recordDailyTipViewed(): Promise<void> {
   await apiClient.post('/daily-tip/viewed');
 }
+
+/** Suggested activity and article based on today's tip psychology_basis. */
+export interface DailyTipSuggestion {
+  id: string;
+  type: 'activity' | 'article';
+  title: string;
+  summary: string | null;
+  age_range: string | null;
+}
+
+export interface DailyTipSuggestionsResponse {
+  suggested_activity: DailyTipSuggestion | null;
+  suggested_article: DailyTipSuggestion | null;
+}
+
+export async function fetchDailyTipSuggestions(): Promise<DailyTipSuggestionsResponse> {
+  const { data } = await apiClient.get<DailyTipSuggestionsResponse>('/daily-tip/suggestions');
+  return data;
+}

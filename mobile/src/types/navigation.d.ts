@@ -37,6 +37,8 @@ export type ParentStackParamList = {
   ParentResources: undefined;
   ContentDetail: { contentId: string };
   KidsActivities: undefined;
+  Booking: { psychologistId: string };
+  MyAppointments: undefined;
 };
 
 export type ChildTabParamList = {
@@ -95,20 +97,24 @@ export type AdminStackParamList = {
   AdminContentDetail: { contentId: string };
 };
 
-/** Therapist: dashboard (application status), legal. */
+/** Therapist: dashboard (application status), availability, appointments, legal. */
 export type TherapistStackParamList = {
   TherapistDashboard: undefined;
+  TherapistAvailability: undefined;
+  TherapistAppointmentRequests: undefined;
   TermsOfService: undefined;
   PrivacyPolicy: undefined;
   ProfessionalDisclaimer: undefined;
 };
 
-/** Clinic admin: list clinics, detail, edit profile, therapists, legal. */
+/** Clinic admin: list clinics, detail, edit profile, therapists, therapist availability, legal. */
 export type ClinicStackParamList = {
   ClinicDashboard: undefined;
   ClinicDetail: { clinicId: string };
   ClinicEdit: { clinicId: string };
   ClinicTherapists: { clinicId: string };
+  ClinicAvailabilityClinics: undefined;
+  ClinicTherapistAvailability: { psychologistId: string; psychologistName?: string };
   TermsOfService: undefined;
   PrivacyPolicy: undefined;
   ProfessionalDisclaimer: undefined;

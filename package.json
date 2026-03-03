@@ -10,7 +10,8 @@
     "migrate:rollback": "node src/database/rollback.js",
     "db:check": "node src/database/check-tables.js",
     "job:check-verification-expiry": "node src/jobs/checkVerificationExpiry.js",
-    "set-admin": "node scripts/set-admin.js"
+    "set-admin": "node scripts/set-admin.js",
+    "mark-appointments-completed": "node scripts/mark-appointments-completed.js"
   },
   "engines": {
     "node": ">=18.0.0"

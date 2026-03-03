@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useChildren } from '../../hooks/useChildren';
 import { useProgressSummary } from '../../hooks/useProgressSummary';
 import { fetchFeaturedAdvice, type AdviceItem } from '../../api/advice';
-import { fetchDailyTip, recordDailyTipViewed, type DailyTip } from '../../api/dailyTip';
+import { fetchDailyTip, recordDailyTipViewed, fetchDailyTipSuggestions, type DailyTip, type DailyTipSuggestion } from '../../api/dailyTip';
 import { fetchParentStreak, type ParentStreak } from '../../api/parentStreak';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Button } from '../../components/ui/Button';
@@ -110,6 +110,7 @@ export function DashboardScreen() {
   const [dailyTipLoading, setDailyTipLoading] = useState(true);
   const [tipModalVisible, setTipModalVisible] = useState(false);
   const [streak, setStreak] = useState<ParentStreak | null>(null);
+  const [tipSuggestions, setTipSuggestions] = useState<{ suggested_activity: DailyTipSuggestion | null; suggested_article: DailyTipSuggestion | null } | null>(null);
 
   const loadAdvice = useCallback(async () => {
     setAdviceLoading(true);
@@ -149,14 +150,26 @@ export function DashboardScreen() {
   const openTipDetail = useCallback(async () => {
     if (!dailyTip) return;
     setTipModalVisible(true);
+    setTipSuggestions(null);
     try {
       await recordDailyTipViewed();
       setDailyTipViewed(true);
       await loadParentStreak();
+      const sug = await fetchDailyTipSuggestions();
+      setTipSuggestions(sug);
     } catch {
       // non-blocking
     }
   }, [dailyTip, loadParentStreak]);
+
+  const openContentDetail = useCallback(
+    (contentId: string) => {
+      setTipModalVisible(false);
+      const stack = navigation.getParent<NativeStackNavigationProp<ParentStackParamList>>();
+      stack?.navigate('ContentDetail', { contentId });
+    },
+    [navigation]
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -427,6 +440,12 @@ export function DashboardScreen() {
         <Card style={styles.card}>
           <Text style={styles.cardTitle}>Quick actions</Text>
           <Text style={styles.cardDesc}>View advice, library, and child progress in the tabs.</Text>
+          <TouchableOpacity
+            onPress={() => parentStack?.navigate('MyAppointments')}
+            style={styles.quickActionLink}
+          >
+            <Text style={styles.quickActionLinkText}>My appointments</Text>
+          </TouchableOpacity>
         </Card>
 
         <Button
@@ -478,6 +497,37 @@ export function DashboardScreen() {
             ) : null}
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
               <Text style={styles.modalBody}>{dailyTip?.content ?? ''}</Text>
+              {(tipSuggestions?.suggested_activity || tipSuggestions?.suggested_article) ? (
+                <View style={styles.suggestionsSection}>
+                  <Text style={styles.suggestionsTitle}>Suggested for you</Text>
+                  {tipSuggestions.suggested_activity ? (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => openContentDetail(tipSuggestions.suggested_activity!.id)}
+                      style={styles.suggestionCard}
+                    >
+                      <Text style={styles.suggestionCardLabel}>Activity</Text>
+                      <Text style={styles.suggestionCardTitle} numberOfLines={2}>{tipSuggestions.suggested_activity.title}</Text>
+                      {tipSuggestions.suggested_activity.summary ? (
+                        <Text style={styles.suggestionCardSummary} numberOfLines={1}>{tipSuggestions.suggested_activity.summary}</Text>
+                      ) : null}
+                    </TouchableOpacity>
+                  ) : null}
+                  {tipSuggestions.suggested_article ? (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => openContentDetail(tipSuggestions.suggested_article!.id)}
+                      style={styles.suggestionCard}
+                    >
+                      <Text style={styles.suggestionCardLabel}>Article</Text>
+                      <Text style={styles.suggestionCardTitle} numberOfLines={2}>{tipSuggestions.suggested_article.title}</Text>
+                      {tipSuggestions.suggested_article.summary ? (
+                        <Text style={styles.suggestionCardSummary} numberOfLines={1}>{tipSuggestions.suggested_article.summary}</Text>
+                      ) : null}
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              ) : null}
             </ScrollView>
           </Pressable>
         </Pressable>
@@ -543,6 +593,17 @@ const styles = StyleSheet.create({
   modalBasis: { ...typography.caption, color: colors.primary, marginBottom: spacing.md },
   modalScroll: { maxHeight: 320 },
   modalBody: { ...typography.body, color: colors.text, lineHeight: 24 },
+  suggestionsSection: { marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
+  suggestionsTitle: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm },
+  suggestionCard: {
+    backgroundColor: colors.surfaceSubtle,
+    borderRadius: 8,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  suggestionCardLabel: { ...typography.caption, color: colors.primary, marginBottom: spacing.xs },
+  suggestionCardTitle: { ...typography.body, fontWeight: '600', color: colors.text },
+  suggestionCardSummary: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
   adviceCard: { marginBottom: layout.sectionGapSmall },
   adviceCardLabel: { ...typography.label, color: colors.parentAccent, marginBottom: spacing.xs },
   adviceCardTitle: { ...typography.h3, marginBottom: spacing.sm },
@@ -587,6 +648,8 @@ const styles = StyleSheet.create({
   childMeta: { ...typography.caption, marginTop: 2 },
   cardTitle: { ...typography.h3 },
   cardDesc: { ...typography.subtitle, marginTop: spacing.xs },
+  quickActionLink: { marginTop: spacing.sm },
+  quickActionLinkText: { ...typography.body, color: colors.primary, textDecorationLine: 'underline' },
   hint: { ...typography.subtitle, marginBottom: spacing.sm },
   errorText: { ...typography.error, marginBottom: spacing.sm },
   retryBtn: { alignSelf: 'flex-start' },

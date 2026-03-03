@@ -17,6 +17,7 @@ const searchRoutes = require('./search');
 const contentRoutes = require('./content');
 const dailyTipRoutes = require('./dailyTip');
 const parentRoutes = require('./parent');
+const appointmentsRoutes = require('./appointments');
 
 const router = express.Router();
 
@@ -38,6 +39,7 @@ router.use('/search', searchRoutes);
 router.use('/content', contentRoutes);
 router.use('/daily-tip', dailyTipRoutes);
 router.use('/parent', parentRoutes);
+router.use('/appointments', appointmentsRoutes);
 
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

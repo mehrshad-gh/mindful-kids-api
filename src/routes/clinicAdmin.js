@@ -2,6 +2,7 @@ const express = require('express');
 const { authenticate, requireRole, requireClinicAccess, resolveClinicMe } = require('../middleware/auth');
 const ClinicAdmin = require('../models/ClinicAdmin');
 const clinicAdminController = require('../controllers/clinicAdminController');
+const clinicAdminAvailabilityController = require('../controllers/clinicAdminAvailabilityController');
 
 const router = express.Router();
 
@@ -9,6 +10,9 @@ router.use(authenticate);
 router.use(requireRole('clinic_admin'));
 
 router.get('/clinics', clinicAdminController.listMyClinics);
+router.post('/psychologists/:id/availability', clinicAdminAvailabilityController.createSlot);
+router.get('/psychologists/:id/availability', clinicAdminAvailabilityController.listSlots);
+router.delete('/availability/:slotId', clinicAdminAvailabilityController.deleteSlot);
 // /me resolves to first managed clinic; must come before :clinicId
 router.get('/clinics/me', resolveClinicMe(ClinicAdmin), requireClinicAccess(ClinicAdmin), clinicAdminController.getClinic);
 router.patch('/clinics/me', resolveClinicMe(ClinicAdmin), requireClinicAccess(ClinicAdmin), clinicAdminController.updateClinic);

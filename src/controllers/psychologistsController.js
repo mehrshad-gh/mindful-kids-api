@@ -2,6 +2,7 @@ const Psychologist = require('../models/Psychologist');
 const ProfessionalCredential = require('../models/ProfessionalCredential');
 const Review = require('../models/Review');
 const TherapistClinic = require('../models/TherapistClinic');
+const AvailabilitySlot = require('../models/AvailabilitySlot');
 
 async function list(req, res, next) {
   try {
@@ -62,7 +63,36 @@ async function getOne(req, res, next) {
   }
 }
 
+/** GET /therapists/:id/availability?from=&to= – open slots only (public). Past slots excluded: starts_at_utc > now(). */
+async function getAvailability(req, res, next) {
+  try {
+    const psychologist = await Psychologist.findById(req.params.id);
+    if (!psychologist) {
+      return res.status(404).json({ error: 'Psychologist not found' });
+    }
+    const { from, to } = req.query;
+    const now = new Date();
+    const fromRequested = from ? new Date(from) : now;
+    const fromDate = fromRequested.getTime() < now.getTime() ? now : fromRequested;
+    const toDate = to ? new Date(to) : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime()) || toDate <= fromDate) {
+      return res.status(400).json({ error: 'Valid from and to query params required' });
+    }
+    const slots = await AvailabilitySlot.listByOwner(
+      'psychologist',
+      req.params.id,
+      fromDate.toISOString(),
+      toDate.toISOString(),
+      'open'
+    );
+    res.json({ slots });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   list,
   getOne,
+  getAvailability,
 };

@@ -100,6 +100,13 @@ export function ClinicTherapistsScreen() {
     );
   };
 
+  const openAvailability = (therapist: ClinicTherapist) => {
+    navigation.navigate('ClinicTherapistAvailability', {
+      psychologistId: therapist.id,
+      psychologistName: therapist.name,
+    });
+  };
+
   const renderItem = ({ item }: { item: ClinicTherapist }) => (
     <Card style={styles.card} variant="outlined">
       <View style={styles.row}>
@@ -117,17 +124,22 @@ export function ClinicTherapistsScreen() {
             </Text>
           )}
         </View>
-        <TouchableOpacity
-          onPress={() => handleRemove(item)}
-          disabled={removingId === item.id}
-          style={styles.removeBtn}
-        >
-          {removingId === item.id ? (
-            <ActivityIndicator size="small" color={colors.error} />
-          ) : (
-            <Text style={styles.removeText}>Remove</Text>
-          )}
-        </TouchableOpacity>
+        <View style={styles.actions}>
+          <TouchableOpacity onPress={() => openAvailability(item)} style={styles.availabilityBtn}>
+            <Text style={styles.availabilityText}>Manage availability</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => handleRemove(item)}
+            disabled={removingId === item.id}
+            style={styles.removeBtn}
+          >
+            {removingId === item.id ? (
+              <ActivityIndicator size="small" color={colors.error} />
+            ) : (
+              <Text style={styles.removeText}>Remove</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
     </Card>
   );
@@ -234,10 +246,13 @@ const styles = StyleSheet.create({
   },
   card: { marginBottom: layout.listItemGap },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  info: { flex: 1 },
+  info: { flex: 1, marginRight: spacing.sm },
   name: { ...typography.h4, marginBottom: spacing.xs },
   specialty: { ...typography.subtitle, color: colors.textSecondary, marginBottom: spacing.xs },
   rating: { ...typography.subtitle, color: colors.textTertiary },
+  actions: { alignItems: 'flex-end', gap: spacing.xs },
+  availabilityBtn: { paddingVertical: spacing.xs, paddingHorizontal: spacing.sm },
+  availabilityText: { ...typography.label, color: colors.primary },
   removeBtn: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
   removeText: { ...typography.label, color: colors.error },
   emptyWrap: { flex: 1, justifyContent: 'center' },

@@ -52,18 +52,35 @@ export function ClinicDashboardScreen() {
       <View style={styles.container}>
         <Text style={styles.title}>My clinics</Text>
         {clinics.length > 0 ? (
-          clinics.map((clinic) => (
+          <>
             <TouchableOpacity
-              key={clinic.id}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate('ClinicDetail', { clinicId: clinic.id })}
+              onPress={() =>
+                clinics.length === 1
+                  ? navigation.navigate('ClinicTherapists', { clinicId: clinics[0].id })
+                  : navigation.navigate('ClinicAvailabilityClinics')
+              }
             >
-              <Card style={styles.card} variant="elevated" accentColor={colors.primary}>
-                <Text style={styles.clinicName}>{clinic.name}</Text>
-                <Text style={styles.tapHint}>Tap to manage profile and therapists</Text>
+              <Card style={styles.card} variant="outlined">
+                <Text style={styles.manageAvailabilityTitle}>Manage therapist availability</Text>
+                <Text style={styles.tapHint}>
+                  {clinics.length === 1 ? 'Tap to view therapists and manage their slots' : 'Tap to select a clinic'}
+                </Text>
               </Card>
             </TouchableOpacity>
-          ))
+            {clinics.map((clinic) => (
+              <TouchableOpacity
+                key={clinic.id}
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate('ClinicDetail', { clinicId: clinic.id })}
+              >
+                <Card style={styles.card} variant="elevated" accentColor={colors.primary}>
+                  <Text style={styles.clinicName}>{clinic.name}</Text>
+                  <Text style={styles.tapHint}>Tap to manage profile and therapists</Text>
+                </Card>
+              </TouchableOpacity>
+            ))}
+          </>
         ) : (
           <Card style={styles.card}>
             <EmptyState
@@ -106,6 +123,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   title: { ...typography.h2, marginBottom: layout.sectionGapSmall },
   card: { marginBottom: layout.listItemGap },
+  manageAvailabilityTitle: { ...typography.h3, marginBottom: spacing.xs },
   clinicName: { ...typography.h3, marginBottom: spacing.xs },
   tapHint: { ...typography.subtitle, color: colors.textTertiary },
   legalHeading: { ...typography.label, color: colors.primary, marginBottom: spacing.sm },

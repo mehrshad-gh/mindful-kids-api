@@ -89,6 +89,22 @@ async function getTherapistCountByClinicIds(clinicIds) {
   return map;
 }
 
+/**
+ * Check if a clinic_admin (with given clinic IDs) has access to manage a psychologist.
+ * Returns { hasAccess: true, clinicId } with first affiliated clinic, or { hasAccess: false }.
+ */
+async function getClinicAccessToPsychologist(clinicIds, psychologistId) {
+  if (!clinicIds || clinicIds.length === 0) return { hasAccess: false };
+  const result = await query(
+    `SELECT clinic_id FROM therapist_clinics
+     WHERE clinic_id = ANY($1) AND psychologist_id = $2 AND status = 'active'
+     LIMIT 1`,
+    [clinicIds, psychologistId]
+  );
+  const row = result.rows[0];
+  return row ? { hasAccess: true, clinicId: row.clinic_id } : { hasAccess: false };
+}
+
 module.exports = {
   add,
   findByPsychologistId,
@@ -96,4 +112,5 @@ module.exports = {
   remove,
   getClinicNamesByPsychologistIds,
   getTherapistCountByClinicIds,
+  getClinicAccessToPsychologist,
 };

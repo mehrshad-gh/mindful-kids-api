@@ -17,6 +17,7 @@ import {
   postCredentials,
   uploadCredentialDocument,
 } from '../../api/therapist';
+import { getAppointmentCounts } from '../../api/therapistAppointments';
 import type {
   TherapistProfile,
   TherapistMeCredential,
@@ -60,6 +61,7 @@ export function TherapistDashboardScreen() {
   const [error, setError] = useState<string | null>(null);
   const [credentialActionLoading, setCredentialActionLoading] = useState<string | null>(null);
   const [addingCredential, setAddingCredential] = useState(false);
+  const [requestedAppointmentsCount, setRequestedAppointmentsCount] = useState<number>(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -68,7 +70,7 @@ export function TherapistDashboardScreen() {
         setLoading(true);
         setError(null);
         try {
-          const [appRes, profileRes, verificationRes, credentialsRes, reportsRes, affiliationsRes] =
+          const [appRes, profileRes, verificationRes, credentialsRes, reportsRes, affiliationsRes, countsRes] =
             await Promise.all([
               getApplication(),
               getProfileMe(),
@@ -76,6 +78,7 @@ export function TherapistDashboardScreen() {
               getCredentials().catch(() => ({ credentials: [] })),
               getReports().catch(() => ({ reports: [] })),
               getClinicAffiliations().catch(() => ({ affiliations: [] })),
+              getAppointmentCounts().catch(() => ({ requested: 0 })),
             ]);
           if (!cancelled) {
             if (appRes.application) {
@@ -94,6 +97,7 @@ export function TherapistDashboardScreen() {
             setCredentials(credentialsRes.credentials ?? []);
             setReports(reportsRes.reports ?? []);
             setAffiliations(affiliationsRes.affiliations ?? []);
+            setRequestedAppointmentsCount(countsRes?.requested ?? 0);
           }
         } catch (e) {
           if (!cancelled) setError('Could not load dashboard.');
@@ -373,6 +377,22 @@ export function TherapistDashboardScreen() {
           />
         )}
         <Card style={styles.card}>
+          <Text style={styles.cardTitle}>Availability & booking</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('TherapistAvailability')} style={styles.legalLink}>
+            <Text style={styles.legalLinkText}>Manage availability slots</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('TherapistAppointmentRequests')} style={styles.legalLink}>
+            <View style={styles.legalLinkRow}>
+              <Text style={styles.legalLinkText}>Appointment requests</Text>
+              {requestedAppointmentsCount > 0 ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{requestedAppointmentsCount}</Text>
+                </View>
+              ) : null}
+            </View>
+          </TouchableOpacity>
+        </Card>
+        <Card style={styles.card}>
           <Text style={styles.cardTitle}>Legal</Text>
           <TouchableOpacity onPress={() => navigation.navigate('TermsOfService')} style={styles.legalLink}>
             <Text style={styles.legalLinkText}>Terms of Service</Text>
@@ -442,7 +462,18 @@ const styles = StyleSheet.create({
   clinicName: { ...typography.body, fontWeight: '600', color: colors.text },
   clinicRole: { ...typography.bodySmall, color: colors.textSecondary },
   legalLink: { marginTop: spacing.xs },
+  legalLinkRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   legalLinkText: { ...typography.body, color: colors.primary, textDecorationLine: 'underline' },
+  badge: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.error,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  badgeText: { ...typography.caption, color: '#fff', fontWeight: '700' },
   btn: { alignSelf: 'flex-start', marginBottom: spacing.sm },
   signOutBtn: {},
 });
