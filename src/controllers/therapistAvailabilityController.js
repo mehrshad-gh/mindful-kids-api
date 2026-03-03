@@ -38,7 +38,7 @@ async function createSlot(req, res, next) {
       end.toISOString()
     );
     if (overlapping.length > 0) {
-      return res.status(409).json({ error: 'Slot overlaps with an existing open or booked slot' });
+      return res.status(409).json({ error: 'Slot overlaps with an existing open, booked, or blocked slot' });
     }
     const slot = await AvailabilitySlot.create({
       owner_type: 'psychologist',

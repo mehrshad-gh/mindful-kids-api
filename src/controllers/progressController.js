@@ -1,5 +1,7 @@
 const Child = require('../models/Child');
 const Progress = require('../models/Progress');
+const Activity = require('../models/Activity');
+const KidToolSession = require('../models/KidToolSession');
 
 async function list(req, res, next) {
   try {
@@ -30,6 +32,15 @@ async function upsert(req, res, next) {
       streakDays: streak_days,
       metadata,
     });
+    const activity = await Activity.findById(activity_id);
+    const domainId = (activity && activity.domain_id) || 'emotional_awareness';
+    await KidToolSession.insert({
+      childId: child_id,
+      activityId: activity_id,
+      domainId,
+      stars: progress.stars,
+      completedAt: progress.completed_at,
+    });
     res.json({ progress });
   } catch (err) {
     next(err);
@@ -54,6 +65,15 @@ async function create(req, res, next) {
       streakDays: 0,
       metadata,
       completedAt: completed_at || null,
+    });
+    const activity = await Activity.findById(activity_id);
+    const domainId = (activity && activity.domain_id) || 'emotional_awareness';
+    await KidToolSession.insert({
+      childId: child_id,
+      activityId: activity_id,
+      domainId,
+      stars: progress.stars,
+      completedAt: progress.completed_at,
     });
     res.status(201).json({ progress });
   } catch (err) {

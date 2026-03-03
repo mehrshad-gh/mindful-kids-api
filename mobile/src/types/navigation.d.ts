@@ -50,6 +50,7 @@ export type ChildTabParamList = {
 
 export type ChildStackParamList = {
   Main: undefined;
+  DomainDetail: { domainId: string };
   CompletionReward: { starsEarned: number };
 };
 

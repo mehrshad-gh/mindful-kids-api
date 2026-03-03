@@ -1,5 +1,5 @@
 const express = require('express');
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 const { authenticate } = require('../middleware/auth');
 const { requireRole } = require('../middleware/auth');
 const { handleValidationErrors } = require('../middleware/validate');
@@ -48,7 +48,12 @@ router.post('/application/submit', therapistApplicationController.submit);
 
 router.post('/availability', therapistAvailabilityController.createSlot);
 router.get('/availability', therapistAvailabilityController.listMySlots);
-router.delete('/availability/:id', therapistAvailabilityController.deleteSlot);
+router.delete(
+  '/availability/:id',
+  param('id').isUUID().withMessage('Invalid slot id'),
+  handleValidationErrors,
+  therapistAvailabilityController.deleteSlot
+);
 
 router.get('/appointments/counts', therapistAppointmentsController.getCounts);
 router.get('/appointments', therapistAppointmentsController.list);

@@ -1,58 +1,103 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  RefreshControl,
   ScrollView,
+  RefreshControl,
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
-import { fetchActivities, type Activity } from '../../services/activitiesService';
+import { useChildren } from '../../hooks/useChildren';
+import { fetchDomainProgress, type DomainProgressItem } from '../../api/domainProgress';
+import { EMOTIONAL_DOMAINS } from '../../constants/emotionalDomains';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { colors } from '../../theme/colors';
 import { spacing, layout } from '../../theme';
 import { typography } from '../../theme/typography';
-import type { ChildTabParamList } from '../../types/navigation';
+import type { ChildTabParamList, ChildStackParamList } from '../../types/navigation';
+
+type TabNav = NativeStackNavigationProp<ChildTabParamList, 'ActivityHub'>;
+type StackNav = NativeStackNavigationProp<ChildStackParamList, 'Main'>;
+
+function formatLastPracticed(iso: string | null): string {
+  if (!iso) return 'Not yet';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = now.getTime() - d.getTime();
+  if (diff < 24 * 60 * 60 * 1000) return 'Today';
+  if (diff < 2 * 24 * 60 * 60 * 1000) return 'Yesterday';
+  if (diff < 7 * 24 * 60 * 60 * 1000) return 'This week';
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
 
 export function ActivityHubScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<ChildTabParamList, 'ActivityHub'>>();
-  const { setAppRole, pendingActivityId, setPendingActivityId } = useAuth();
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const navigation = useNavigation<TabNav>();
+  const stackNav = useNavigation<StackNav>();
+  const { setAppRole, pendingActivityId, setPendingActivityId, selectedChildId } = useAuth();
+  const { children } = useChildren();
+  const [progressByDomain, setProgressByDomain] = useState<Record<string, DomainProgressItem>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const childId = selectedChildId ?? children[0]?.id ?? null;
+
+  const load = useCallback(async () => {
+    if (!childId) {
+      setProgressByDomain({});
+      setLoading(false);
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const { domains } = await fetchDomainProgress(childId);
+      const map: Record<string, DomainProgressItem> = {};
+      for (const d of domains) {
+        map[d.domain_id] = d;
+      }
+      setProgressByDomain(map);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not load progress');
+      setProgressByDomain({});
+    } finally {
+      setLoading(false);
+    }
+  }, [childId]);
 
   useFocusEffect(
     useCallback(() => {
       if (pendingActivityId) {
         setPendingActivityId(null);
-        navigation.navigate('Activity', { activityId: pendingActivityId });
+        (navigation.getParent() as any)?.navigate('Activity', { activityId: pendingActivityId });
       }
     }, [pendingActivityId, setPendingActivityId, navigation])
   );
 
-  const load = useCallback(async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      const list = await fetchActivities({ active: true });
-      setActivities(list);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load activities');
-      setActivities([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     load();
   }, [load]);
+
+  const openDomain = (domainId: string) => {
+    stackNav.navigate('DomainDetail', { domainId });
+  };
+
+  if (!childId && children.length === 0) {
+    return (
+      <ScreenLayout>
+        <Text style={styles.title}>Activity Hub</Text>
+        <Card style={styles.card}>
+          <Text style={styles.emptyText}>Add a child in parent mode to start building skills.</Text>
+        </Card>
+        <Button title="Back to Parent mode" onPress={() => setAppRole('parent')} variant="ghost" style={styles.switchBtn} />
+      </ScreenLayout>
+    );
+  }
 
   return (
     <ScreenLayout scroll={false}>
@@ -63,10 +108,10 @@ export function ActivityHubScreen() {
           <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
         }
       >
-        <Text style={styles.title}>Activity Hub</Text>
-        <Text style={styles.subtitle}>Psychology-based activities: CPRT, CBT, DBT, ACT.</Text>
+        <Text style={styles.title}>Build Your Skills</Text>
+        <Text style={styles.subtitle}>Practice in each area to grow stronger every day.</Text>
 
-        {loading && activities.length === 0 ? (
+        {loading && Object.keys(progressByDomain).length === 0 ? (
           <View style={styles.centered}>
             <ActivityIndicator size="large" color={colors.childAccent} />
           </View>
@@ -75,33 +120,33 @@ export function ActivityHubScreen() {
             <Text style={styles.errorText}>{error}</Text>
             <Button title="Retry" onPress={load} variant="outline" style={styles.retryBtn} />
           </Card>
-        ) : activities.length === 0 ? (
-          <Card style={styles.card} variant="glow" accentColor={colors.childAccent}>
-            <Text style={styles.emptyText}>No activities yet. Check back later!</Text>
-          </Card>
         ) : (
-          activities.map((activity) => (
-            <TouchableOpacity
-              key={activity.id}
-              activeOpacity={0.82}
-              onPress={() => navigation.navigate('Activity', { activityId: activity.id })}
-            >
-              <Card style={styles.card} variant="elevated" accentColor={colors.childAccent}>
-                <Text style={styles.activityTitle}>{activity.title}</Text>
-                {activity.description ? (
-                  <Text style={styles.activityDesc} numberOfLines={2}>
-                    {activity.description}
+          EMOTIONAL_DOMAINS.map((domain) => {
+            const prog = progressByDomain[domain.id];
+            const sessions = prog?.sessions_completed ?? 0;
+            const stars = prog?.total_stars ?? 0;
+            const lastAt = prog?.last_practiced_at ?? null;
+            return (
+              <TouchableOpacity
+                key={domain.id}
+                activeOpacity={0.82}
+                onPress={() => openDomain(domain.id)}
+              >
+                <Card style={styles.card} variant="elevated" accentColor={colors.childAccent}>
+                  <Text style={styles.domainTitle}>{domain.title}</Text>
+                  <Text style={styles.domainDesc} numberOfLines={2}>
+                    {domain.description}
                   </Text>
-                ) : null}
-                <View style={styles.meta}>
-                  <Text style={styles.metaText}>{activity.activity_type}</Text>
-                  {activity.duration_minutes != null && (
-                    <Text style={styles.metaText}> • {activity.duration_minutes} min</Text>
-                  )}
-                </View>
-              </Card>
-            </TouchableOpacity>
-          ))
+                  <View style={styles.stats}>
+                    <Text style={styles.statText}>{sessions} session{sessions !== 1 ? 's' : ''} completed</Text>
+                    <Text style={styles.statText}>★ {stars} stars</Text>
+                    <Text style={styles.metaText}>Last: {formatLastPracticed(lastAt)}</Text>
+                  </View>
+                  <Button title="Practice" onPress={() => openDomain(domain.id)} size="small" style={styles.practiceBtn} />
+                </Card>
+              </TouchableOpacity>
+            );
+          })
         )}
 
         <Button
@@ -124,13 +169,15 @@ const styles = StyleSheet.create({
   title: { ...typography.h2, marginBottom: spacing.xs },
   subtitle: { ...typography.subtitle, marginBottom: layout.sectionGapSmall },
   card: { marginBottom: layout.listItemGap },
-  activityTitle: { ...typography.h3 },
-  activityDesc: { ...typography.subtitle, marginTop: spacing.xs },
-  meta: { flexDirection: 'row', marginTop: spacing.xs },
-  metaText: { ...typography.caption },
+  domainTitle: { ...typography.h3, marginBottom: spacing.xs },
+  domainDesc: { ...typography.subtitle, color: colors.textSecondary, marginBottom: spacing.sm },
+  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
+  statText: { ...typography.caption, color: colors.text },
+  metaText: { ...typography.caption, color: colors.textTertiary },
+  practiceBtn: { alignSelf: 'flex-start' },
   errorText: { ...typography.error, marginBottom: spacing.sm },
   retryBtn: { alignSelf: 'flex-start' },
-  emptyText: { ...typography.subtitle },
+  emptyText: { ...typography.subtitle, color: colors.textSecondary },
   centered: { padding: spacing.xl, alignItems: 'center' },
   switchBtn: { marginTop: spacing.lg },
 });

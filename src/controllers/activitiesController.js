@@ -2,11 +2,12 @@ const Activity = require('../models/Activity');
 
 async function list(req, res, next) {
   try {
-    const { active, activity_type, age_group } = req.query;
+    const { active, activity_type, age_group, domain_id } = req.query;
     const activities = await Activity.findAll({
       active: active !== undefined ? active === 'true' : true,
       activityType: activity_type,
       ageGroup: age_group,
+      domainId: domain_id || undefined,
     });
     res.json({ activities });
   } catch (err) {

@@ -101,7 +101,7 @@ Consent is stored with timestamp.
 3. Provide support resources  
 4. Internal review process  
 
-We do not provide crisis intervention — we guide safely.
+We do not provide crisis support — we guide safely.
 
 ---
 

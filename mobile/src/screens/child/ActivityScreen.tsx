@@ -14,6 +14,9 @@ import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
 import { CompleteActivityBlock } from '../../components/CompleteActivityBlock';
 import { EmotionWheelActivity } from '../../components/EmotionWheelActivity';
+import { Grounding54321Activity } from '../../components/Grounding54321Activity';
+import { CalmBodyResetActivity } from '../../components/CalmBodyResetActivity';
+import { PauseAndChooseActivity } from '../../components/PauseAndChooseActivity';
 import { useAuth } from '../../context/AuthContext';
 import { fetchActivityById, type Activity } from '../../services/activitiesService';
 import { colors } from '../../theme/colors';
@@ -115,6 +118,69 @@ export function ActivityScreen({ navigation, route }: Props) {
             activityTitle={activity.title}
             activityDescription={activity.description}
             instructions={activity.instructions ?? undefined}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'grounding_54321') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <Grounding54321Activity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'calm_body_reset') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <CalmBodyResetActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'pause_and_choose') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <PauseAndChooseActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
             childId={selectedChildId}
             onRecorded={handleRecorded}
           />

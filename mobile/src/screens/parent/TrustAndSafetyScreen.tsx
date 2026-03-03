@@ -37,7 +37,7 @@ export function TrustAndSafetyScreen() {
         <Card style={styles.card}>
           <Text style={styles.heading}>Platform positioning</Text>
           <Text style={styles.body}>
-            We provide activities and advice to help families build emotional skills. We are not a healthcare provider. For diagnosis, treatment, or clinical support, please see a qualified professional.
+            We provide activities and advice to help families build emotional skills. We are not a healthcare provider. For diagnosis, clinical care, or professional support, please see a qualified professional.
           </Text>
         </Card>
 

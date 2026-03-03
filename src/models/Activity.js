@@ -3,7 +3,7 @@ const { query } = require('../database/connection');
 async function findAll(filters = {}) {
   let sql = `
     SELECT id, title, slug, description, activity_type, age_groups, psychology_basis,
-           for_parents_notes, duration_minutes, sort_order, is_active, instructions, created_at, updated_at
+           for_parents_notes, duration_minutes, sort_order, is_active, instructions, domain_id, created_at, updated_at
     FROM activities WHERE 1=1`;
   const params = [];
   let i = 1;
@@ -19,6 +19,10 @@ async function findAll(filters = {}) {
     sql += ` AND $${i++} = ANY(age_groups)`;
     params.push(filters.ageGroup);
   }
+  if (filters.domainId) {
+    sql += ` AND domain_id = $${i++}`;
+    params.push(filters.domainId);
+  }
   sql += ' ORDER BY sort_order ASC, created_at ASC';
   const result = await query(sql, params);
   return result.rows;
@@ -27,7 +31,7 @@ async function findAll(filters = {}) {
 async function findById(id) {
   const result = await query(
     `SELECT id, title, slug, description, activity_type, age_groups, psychology_basis,
-            for_parents_notes, duration_minutes, sort_order, is_active, instructions, created_at, updated_at
+            for_parents_notes, duration_minutes, sort_order, is_active, instructions, domain_id, created_at, updated_at
      FROM activities WHERE id = $1`,
     [id]
   );
@@ -37,7 +41,7 @@ async function findById(id) {
 async function findBySlug(slug) {
   const result = await query(
     `SELECT id, title, slug, description, activity_type, age_groups, psychology_basis,
-            for_parents_notes, duration_minutes, sort_order, is_active, instructions, created_at, updated_at
+            for_parents_notes, duration_minutes, sort_order, is_active, instructions, domain_id, created_at, updated_at
      FROM activities WHERE slug = $1 AND is_active = true`,
     [slug]
   );

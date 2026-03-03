@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityHubScreen } from '../screens/child/ActivityHubScreen';
 import { ActivityScreen } from '../screens/child/ActivityScreen';
+import { DomainDetailScreen } from '../screens/child/DomainDetailScreen';
 import { RewardScreen } from '../screens/child/RewardScreen';
 import { CalmToolsScreen } from '../screens/child/CalmToolsScreen';
 import { CompletionRewardScreen } from '../screens/child/CompletionRewardScreen';
@@ -37,6 +38,7 @@ export function ChildNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Main" component={ChildTabs} />
+      <Stack.Screen name="DomainDetail" component={DomainDetailScreen} />
       <Stack.Screen name="CompletionReward" component={CompletionRewardScreen} />
     </Stack.Navigator>
   );

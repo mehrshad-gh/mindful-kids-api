@@ -31,13 +31,13 @@ async function create({
   return result.rows[0];
 }
 
-/** Find overlapping open or booked slots (for validation). */
+/** Find overlapping open, booked, or blocked slots (for validation). Includes blocked so unavailability ranges don't overlap. */
 async function findOverlapping(owner_type, owner_id, starts_at_utc, ends_at_utc, excludeSlotId = null) {
   let sql = `
     SELECT id, owner_type, owner_id, starts_at_utc, ends_at_utc, status
     FROM availability_slots
     WHERE owner_type = $1 AND owner_id = $2
-      AND (status = 'open' OR status = 'booked')
+      AND status IN ('open', 'booked', 'blocked')
       AND (starts_at_utc, ends_at_utc) OVERLAPS ($3::timestamptz, $4::timestamptz)`;
   const params = [owner_type, owner_id, starts_at_utc, ends_at_utc];
   if (excludeSlotId) {

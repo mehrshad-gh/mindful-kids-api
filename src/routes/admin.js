@@ -11,6 +11,7 @@ const ClinicAdmin = require('../models/ClinicAdmin');
 const User = require('../models/User');
 const Psychologist = require('../models/Psychologist');
 const AdminAuditLog = require('../models/AdminAuditLog');
+const AvailabilitySlotAuditLog = require('../models/AvailabilitySlotAuditLog');
 
 const router = express.Router();
 
@@ -242,6 +243,25 @@ router.patch('/clinics/:id/status', async (req, res, next) => {
       details: { status, verification_status },
     });
     res.json({ message: 'Status updated.', clinic: updated });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** GET /admin/availability-slot-audit – list slot create/delete audit entries (who created/deleted). Query: slot_id? (UUID), limit? */
+router.get('/availability-slot-audit', async (req, res, next) => {
+  try {
+    const slotIdRaw = req.query.slot_id || null;
+    if (slotIdRaw !== null && slotIdRaw !== '') {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(slotIdRaw)) {
+        return res.status(400).json({ error: 'slot_id must be a valid UUID' });
+      }
+    }
+    const slotId = slotIdRaw || null;
+    const limit = Math.min(parseInt(req.query.limit, 10) || 100, 500);
+    const entries = await AvailabilitySlotAuditLog.listForAdmin({ slotId, limit });
+    res.json({ entries });
   } catch (err) {
     next(err);
   }

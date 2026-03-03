@@ -6,7 +6,7 @@ const { query } = require('../database/connection');
  */
 async function getTodayTip() {
   const tipsResult = await query(
-    `SELECT id, title, content, psychology_basis, created_at
+    `SELECT id, title, content, psychology_basis, domain_id, created_at
      FROM daily_tips
      WHERE is_active = true
      ORDER BY id ASC`
@@ -26,6 +26,7 @@ async function getTodayTip() {
     title: tip.title,
     content: tip.content,
     psychology_basis: tip.psychology_basis,
+    domain_id: tip.domain_id ?? null,
   };
 }
 

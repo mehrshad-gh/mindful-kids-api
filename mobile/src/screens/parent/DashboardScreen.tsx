@@ -7,8 +7,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useChildren } from '../../hooks/useChildren';
 import { useProgressSummary } from '../../hooks/useProgressSummary';
 import { fetchFeaturedAdvice, type AdviceItem } from '../../api/advice';
-import { fetchDailyTip, recordDailyTipViewed, fetchDailyTipSuggestions, type DailyTip, type DailyTipSuggestion } from '../../api/dailyTip';
+import { fetchDailyTip, recordDailyTipViewed, fetchDailyTipSuggestions, type DailyTip, type DailyTipSuggestion, type DailyTipSuggestedTool } from '../../api/dailyTip';
 import { fetchParentStreak, type ParentStreak } from '../../api/parentStreak';
+import { fetchDomainProgress, type DomainProgressItem } from '../../api/domainProgress';
+import { EMOTIONAL_DOMAINS } from '../../constants/emotionalDomains';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -110,7 +112,9 @@ export function DashboardScreen() {
   const [dailyTipLoading, setDailyTipLoading] = useState(true);
   const [tipModalVisible, setTipModalVisible] = useState(false);
   const [streak, setStreak] = useState<ParentStreak | null>(null);
-  const [tipSuggestions, setTipSuggestions] = useState<{ suggested_activity: DailyTipSuggestion | null; suggested_article: DailyTipSuggestion | null } | null>(null);
+  const [tipSuggestions, setTipSuggestions] = useState<{ suggested_activity: DailyTipSuggestion | null; suggested_article: DailyTipSuggestion | null; suggested_tool?: DailyTipSuggestedTool | null } | null>(null);
+  const [domainProgress, setDomainProgress] = useState<DomainProgressItem[] | null>(null);
+  const [domainProgressLoading, setDomainProgressLoading] = useState(false);
 
   const loadAdvice = useCallback(async () => {
     setAdviceLoading(true);
@@ -147,6 +151,22 @@ export function DashboardScreen() {
     }
   }, []);
 
+  const loadDomainProgress = useCallback(async () => {
+    if (!selectedChildId) {
+      setDomainProgress(null);
+      return;
+    }
+    setDomainProgressLoading(true);
+    try {
+      const { domains } = await fetchDomainProgress(selectedChildId);
+      setDomainProgress(domains);
+    } catch {
+      setDomainProgress(null);
+    } finally {
+      setDomainProgressLoading(false);
+    }
+  }, [selectedChildId]);
+
   const openTipDetail = useCallback(async () => {
     if (!dailyTip) return;
     setTipModalVisible(true);
@@ -178,7 +198,8 @@ export function DashboardScreen() {
       loadAdvice();
       loadDailyTip();
       loadParentStreak();
-    }, [refresh, refreshSummary, loadAdvice, loadDailyTip, loadParentStreak])
+      loadDomainProgress();
+    }, [refresh, refreshSummary, loadAdvice, loadDailyTip, loadParentStreak, loadDomainProgress])
   );
 
   const selectedChild = children.find((c) => c.id === selectedChildId);
@@ -226,7 +247,8 @@ export function DashboardScreen() {
     loadAdvice();
     loadDailyTip();
     loadParentStreak();
-  }, [refresh, refreshSummary, loadAdvice, loadDailyTip, loadParentStreak]);
+    loadDomainProgress();
+  }, [refresh, refreshSummary, loadAdvice, loadDailyTip, loadParentStreak, loadDomainProgress]);
 
   return (
     <ScreenLayout scroll={false}>
@@ -395,6 +417,35 @@ export function DashboardScreen() {
           </Card>
         )}
 
+        {selectedChild && (
+          <Card style={styles.domainCard} variant="outlined">
+            <Text style={styles.domainCardTitle}>Emotional Growth Overview</Text>
+            <Text style={styles.domainCardSubtitle}>Skills practice by area</Text>
+            {domainProgressLoading && !domainProgress ? (
+              <ActivityIndicator size="small" color={colors.parentAccent} style={styles.domainLoader} />
+            ) : domainProgress ? (
+              EMOTIONAL_DOMAINS.map((domain) => {
+                const prog = domainProgress.find((d) => d.domain_id === domain.id);
+                const sessions = prog?.sessions_completed ?? 0;
+                const stars = prog?.total_stars ?? 0;
+                const barMax = 10;
+                const barPct = Math.min(1, sessions / barMax);
+                return (
+                  <View key={domain.id} style={styles.domainRow}>
+                    <Text style={styles.domainLabel}>{domain.title}</Text>
+                    <View style={styles.domainBarBg}>
+                      <View style={[styles.domainBarFill, { width: `${barPct * 100}%` }]} />
+                    </View>
+                    <Text style={styles.domainMeta}>{stars} stars · {sessions} session{sessions !== 1 ? 's' : ''}</Text>
+                  </View>
+                );
+              })
+            ) : (
+              <Text style={styles.domainEmpty}>No domain progress yet.</Text>
+            )}
+          </Card>
+        )}
+
         <Text style={styles.sectionTitle}>Child for “Child mode”</Text>
         {loading && children.length === 0 ? (
           <View style={styles.centered}>
@@ -497,9 +548,16 @@ export function DashboardScreen() {
             ) : null}
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
               <Text style={styles.modalBody}>{dailyTip?.content ?? ''}</Text>
-              {(tipSuggestions?.suggested_activity || tipSuggestions?.suggested_article) ? (
+              {(tipSuggestions?.suggested_activity || tipSuggestions?.suggested_article || tipSuggestions?.suggested_tool) ? (
                 <View style={styles.suggestionsSection}>
                   <Text style={styles.suggestionsTitle}>Suggested for you</Text>
+                  {tipSuggestions.suggested_tool ? (
+                    <View style={styles.suggestionCard}>
+                      <Text style={styles.suggestionCardLabel}>Practice with your child</Text>
+                      <Text style={styles.suggestionCardTitle} numberOfLines={2}>{tipSuggestions.suggested_tool.title}</Text>
+                      <Text style={styles.suggestionCardSummary}>Try this skill-building tool in Child mode.</Text>
+                    </View>
+                  ) : null}
                   {tipSuggestions.suggested_activity ? (
                     <TouchableOpacity
                       activeOpacity={0.7}
@@ -641,6 +699,16 @@ const styles = StyleSheet.create({
   recentActivity: { ...typography.subtitle, fontWeight: '600', color: colors.text },
   recentMeta: { ...typography.caption, marginTop: 2 },
   noActivity: { ...typography.subtitle },
+  domainCard: { marginBottom: layout.listItemGap },
+  domainCardTitle: { ...typography.h3, marginBottom: spacing.xs },
+  domainCardSubtitle: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.md },
+  domainRow: { marginBottom: spacing.sm },
+  domainLabel: { ...typography.subtitle, marginBottom: spacing.xs },
+  domainBarBg: { height: 8, backgroundColor: colors.border, borderRadius: 4, overflow: 'hidden', marginBottom: spacing.xs },
+  domainBarFill: { height: '100%', backgroundColor: colors.parentAccent, borderRadius: 4 },
+  domainMeta: { ...typography.caption, color: colors.textSecondary },
+  domainEmpty: { ...typography.bodySmall, color: colors.textSecondary },
+  domainLoader: { marginVertical: spacing.sm },
   sectionTitle: { ...typography.h3, fontSize: 16, marginBottom: spacing.sm },
   card: { marginBottom: layout.listItemGap },
   cardSelected: { borderColor: colors.parentAccent, borderWidth: 2 },
