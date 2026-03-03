@@ -17,6 +17,12 @@ import { EmotionWheelActivity } from '../../components/EmotionWheelActivity';
 import { Grounding54321Activity } from '../../components/Grounding54321Activity';
 import { CalmBodyResetActivity } from '../../components/CalmBodyResetActivity';
 import { PauseAndChooseActivity } from '../../components/PauseAndChooseActivity';
+import { EmotionMatchGameActivity } from '../../components/EmotionMatchGameActivity';
+import { BodySignalsMapActivity } from '../../components/BodySignalsMapActivity';
+import { FeelingIntensityCheckActivity } from '../../components/FeelingIntensityCheckActivity';
+import { ProblemLadderActivity } from '../../components/ProblemLadderActivity';
+import { FixItPlanActivity } from '../../components/FixItPlanActivity';
+import { TryAgainToolActivity } from '../../components/TryAgainToolActivity';
 import { useAuth } from '../../context/AuthContext';
 import { fetchActivityById, type Activity } from '../../services/activitiesService';
 import { colors } from '../../theme/colors';
@@ -179,6 +185,132 @@ export function ActivityScreen({ navigation, route }: Props) {
           showsVerticalScrollIndicator={false}
         >
           <PauseAndChooseActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'emotion_match_game') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <EmotionMatchGameActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'body_signals_map') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <BodySignalsMapActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'feeling_intensity_check') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <FeelingIntensityCheckActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'problem_ladder') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <ProblemLadderActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'fix_it_plan') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <FixItPlanActivity
+            activityId={activity.id}
+            activityTitle={activity.title}
+            childId={selectedChildId}
+            onRecorded={handleRecorded}
+          />
+        </ScrollView>
+      </ScreenLayout>
+    );
+  }
+
+  if (activity.slug === 'try_again_tool') {
+    return (
+      <ScreenLayout scroll={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <TryAgainToolActivity
             activityId={activity.id}
             activityTitle={activity.title}
             childId={selectedChildId}

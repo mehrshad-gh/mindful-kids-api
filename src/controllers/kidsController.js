@@ -5,8 +5,14 @@ const Progress = require('../models/Progress');
 
 const DOMAIN_IDS = ['emotional_awareness', 'self_regulation', 'problem_solving', 'social_connection', 'resilience'];
 
-/** tool_type (slug) values accepted for /kids/tools; all map to self_regulation. */
-const TOOL_TYPE_SLUGS = ['calm-breathing-dbt', 'grounding_54321', 'calm_body_reset', 'pause_and_choose'];
+/** tool_type (slug) values accepted for /kids/tools; must resolve to allowed domain. */
+const TOOL_TYPE_SLUGS = [
+  'calm-breathing-dbt', 'grounding_54321', 'calm_body_reset', 'pause_and_choose',
+  'emotion-wheel', 'emotion-identification-cbt', 'emotion_match_game', 'body_signals_map', 'feeling_intensity_check',
+  'problem_ladder', 'fix_it_plan', 'try_again_tool',
+];
+
+const TOOL_ALLOWED_DOMAINS = ['self_regulation', 'emotional_awareness', 'problem_solving'];
 
 function normalizeToolType(toolType) {
   if (toolType === 'breathing') return 'calm-breathing-dbt';
@@ -62,15 +68,15 @@ async function toolsStart(req, res, next) {
     const slug = normalizeToolType(toolType);
     if (!TOOL_TYPE_SLUGS.includes(slug)) {
       return res.status(400).json({
-        error: 'Invalid tool_type. Use one of: breathing, grounding_54321, calm_body_reset, pause_and_choose',
+        error: 'Invalid tool_type. Use one of: breathing, grounding_54321, calm_body_reset, pause_and_choose, emotion_match_game, body_signals_map, feeling_intensity_check, emotion-wheel, emotion-identification-cbt, problem_ladder, fix_it_plan, try_again_tool',
       });
     }
     const activity = await Activity.findBySlug(slug);
     if (!activity) {
       return res.status(404).json({ error: 'Activity not found for this tool' });
     }
-    if (activity.domain_id !== 'self_regulation') {
-      return res.status(400).json({ error: 'This tool is not part of the self-regulation domain' });
+    if (!TOOL_ALLOWED_DOMAINS.includes(activity.domain_id)) {
+      return res.status(400).json({ error: 'This tool is not available for the tools API' });
     }
     res.json({
       activity_id: activity.id,
@@ -102,15 +108,15 @@ async function toolsComplete(req, res, next) {
     const slug = normalizeToolType(toolType);
     if (!TOOL_TYPE_SLUGS.includes(slug)) {
       return res.status(400).json({
-        error: 'Invalid tool_type. Use one of: breathing, grounding_54321, calm_body_reset, pause_and_choose',
+        error: 'Invalid tool_type. Use one of: breathing, grounding_54321, calm_body_reset, pause_and_choose, emotion_match_game, body_signals_map, feeling_intensity_check, emotion-wheel, emotion-identification-cbt, problem_ladder, fix_it_plan, try_again_tool',
       });
     }
     const activity = await Activity.findBySlug(slug);
     if (!activity) {
       return res.status(404).json({ error: 'Activity not found for this tool' });
     }
-    if (activity.domain_id !== 'self_regulation') {
-      return res.status(400).json({ error: 'This tool is not part of the self-regulation domain' });
+    if (!TOOL_ALLOWED_DOMAINS.includes(activity.domain_id)) {
+      return res.status(400).json({ error: 'This tool is not available for the tools API' });
     }
 
     const recent = await KidToolSession.findMostRecent(childId, activity.id);

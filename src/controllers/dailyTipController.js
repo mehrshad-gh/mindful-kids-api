@@ -68,16 +68,19 @@ async function getSuggestions(req, res, next) {
     const tipBasis = tip.psychology_basis || '';
     const suggested_activity = activities.find((a) => psychologyOverlap(tipBasis, a.psychology_basis)) || null;
     const suggested_article = articles.find((a) => psychologyOverlap(tipBasis, a.psychology_basis)) || null;
-    // For self_regulation, prefer tool order: breathing → grounding_54321 → pause_and_choose → calm_body_reset
+    // Domain-specific tool preference order for suggested_tool
     const selfRegulationSlugOrder = ['calm-breathing-dbt', 'grounding_54321', 'pause_and_choose', 'calm_body_reset'];
+    const emotionalAwarenessSlugOrder = ['emotion_match_game', 'feeling_intensity_check', 'body_signals_map', 'emotion-wheel', 'emotion-identification-cbt'];
+    const problemSolvingSlugOrder = ['problem_ladder', 'fix_it_plan', 'try_again_tool'];
     let suggested_tool = null;
     if (domainTools.length > 0) {
-      const first =
-        tip.domain_id === 'self_regulation'
-          ? selfRegulationSlugOrder
-              .map((slug) => domainTools.find((t) => t.slug === slug))
-              .find(Boolean) || domainTools[0]
-          : domainTools[0];
+      const order = tip.domain_id === 'self_regulation' ? selfRegulationSlugOrder
+        : tip.domain_id === 'emotional_awareness' ? emotionalAwarenessSlugOrder
+        : tip.domain_id === 'problem_solving' ? problemSolvingSlugOrder
+        : null;
+      const first = order
+        ? (order.map((slug) => domainTools.find((t) => t.slug === slug)).find(Boolean) || domainTools[0])
+        : domainTools[0];
       suggested_tool = { id: first.id, title: first.title, slug: first.slug, domain_id: tip.domain_id };
     }
     res.json({
