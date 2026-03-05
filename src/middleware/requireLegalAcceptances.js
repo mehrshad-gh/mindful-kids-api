@@ -1,4 +1,4 @@
-const { CURRENT_LEGAL, getRequiredDocTypesForRole } = require('../config/legalVersions');
+const { getCurrentLegalVersions, getRequiredDocTypesForRole } = require('../config/legalVersions');
 const LegalAcceptance = require('../models/LegalAcceptance');
 
 /**
@@ -9,12 +9,13 @@ const LegalAcceptance = require('../models/LegalAcceptance');
  */
 async function requireLegalAcceptances(req, res, next) {
   try {
+    const versions = await getCurrentLegalVersions();
     const role = req.user?.role || 'parent';
     const docTypes = getRequiredDocTypesForRole(role);
     const required = docTypes
       .map((document_type) => ({
         document_type,
-        document_version: CURRENT_LEGAL[document_type] || null,
+        document_version: versions[document_type] || null,
       }))
       .filter((r) => r.document_version != null);
 

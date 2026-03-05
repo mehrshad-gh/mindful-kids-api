@@ -15,15 +15,16 @@ const User = require('../models/User');
 const Psychologist = require('../models/Psychologist');
 const AdminAuditLog = require('../models/AdminAuditLog');
 const AvailabilitySlotAuditLog = require('../models/AvailabilitySlotAuditLog');
+const { query } = require('../database/connection');
+const { invalidateLegalVersionsCache } = require('../config/legalVersions');
+
+const ALLOWED_LEGAL_DOCUMENT_TYPES = ['terms', 'privacy_policy', 'professional_disclaimer', 'provider_terms'];
 
 const router = express.Router();
 
-// Signed document URL access (token in query, 5 min expiry) – no auth so link can be opened in new tab
-router.get('/clinic-applications/document', clinicApplicationController.serveDocumentByToken);
-
 router.use(authenticate);
 router.use(requireRole('admin'));
-// Force re-acceptance when CURRENT_LEGAL versions change (returns 428 LEGAL_REACCEPT_REQUIRED)
+// Force re-acceptance when legal_documents versions change (returns 428 LEGAL_REACCEPT_REQUIRED)
 router.use(requireLegalAcceptances);
 
 // Dashboard overview (counts)
@@ -42,6 +43,45 @@ router.get('/content', adminContentController.list);
 router.get('/content/:id', adminContentController.getOne);
 router.post('/content', adminContentController.create);
 router.patch('/content/:id', adminContentController.update);
+
+// Legal document versions (admin bump without code deploy); audit in legal_document_updates
+router.patch('/legal-documents/:document_type', async (req, res, next) => {
+  try {
+    const { document_type } = req.params;
+    const { version } = req.body;
+    if (!ALLOWED_LEGAL_DOCUMENT_TYPES.includes(document_type)) {
+      return res.status(400).json({ error: `document_type must be one of: ${ALLOWED_LEGAL_DOCUMENT_TYPES.join(', ')}` });
+    }
+    if (!version || typeof version !== 'string' || !version.trim()) {
+      return res.status(400).json({ error: 'Body must include version (non-empty string).' });
+    }
+    const newVersion = version.trim();
+    const oldRow = await query(
+      `SELECT current_version FROM legal_documents WHERE document_type = $1`,
+      [document_type]
+    );
+    if (oldRow.rowCount === 0) {
+      return res.status(404).json({ error: 'Legal document type not found.' });
+    }
+    const oldVersion = oldRow.rows[0].current_version;
+    const result = await query(
+      `UPDATE legal_documents SET current_version = $1, updated_at = NOW() WHERE document_type = $2 RETURNING current_version`,
+      [newVersion, document_type]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Legal document type not found.' });
+    }
+    await query(
+      `INSERT INTO legal_document_updates (document_type, old_version, new_version, updated_by)
+       VALUES ($1, $2, $3, $4)`,
+      [document_type, oldVersion, newVersion, req.user.id]
+    );
+    invalidateLegalVersionsCache();
+    res.json({ document_type, new_version: result.rows[0].current_version });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Clinic onboarding: list, get one, get document URL, approve/reject
 router.use('/clinic-applications', adminClinicApplicationsRoutes);

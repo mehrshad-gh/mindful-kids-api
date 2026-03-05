@@ -2,7 +2,7 @@
  * Admin API – requires authenticated user with role admin.
  */
 
-import { apiClient } from '../lib/apiClient';
+import { apiClient, getBaseURL } from '../lib/apiClient';
 import type { TherapistApplication, Clinic, ClinicApplication, AdminClinicDetailResponse } from '../types/therapist';
 
 export interface AdminDashboard {
@@ -299,11 +299,13 @@ export async function getClinicApplication(id: string): Promise<{ application: C
 
 export async function getClinicApplicationDocumentUrl(
   id: string
-): Promise<{ url: string; expires_in_seconds: number }> {
-  const { data } = await apiClient.get<{ url: string; expires_in_seconds: number }>(
-    `/admin/clinic-applications/${id}/document`
+): Promise<{ url: string }> {
+  const { data } = await apiClient.get<{ url: string }>(
+    `/admin/clinic-applications/${id}/document-link`
   );
-  return data;
+  const baseURL = getBaseURL();
+  const fullUrl = data.url.startsWith('http') ? data.url : `${baseURL}${data.url}`;
+  return { url: fullUrl };
 }
 
 export async function reviewClinicApplication(

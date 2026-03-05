@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
-const { CURRENT_LEGAL, getRequiredDocTypesForRole } = require('../config/legalVersions');
+const { getCurrentLegalVersions, getRequiredDocTypesForRole } = require('../config/legalVersions');
 const User = require('../models/User');
 const LegalAcceptance = require('../models/LegalAcceptance');
 
@@ -163,11 +163,12 @@ async function getLegalAcceptances(req, res, next) {
 /** GET /auth/me/required-acceptances – required and missing document acceptances for current user (role-based). Used by app to show legal gate. req.user comes from authenticate (DB load), so role reflects current DB state (demotions apply immediately). */
 async function getRequiredAcceptances(req, res, next) {
   try {
+    const versions = await getCurrentLegalVersions();
     const role = req.user.role || 'parent';
     const docTypes = getRequiredDocTypesForRole(role);
     const required = docTypes.map((document_type) => ({
       document_type,
-      document_version: CURRENT_LEGAL[document_type] || null,
+      document_version: versions[document_type] || null,
     })).filter((r) => r.document_version != null);
 
     const missing = [];

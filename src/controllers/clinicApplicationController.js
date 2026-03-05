@@ -4,16 +4,16 @@
  * STORAGE VERIFICATION (security):
  * 1. Uploaded documents: stored under RAILWAY_VOLUME_MOUNT_PATH/uploads/clinic-applications (or /data when set).
  *    When Railway volume is mounted, files persist across deploys. Fallback: local ./uploads.
- * 2. Signed document URL: only admin routes can request it. GET /admin/clinic-applications/:id/document
- *    is behind authenticate + requireRole('admin'). The returned URL is the only way to access the file.
- * 3. Signed URL expires in 5 minutes (DOCUMENT_TOKEN_EXPIRY = '5m'). serveDocumentByToken verifies JWT.
+ * 2. Signed document link: GET /admin/clinic-applications/:id/document-link (authenticate + requireRole('admin') + requireLegalAcceptances)
+ *    returns { url: "/clinic-documents/<token>" }. Token is a JWT with clinic_application_id and file_path; 5 min expiry.
+ * 3. GET /clinic-documents/:token (public) verifies token and streams file; invalid/expired tokens rejected.
  */
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const multer = require('multer');
-const jwt = require('jsonwebtoken');
 const config = require('../config');
+const { generateDocumentToken, verifyDocumentToken } = require('../utils/signedDocumentToken');
 const ClinicApplication = require('../models/ClinicApplication');
 const Clinic = require('../models/Clinic');
 const ClinicInvite = require('../models/ClinicInvite');
@@ -28,7 +28,6 @@ const ALLOWED_MIMES = [
   'image/webp',
 ];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-const DOCUMENT_TOKEN_EXPIRY = '5m';
 
 const VOLUME_ROOT = process.env.RAILWAY_VOLUME_MOUNT_PATH || '/data';
 const PERSISTENT_PATH = path.join(VOLUME_ROOT, 'uploads', UPLOAD_SUBDIR);
@@ -353,10 +352,10 @@ async function review(req, res, next) {
 }
 
 /**
- * GET /api/admin/clinic-applications/:id/document
- * Admin only. Returns JSON { url } where url is a signed URL valid for 5 minutes. Never exposes storage path.
+ * GET /api/admin/clinic-applications/:id/document-link
+ * Admin only. Returns JSON { url } where url is a path to a signed document endpoint (token in path). Token valid 5 minutes.
  */
-async function getDocumentUrl(req, res, next) {
+async function getDocumentLink(req, res, next) {
   try {
     const application = await ClinicApplication.findById(req.params.id);
     if (!application) {
@@ -365,53 +364,58 @@ async function getDocumentUrl(req, res, next) {
     if (!application.document_storage_path) {
       return res.status(404).json({ error: 'No document for this application.' });
     }
-    const baseUrl = config.baseUrl || `${req.get('x-forwarded-proto') || req.protocol}://${req.get('x-forwarded-host') || req.get('host')}`;
-    const token = jwt.sign(
-      { sub: application.id },
-      config.jwt.secret,
-      { expiresIn: DOCUMENT_TOKEN_EXPIRY }
+    const token = generateDocumentToken(
+      {
+        clinic_application_id: application.id,
+        file_path: application.document_storage_path,
+      },
+      300
     );
-    const url = `${baseUrl}/api/admin/clinic-applications/document?token=${token}`;
-    res.json({ url, expires_in_seconds: 300 });
+    res.json({ url: '/clinic-documents/' + token });
   } catch (err) {
     next(err);
   }
 }
 
 /**
- * GET /api/admin/clinic-applications/document?token=...
- * No auth header; token in query. Verifies JWT (5 min expiry), serves file. Never exposes storage path.
+ * GET /clinic-documents/:token
+ * Public route. Verifies token (expired → 401, invalid → 403), validates payload against DB,
+ * blocks path traversal, then streams file from STORAGE_ROOT.
  */
-async function serveDocumentByToken(req, res, next) {
+async function serveClinicDocumentByToken(req, res, next) {
   try {
-    const token = req.query.token;
+    const token = req.params.token;
     if (!token) {
       return res.status(401).json({ error: 'Token required.' });
     }
-    let decoded;
+    let payload;
     try {
-      decoded = jwt.verify(token, config.jwt.secret);
+      payload = verifyDocumentToken(token);
     } catch (e) {
       if (e.name === 'TokenExpiredError') {
-        return res.status(401).json({ error: 'Link expired. Request a new document link.' });
+        return res.status(401).json({ error: 'Document link expired' });
       }
-      return res.status(401).json({ error: 'Invalid token.' });
+      return res.status(403).json({ error: 'Invalid document token' });
     }
-    const applicationId = decoded.sub;
-    const application = await ClinicApplication.findById(applicationId);
+    // Validate token payload against database (prevents token manipulation)
+    const application = await ClinicApplication.findById(payload.clinic_application_id);
     if (!application || !application.document_storage_path) {
       return res.status(404).json({ error: 'Document not found.' });
     }
-    const filename = path.basename(application.document_storage_path);
-    if (filename !== application.document_storage_path || filename.includes('..') || filename.includes('/')) {
+    if (application.document_storage_path !== payload.file_path) {
+      return res.status(403).json({ error: 'Invalid document token' });
+    }
+    const file_path = payload.file_path;
+    // Prevent path traversal: reject ".." or any directory escape; never allow direct filesystem paths
+    if (file_path.includes('..') || file_path.includes('/') || file_path.includes('\\')) {
       return res.status(400).json({ error: 'Invalid path.' });
     }
-    const resolvedDir = path.resolve(getUploadDir());
-    const filepath = path.join(resolvedDir, filename);
-    if (!filepath.startsWith(resolvedDir) || !fs.existsSync(filepath) || !fs.statSync(filepath).isFile()) {
+    const STORAGE_ROOT = path.resolve(getUploadDir());
+    const fullPath = path.join(STORAGE_ROOT, file_path);
+    if (!fullPath.startsWith(STORAGE_ROOT) || !fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) {
       return res.status(404).json({ error: 'File not found.' });
     }
-    res.sendFile(filename, { root: resolvedDir }, (err) => {
+    res.sendFile(file_path, { root: STORAGE_ROOT }, (err) => {
       if (err) next(err);
     });
   } catch (err) {
@@ -424,8 +428,8 @@ module.exports = {
   list,
   getOne,
   review,
-  getDocumentUrl,
-  serveDocumentByToken,
+  getDocumentLink,
+  serveClinicDocumentByToken,
   multerUpload,
   getUploadDir,
   ALLOWED_MIMES,

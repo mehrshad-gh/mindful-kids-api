@@ -7,6 +7,7 @@ const { handleValidationErrors } = require('../middleware/validate');
 
 const router = express.Router({ mergeParams: true });
 
+// All reports routes require authentication and current legal acceptances.
 const reportProfessionalValidation = [
   body('psychologist_id').isUUID().withMessage('Valid psychologist_id required'),
   body('reason').optional().isIn(['misconduct', 'inaccurate_info', 'inappropriate_behavior', 'other']),
@@ -14,7 +15,6 @@ const reportProfessionalValidation = [
 ];
 
 router.use(authenticate);
-// Force re-acceptance when CURRENT_LEGAL versions change (returns 428 LEGAL_REACCEPT_REQUIRED)
 router.use(requireLegalAcceptances);
 router.post('/professional', reportProfessionalValidation, handleValidationErrors, reportsController.reportProfessional);
 

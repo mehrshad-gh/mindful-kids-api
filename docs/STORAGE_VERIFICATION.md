@@ -14,12 +14,12 @@
 
 ---
 
-## 2. Only admin routes can request signed URLs
+## 2. Only admin routes can request signed document links
 
 - **Clinic application documents:**  
-  - `GET /api/admin/clinic-applications/:id/document` returns the signed URL.  
-  - Route lives under `adminClinicApplications.js`: `authenticate` + `requireRole('admin')`.  
-  - Only admins can call this; the response is the only way to obtain the document link.
+  - `GET /api/admin/clinic-applications/:id/document-link` returns `{ "url": "/clinic-documents/<token>" }`.  
+  - Route lives under `adminClinicApplications.js`: `authenticate` + `requireRole('admin')` + `requireLegalAcceptances`.  
+  - Only admins can obtain the link; the actual file is served at `GET /api/clinic-documents/:token` (token verified, no auth header).
 
 - **Credential documents:**  
   - No signed URL. Files are served at `GET /api/therapist/credential-document/:filename` with `requireRole('admin')`.  
@@ -29,9 +29,9 @@
 
 ---
 
-## 3. Signed URL expiry
+## 3. Signed document token expiry
 
-- Clinic document link: JWT with `expiresIn: '5m'` (see `DOCUMENT_TOKEN_EXPIRY` in `clinicApplicationController.js`).  
-- `serveDocumentByToken` verifies the JWT and returns 401 when expired.
+- Clinic document token: JWT with payload `{ clinic_application_id, file_path }`, default 5 min expiry (`src/utils/signedDocumentToken.js`).  
+- `GET /api/clinic-documents/:token` verifies the token (using `DOCUMENT_TOKEN_SECRET`): expired → 401, invalid → 403.
 
-**Conclusion:** Signed URLs expire after 5 minutes.
+**Conclusion:** Signed document links expire after 5 minutes.

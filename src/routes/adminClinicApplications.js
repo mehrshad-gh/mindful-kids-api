@@ -9,7 +9,7 @@ router.use(requireRole('admin'));
 
 router.get('/', clinicApplicationController.list);
 router.get('/:id', clinicApplicationController.getOne);
-router.get('/:id/document', clinicApplicationController.getDocumentUrl);
+router.get('/:id/document-link', clinicApplicationController.getDocumentLink);
 router.patch('/:id', clinicApplicationController.review);
 
 module.exports = router;

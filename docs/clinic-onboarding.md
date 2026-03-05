@@ -38,11 +38,12 @@ Creates table `clinic_applications` with:
 | GET | `/api/admin/clinic-applications/:id/document` | Returns `{ url, expires_in_seconds: 300 }`. URL is signed, expires in 5 minutes; never exposes storage path. |
 | PATCH | `/api/admin/clinic-applications/:id` | Body: `status` = `approved` \| `rejected`, optional `rejection_reason`. On approve: creates clinic, sets `verification_status = 'verified'`, `verified_at`, `verified_by`, audit log. On reject: updates status, audit log. |
 
-### Document access (no auth; token in URL)
+### Document access (signed token)
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/admin/clinic-applications/document?token=<jwt>` | Serves the file. Token is the signed URL from `GET .../:id/document`; valid 5 minutes. |
+| GET | `/api/admin/clinic-applications/:id/document-link` | Admin only. Returns `{ "url": "/clinic-documents/<jwt>" }`. Token valid 5 minutes. |
+| GET | `/api/clinic-documents/:token` | Serves the file. No auth; token is verified (valid + not expired). Reject invalid/expired. |
 
 ---
 
@@ -83,12 +84,13 @@ Same as existing app; clinic application documents use the same volume/local pat
 | Variable | Purpose |
 |----------|---------|
 | `DATABASE_URL` | PostgreSQL connection (migration + app). |
-| `JWT_SECRET` | Signing admin JWTs and document tokens (5 min expiry). |
+| `JWT_SECRET` | Signing auth JWTs (login/session). |
+| `DOCUMENT_TOKEN_SECRET` | **Required.** Signing clinic document access tokens only (not auth). Separate from JWT_SECRET. |
 | `BASE_URL` | Optional; used for signed document URL base (e.g. `https://your-api.up.railway.app`). |
 | `RAILWAY_VOLUME_MOUNT_PATH` | Optional; e.g. `/data` – clinic application files stored under `{volume}/uploads/clinic-applications/`. |
 | `UPLOAD_DIR` | Optional; fallback when volume not used (e.g. `./uploads`). |
 
-No new env vars required; existing `BASE_URL`, `JWT_SECRET`, and upload dir behaviour cover clinic applications.
+`DOCUMENT_TOKEN_SECRET` is required at startup; the app will not start without it.
 
 ---
 
@@ -124,17 +126,17 @@ curl -s -H "Authorization: Bearer YOUR_ADMIN_JWT" \
   "http://localhost:8080/api/admin/clinic-applications/APPLICATION_ID"
 ```
 
-### 4. Get signed document URL (admin)
+### 4. Get signed document link (admin)
 
 ```bash
 curl -s -H "Authorization: Bearer YOUR_ADMIN_JWT" \
-  "http://localhost:8080/api/admin/clinic-applications/APPLICATION_ID/document"
+  "http://localhost:8080/api/admin/clinic-applications/APPLICATION_ID/document-link"
 ```
 
-Returns `{ "url": "http://.../api/admin/clinic-applications/document?token=...", "expires_in_seconds": 300 }`. Open `url` in browser or:
+Returns `{ "url": "/clinic-documents/<token>" }`. To download the file, prefix with your API base: `http://localhost:8080/api` + `url`, then open in browser or:
 
 ```bash
-curl -s -o downloaded.pdf "THE_URL_FROM_ABOVE"
+curl -s -o downloaded.pdf "http://localhost:8080/api/THE_URL_FROM_ABOVE"
 ```
 
 ### 5. Approve application (admin)
