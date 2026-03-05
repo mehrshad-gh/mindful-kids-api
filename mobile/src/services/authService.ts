@@ -51,7 +51,7 @@ export async function setPasswordFromInvite(token: string, password: string): Pr
   return data;
 }
 
-export type LegalDocumentType = 'terms' | 'privacy_policy' | 'professional_disclaimer';
+export type LegalDocumentType = 'terms' | 'privacy_policy' | 'professional_disclaimer' | 'provider_terms';
 
 export type LegalAcceptanceEntry = { accepted_at: string; document_version: string };
 

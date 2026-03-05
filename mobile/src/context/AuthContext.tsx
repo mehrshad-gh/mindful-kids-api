@@ -3,7 +3,13 @@ import type { User, UserRole } from '../types/auth';
 import { getToken } from '../services/tokenStorage';
 import { getOnboardingComplete, setOnboardingComplete as persistOnboardingComplete } from '../services/onboardingStorage';
 import * as authService from '../services/authService';
-import { setAccountDeactivatedHandler } from '../lib/apiClient';
+import { getRequiredAcceptances } from '../api/legalGate';
+import { setAccountDeactivatedHandler, setLegalReacceptRequiredHandler } from '../lib/apiClient';
+
+export interface LegalGateMissingItem {
+  document_type: string;
+  document_version: string;
+}
 
 interface AuthContextValue {
   user: User | null;
@@ -16,6 +22,10 @@ interface AuthContextValue {
   isRestoring: boolean;
   /** Onboarding completed and persisted; when false, show onboarding flow. */
   onboardingComplete: boolean;
+  /** When non-null and length > 0, app must show LegalReacceptGateScreen until user accepts. */
+  legalGateMissing: LegalGateMissingItem[] | null;
+  /** Clear legal gate after user has accepted all missing (or to retry check). */
+  setLegalGateMissing: (missing: LegalGateMissingItem[] | null) => void;
   /** Mark onboarding complete and persist. */
   setOnboardingComplete: (complete: boolean) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
@@ -52,6 +62,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isRestoring, setIsRestoring] = useState(true);
   const [onboardingComplete, setOnboardingCompleteState] = useState<boolean>(false);
   const [accountDeactivated, setAccountDeactivatedState] = useState(false);
+  const [legalGateMissing, setLegalGateMissingState] = useState<LegalGateMissingItem[] | null>(null);
+
+  const setLegalGateMissing = useCallback((missing: LegalGateMissingItem[] | null) => {
+    setLegalGateMissingState(missing);
+  }, []);
+
+  const fetchLegalGate = useCallback(async () => {
+    try {
+      const { missing } = await getRequiredAcceptances();
+      setLegalGateMissingState(missing.length > 0 ? missing : null);
+    } catch {
+      setLegalGateMissingState(null);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,6 +101,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           normalized.role === 'therapist' ? 'therapist' :
           normalized.role === 'clinic_admin' ? 'clinic_admin' : 'parent'
         );
+          await fetchLegalGate();
+          if (cancelled) return;
         }
       } catch {
         if (!cancelled) setUser(null);
@@ -87,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [fetchLegalGate]);
 
   const refreshAuth = useCallback(async () => {
     try {
@@ -101,10 +127,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           normalized.role === 'therapist' ? 'therapist' :
           normalized.role === 'clinic_admin' ? 'clinic_admin' : 'parent'
         );
+      await fetchLegalGate();
     } catch {
       setUser(null);
+      setLegalGateMissingState(null);
     }
-  }, []);
+  }, [fetchLegalGate]);
 
   const setOnboardingComplete = useCallback(async (complete: boolean) => {
     setOnboardingCompleteState(complete);
@@ -122,10 +150,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           normalized.role === 'therapist' ? 'therapist' :
           normalized.role === 'clinic_admin' ? 'clinic_admin' : 'parent'
         );
+      await fetchLegalGate();
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchLegalGate]);
 
   const register = useCallback(
     async (email: string, password: string, name: string, role?: 'parent' | 'therapist' | 'clinic_admin') => {
@@ -139,11 +168,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           normalized.role === 'therapist' ? 'therapist' :
           normalized.role === 'clinic_admin' ? 'clinic_admin' : 'parent'
         );
+        await fetchLegalGate();
       } finally {
         setIsLoading(false);
       }
     },
-    []
+    [fetchLegalGate]
   );
 
   const logout = useCallback(async () => {
@@ -152,6 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAppRoleState('parent');
     setSelectedChildId(null);
     setPendingActivityIdState(null);
+    setLegalGateMissingState(null);
   }, []);
 
   const setAppRole = useCallback((role: UserRole) => {
@@ -178,7 +209,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAccountDeactivatedState(true);
       });
     });
-    return () => setAccountDeactivatedHandler(null);
+    setLegalReacceptRequiredHandler((missing) => {
+      setLegalGateMissingState(missing);
+    });
+    return () => {
+      setAccountDeactivatedHandler(null);
+      setLegalReacceptRequiredHandler(null);
+    };
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -191,6 +228,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       isRestoring,
       onboardingComplete,
+      legalGateMissing,
+      setLegalGateMissing,
       setOnboardingComplete,
       login,
       register,
@@ -210,6 +249,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       isRestoring,
       onboardingComplete,
+      legalGateMissing,
+      setLegalGateMissing,
       setOnboardingComplete,
       login,
       register,

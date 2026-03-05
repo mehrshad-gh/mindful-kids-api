@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
+const { CURRENT_LEGAL, getRequiredDocTypesForRole } = require('../config/legalVersions');
 const User = require('../models/User');
 const LegalAcceptance = require('../models/LegalAcceptance');
 
@@ -126,7 +127,7 @@ async function setPasswordFromInvite(req, res, next) {
   }
 }
 
-/** POST /auth/me/legal-acceptance – record that current user accepted a document (terms | privacy_policy | professional_disclaimer). Optional document_version (e.g. 2026-03-01); if omitted, server default is used. */
+/** POST /auth/me/legal-acceptance – record that current user accepted a document (terms | privacy_policy | professional_disclaimer). Idempotent per version. Always returns 200. Optional document_version; if omitted, server default is used. */
 async function recordLegalAcceptance(req, res, next) {
   try {
     const { document_type: documentType, document_version: documentVersion } = req.body;
@@ -135,22 +136,49 @@ async function recordLegalAcceptance(req, res, next) {
         error: `document_type must be one of: ${LegalAcceptance.DOCUMENT_TYPES.join(', ')}`,
       });
     }
-    await LegalAcceptance.record(req.user.id, documentType, documentVersion);
-    res.status(201).json({
+    const version = documentVersion || LegalAcceptance.DEFAULT_DOCUMENT_VERSION;
+    const { inserted } = await LegalAcceptance.record(req.user.id, documentType, version);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[legal] POST /auth/me/legal-acceptance ${documentType} @ ${version} inserted=${inserted}`);
+    }
+    res.status(200).json({
       message: 'Acceptance recorded',
       document_type: documentType,
-      document_version: documentVersion || LegalAcceptance.DEFAULT_DOCUMENT_VERSION,
     });
   } catch (err) {
     next(err);
   }
 }
 
-/** GET /auth/me/legal-acceptances – return latest acceptance per document type (accepted_at, document_version) for current user. For future use: if current terms version > stored document_version, show "Please review and accept updated Terms" and optionally block until accepted. */
+/** GET /auth/me/legal-acceptances – return latest acceptance per document type (accepted_at, document_version) for current user. */
 async function getLegalAcceptances(req, res, next) {
   try {
     const acceptances = await LegalAcceptance.getLatestByUserId(req.user.id);
     res.json({ acceptances });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** GET /auth/me/required-acceptances – required and missing document acceptances for current user (role-based). Used by app to show legal gate. req.user comes from authenticate (DB load), so role reflects current DB state (demotions apply immediately). */
+async function getRequiredAcceptances(req, res, next) {
+  try {
+    const role = req.user.role || 'parent';
+    const docTypes = getRequiredDocTypesForRole(role);
+    const required = docTypes.map((document_type) => ({
+      document_type,
+      document_version: CURRENT_LEGAL[document_type] || null,
+    })).filter((r) => r.document_version != null);
+
+    const missing = [];
+    for (const { document_type, document_version } of required) {
+      const accepted = await LegalAcceptance.hasAcceptedVersion(req.user.id, document_type, document_version);
+      if (!accepted) {
+        missing.push({ document_type, document_version });
+      }
+    }
+
+    res.json({ required, missing });
   } catch (err) {
     next(err);
   }
@@ -163,4 +191,5 @@ module.exports = {
   setPasswordFromInvite,
   recordLegalAcceptance,
   getLegalAcceptances,
+  getRequiredAcceptances,
 };

@@ -72,6 +72,7 @@ export type OnboardingStackParamList = {
   TermsOfService: undefined;
   PrivacyPolicy: undefined;
   ProfessionalDisclaimer: undefined;
+  ProviderTerms: undefined;
 };
 
 /** Therapist onboarding: linear steps after register (or when therapist has no application). */
@@ -87,6 +88,7 @@ export type TherapistOnboardingStackParamList = {
   TermsOfService: undefined;
   PrivacyPolicy: undefined;
   ProfessionalDisclaimer: undefined;
+  ProviderTerms: undefined;
 };
 
 /** Admin: dashboard, therapist applications, reports (trust & safety), clinics, clinic applications, content. */
@@ -115,6 +117,7 @@ export type TherapistStackParamList = {
   TermsOfService: undefined;
   PrivacyPolicy: undefined;
   ProfessionalDisclaimer: undefined;
+  ProviderTerms: undefined;
 };
 
 /** Clinic admin: list clinics, detail, edit profile, therapists, therapist availability, legal. */
@@ -128,6 +131,7 @@ export type ClinicStackParamList = {
   TermsOfService: undefined;
   PrivacyPolicy: undefined;
   ProfessionalDisclaimer: undefined;
+  ProviderTerms: undefined;
 };
 
 /** Parent onboarding: Welcome -> AddChild -> FirstPractice (then Child mode for activity). */

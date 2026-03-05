@@ -12,6 +12,7 @@ import { TherapistSuccessScreen } from '../screens/therapist/TherapistSuccessScr
 import { TermsOfServiceScreen } from '../screens/legal/TermsOfServiceScreen';
 import { PrivacyPolicyScreen } from '../screens/legal/PrivacyPolicyScreen';
 import { ProfessionalDisclaimerScreen } from '../screens/legal/ProfessionalDisclaimerScreen';
+import { ProviderTermsScreen } from '../screens/legal/ProviderTermsScreen';
 import type { TherapistOnboardingStackParamList } from '../types/navigation';
 import type { RootStackParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
@@ -43,6 +44,7 @@ export function TherapistOnboardingNavigator({ route }: Props) {
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} options={{ title: 'Terms of Service' }} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
       <Stack.Screen name="ProfessionalDisclaimer" component={ProfessionalDisclaimerScreen} options={{ title: 'Professional Disclaimer' }} />
+      <Stack.Screen name="ProviderTerms" component={ProviderTermsScreen} options={{ title: 'Provider Terms' }} />
     </Stack.Navigator>
   );
 }

@@ -1,12 +1,15 @@
 const express = require('express');
 const { query, body } = require('express-validator');
 const { authenticate } = require('../middleware/auth');
+const { requireLegalAcceptances } = require('../middleware/requireLegalAcceptances');
 const { handleValidationErrors } = require('../middleware/validate');
 const kidsController = require('../controllers/kidsController');
 
 const router = express.Router();
 
 router.use(authenticate);
+// Force re-acceptance when CURRENT_LEGAL versions change (returns 428 LEGAL_REACCEPT_REQUIRED)
+router.use(requireLegalAcceptances);
 
 router.get(
   '/domain-progress',

@@ -2,6 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const reportsController = require('../controllers/reportsController');
 const { authenticate } = require('../middleware/auth');
+const { requireLegalAcceptances } = require('../middleware/requireLegalAcceptances');
 const { handleValidationErrors } = require('../middleware/validate');
 
 const router = express.Router({ mergeParams: true });
@@ -13,6 +14,8 @@ const reportProfessionalValidation = [
 ];
 
 router.use(authenticate);
+// Force re-acceptance when CURRENT_LEGAL versions change (returns 428 LEGAL_REACCEPT_REQUIRED)
+router.use(requireLegalAcceptances);
 router.post('/professional', reportProfessionalValidation, handleValidationErrors, reportsController.reportProfessional);
 
 module.exports = router;

@@ -35,6 +35,16 @@ export function AuthBackground({
         ) : (
           <View style={[StyleSheet.absoluteFill, styles.gradientPro]} />
         )}
+        {isFamily && (
+          <>
+            <View style={styles.lightFlare} />
+            <View style={styles.lightFlareSmall} />
+            <LinearGradient
+              colors={['transparent', colors.background]}
+              style={styles.heroFade}
+            />
+          </>
+        )}
         <View style={[styles.blob, styles.blob1, isFamily ? styles.blobFamily1 : styles.blobPro1]} />
         <View style={[styles.blob, styles.blob2, isFamily ? styles.blobFamily2 : styles.blobPro2]} />
         <View style={[styles.blob, styles.blob3, isFamily ? styles.blobFamily3 : styles.blobPro3]} />
@@ -55,17 +65,38 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   gradientPro: { backgroundColor: colors.surface },
+  lightFlare: {
+    position: 'absolute',
+    top: -100,
+    right: -100,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  lightFlareSmall: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  heroFade: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.45,
+  },
   blob: {
     position: 'absolute',
     borderRadius: 9999,
-    opacity: 0.2,
   },
   blob1: { top: -60, left: -80, width: 220, height: 220 },
   blob2: { top: 40, right: -50, width: 160, height: 160 },
   blob3: { bottom: -30, left: 60, width: 100, height: 100 },
-  blobFamily1: { backgroundColor: colors.primary },
-  blobFamily2: { backgroundColor: colors.secondary },
-  blobFamily3: { backgroundColor: colors.accent },
+  blobFamily1: { backgroundColor: colors.primary, opacity: 0.14 },
+  blobFamily2: { backgroundColor: colors.secondary, opacity: 0.12 },
+  blobFamily3: { backgroundColor: colors.accent, opacity: 0.1 },
   blobPro1: { backgroundColor: colors.border, opacity: 0.15 },
   blobPro2: { backgroundColor: colors.border, opacity: 0.12 },
   blobPro3: { backgroundColor: colors.border, opacity: 0.1 },

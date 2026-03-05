@@ -8,10 +8,24 @@ import { TherapistOnboardingNavigator } from './TherapistOnboardingNavigator';
 import { AppSwitch } from './AppSwitch';
 import { RoleSelectScreen } from '../screens/auth/RoleSelectScreen';
 import { AccountDeactivatedScreen } from '../screens/auth/AccountDeactivatedScreen';
+import { LegalReacceptGateScreen } from '../screens/auth/LegalReacceptGateScreen';
+import { TermsOfServiceScreen } from '../screens/legal/TermsOfServiceScreen';
+import { PrivacyPolicyScreen } from '../screens/legal/PrivacyPolicyScreen';
+import { ProfessionalDisclaimerScreen } from '../screens/legal/ProfessionalDisclaimerScreen';
+import { ProviderTermsScreen } from '../screens/legal/ProviderTermsScreen';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+type LegalGateStackParamList = {
+  LegalReacceptGate: undefined;
+  TermsOfService: undefined;
+  PrivacyPolicy: undefined;
+  ProfessionalDisclaimer: undefined;
+  ProviderTerms: undefined;
+};
+const LegalGateStack = createNativeStackNavigator<LegalGateStackParamList>();
 
 const SCHEME = 'mindfulkids';
 
@@ -28,7 +42,7 @@ function parseSetPasswordLink(url: string | null): { token: string } | null {
 }
 
 export function RootNavigator() {
-  const { user, isAuthenticated, isRestoring, onboardingComplete, accountDeactivated } = useAuth();
+  const { user, isAuthenticated, isRestoring, onboardingComplete, accountDeactivated, legalGateMissing } = useAuth();
   const [deepLink, setDeepLink] = useState<{ token: string } | null>(null);
 
   useEffect(() => {
@@ -48,6 +62,18 @@ export function RootNavigator() {
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
+    );
+  }
+
+  if (isAuthenticated && legalGateMissing && legalGateMissing.length > 0) {
+    return (
+      <LegalGateStack.Navigator screenOptions={{ headerShown: false }} initialRouteName="LegalReacceptGate">
+        <LegalGateStack.Screen name="LegalReacceptGate" component={LegalReacceptGateScreen} />
+        <LegalGateStack.Screen name="TermsOfService" component={TermsOfServiceScreen} options={{ title: 'Terms of Service' }} />
+        <LegalGateStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
+        <LegalGateStack.Screen name="ProfessionalDisclaimer" component={ProfessionalDisclaimerScreen} options={{ title: 'Professional Disclaimer' }} />
+        <LegalGateStack.Screen name="ProviderTerms" component={ProviderTermsScreen} options={{ title: 'Provider Terms' }} />
+      </LegalGateStack.Navigator>
     );
   }
 

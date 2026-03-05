@@ -101,6 +101,9 @@ export function ClinicDashboardScreen() {
           <TouchableOpacity onPress={() => navigation.navigate('ProfessionalDisclaimer')} style={styles.legalLink}>
             <Text style={styles.legalLinkText}>Professional Disclaimer</Text>
           </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ProviderTerms')} style={styles.legalLink}>
+            <Text style={styles.legalLinkText}>Provider Terms</Text>
+          </TouchableOpacity>
         </Card>
 
         <TouchableOpacity

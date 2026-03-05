@@ -9,6 +9,7 @@ import { ClinicTherapistAvailabilityScreen } from '../screens/clinic/ClinicThera
 import { TermsOfServiceScreen } from '../screens/legal/TermsOfServiceScreen';
 import { PrivacyPolicyScreen } from '../screens/legal/PrivacyPolicyScreen';
 import { ProfessionalDisclaimerScreen } from '../screens/legal/ProfessionalDisclaimerScreen';
+import { ProviderTermsScreen } from '../screens/legal/ProviderTermsScreen';
 import { colors } from '../theme/colors';
 import type { ClinicStackParamList } from '../types/navigation';
 
@@ -57,6 +58,7 @@ export function ClinicNavigator() {
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} options={{ title: 'Terms of Service' }} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
       <Stack.Screen name="ProfessionalDisclaimer" component={ProfessionalDisclaimerScreen} options={{ title: 'Professional Disclaimer' }} />
+      <Stack.Screen name="ProviderTerms" component={ProviderTermsScreen} options={{ title: 'Provider Terms' }} />
     </Stack.Navigator>
   );
 }

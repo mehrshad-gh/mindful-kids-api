@@ -2,11 +2,14 @@ const express = require('express');
 const { body } = require('express-validator');
 const progressController = require('../controllers/progressController');
 const { authenticate } = require('../middleware/auth');
+const { requireLegalAcceptances } = require('../middleware/requireLegalAcceptances');
 const { handleValidationErrors } = require('../middleware/validate');
 
 const router = express.Router();
 
 router.use(authenticate);
+// Force re-acceptance when CURRENT_LEGAL versions change (returns 428 LEGAL_REACCEPT_REQUIRED)
+router.use(requireLegalAcceptances);
 
 const upsertValidation = [
   body('stars').optional().isInt({ min: 0, max: 5 }),

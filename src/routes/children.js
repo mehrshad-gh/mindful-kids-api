@@ -2,11 +2,14 @@ const express = require('express');
 const { body } = require('express-validator');
 const childrenController = require('../controllers/childrenController');
 const { authenticate } = require('../middleware/auth');
+const { requireLegalAcceptances } = require('../middleware/requireLegalAcceptances');
 const { handleValidationErrors } = require('../middleware/validate');
 
 const router = express.Router({ mergeParams: true });
 
 router.use(authenticate);
+// Force re-acceptance when CURRENT_LEGAL versions change (returns 428 LEGAL_REACCEPT_REQUIRED)
+router.use(requireLegalAcceptances);
 
 const createValidation = [
   body('name').trim().notEmpty().withMessage('Name is required'),

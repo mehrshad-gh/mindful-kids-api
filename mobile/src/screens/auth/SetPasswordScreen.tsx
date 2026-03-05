@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
-import { setPasswordFromInvite, recordLegalAcceptance } from '../../services/authService';
-import { LEGAL_DOCUMENT_VERSION } from '../../constants/legalContent';
+import { setPasswordFromInvite } from '../../services/authService';
+import { recordStandardAcceptances } from '../../utils/legalAcceptance';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -22,6 +22,7 @@ export function SetPasswordScreen({ navigation, route }: Props) {
   const token = route.params?.token ?? '';
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [failureState, setFailureState] = useState<'expired' | 'already_exists' | null>(null);
@@ -79,16 +80,14 @@ export function SetPasswordScreen({ navigation, route }: Props) {
       setError('Passwords do not match');
       return;
     }
+    if (!termsAccepted) {
+      setError('You must agree to the Terms of Service and Privacy Policy to continue.');
+      return;
+    }
     setLoading(true);
     try {
       await setPasswordFromInvite(token, password);
-      try {
-        await recordLegalAcceptance('terms', LEGAL_DOCUMENT_VERSION);
-        await recordLegalAcceptance('privacy_policy', LEGAL_DOCUMENT_VERSION);
-        await recordLegalAcceptance('professional_disclaimer', LEGAL_DOCUMENT_VERSION);
-      } catch {
-        // Non-blocking
-      }
+      await recordStandardAcceptances(['terms', 'privacy_policy', 'professional_disclaimer', 'provider_terms']);
       await refreshAuth();
       // Root will re-render and show App (authenticated)
     } catch (err: unknown) {
@@ -138,21 +137,32 @@ export function SetPasswordScreen({ navigation, route }: Props) {
           secureTextEntry
           error={password !== confirm && confirm ? 'Passwords do not match' : undefined}
         />
-        <Text style={styles.agreement}>
-          By setting your password you agree to our{' '}
-          <Text style={styles.link} onPress={() => (navigation as any).navigate('TermsOfService')}>
-            Terms of Service
-          </Text>
-          ,{' '}
-          <Text style={styles.link} onPress={() => (navigation as any).navigate('PrivacyPolicy')}>
-            Privacy Policy
-          </Text>
-          , and{' '}
-          <Text style={styles.link} onPress={() => (navigation as any).navigate('ProfessionalDisclaimer')}>
-            Professional Disclaimer
-          </Text>
-          .
-        </Text>
+        <View style={styles.checkboxRow}>
+          <TouchableOpacity onPress={() => setTermsAccepted(!termsAccepted)} activeOpacity={0.7} style={styles.checkboxTouchTarget}>
+            <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
+              {termsAccepted && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+          </TouchableOpacity>
+          <View style={styles.legalCopyWrap}>
+            <Text style={styles.agreement}>I agree to our </Text>
+            <TouchableOpacity onPress={() => (navigation as any).navigate('TermsOfService')} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+              <Text style={styles.link}>Terms of Service</Text>
+            </TouchableOpacity>
+            <Text style={styles.agreement}>, </Text>
+            <TouchableOpacity onPress={() => (navigation as any).navigate('PrivacyPolicy')} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+              <Text style={styles.link}>Privacy Policy</Text>
+            </TouchableOpacity>
+            <Text style={styles.agreement}>, </Text>
+            <TouchableOpacity onPress={() => (navigation as any).navigate('ProfessionalDisclaimer')} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+              <Text style={styles.link}>Professional Disclaimer</Text>
+            </TouchableOpacity>
+            <Text style={styles.agreement}>, and </Text>
+            <TouchableOpacity onPress={() => (navigation as any).navigate('ProviderTerms')} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+              <Text style={styles.link}>Provider Terms</Text>
+            </TouchableOpacity>
+            <Text style={styles.agreement}>.</Text>
+          </View>
+        </View>
         <Button
           title="Set password and sign in"
           onPress={handleSubmit}
@@ -170,7 +180,13 @@ const styles = StyleSheet.create({
   heroTitle: { ...typography.h2, marginBottom: spacing.xs },
   heroSubtitle: { ...typography.body, color: colors.textSecondary },
   card: { marginBottom: layout.sectionGap },
-  agreement: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.md },
+  checkboxRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md, paddingHorizontal: 4 },
+  checkboxTouchTarget: { marginRight: 10 },
+  legalCopyWrap: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
+  checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 1.5, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  checkboxChecked: { backgroundColor: colors.primary },
+  checkmark: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  agreement: { ...typography.bodySmall, color: colors.textSecondary, flex: 1 },
   link: { ...typography.bodySmall, color: colors.primary, textDecorationLine: 'underline' },
   failureBody: { ...typography.body, color: colors.textSecondary },
   btn: {},

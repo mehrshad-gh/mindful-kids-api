@@ -403,6 +403,9 @@ export function TherapistDashboardScreen() {
           <TouchableOpacity onPress={() => navigation.navigate('ProfessionalDisclaimer')} style={styles.legalLink}>
             <Text style={styles.legalLinkText}>Professional Disclaimer</Text>
           </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ProviderTerms')} style={styles.legalLink}>
+            <Text style={styles.legalLinkText}>Provider Terms</Text>
+          </TouchableOpacity>
         </Card>
 
         <Button title="Use app as Parent" onPress={useAsParent} style={styles.btn} />

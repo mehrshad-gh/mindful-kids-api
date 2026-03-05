@@ -1,6 +1,7 @@
 const express = require('express');
 const { param } = require('express-validator');
 const { authenticate, requireRole, requireClinicAccess, resolveClinicMe } = require('../middleware/auth');
+const { requireLegalAcceptances } = require('../middleware/requireLegalAcceptances');
 const { handleValidationErrors } = require('../middleware/validate');
 const ClinicAdmin = require('../models/ClinicAdmin');
 const clinicAdminController = require('../controllers/clinicAdminController');
@@ -10,6 +11,8 @@ const router = express.Router();
 
 router.use(authenticate);
 router.use(requireRole('clinic_admin'));
+// Force re-acceptance when CURRENT_LEGAL versions change (returns 428 LEGAL_REACCEPT_REQUIRED)
+router.use(requireLegalAcceptances);
 
 router.get('/clinics', clinicAdminController.listMyClinics);
 router.post('/psychologists/:id/availability', clinicAdminAvailabilityController.createSlot);

@@ -106,3 +106,29 @@ If you have concerns about your or your child’s mental health, please consult 
 
 By using the app, you acknowledge that you have read this disclaimer and understand the limits of the service.
 `.trim();
+
+export const PROVIDER_TERMS = `
+Provider Terms
+
+Last updated: [Date]
+
+These terms apply to professionals (therapists, clinic administrators) who use MindfulKids to deliver or manage services.
+
+1. Professional use
+You agree to use the platform in accordance with your professional obligations and applicable law. You are responsible for the accuracy of your profile, credentials, and availability.
+
+2. Listing and verification
+MindfulKids may verify your credentials and clinic information. You must provide accurate information and update it when it changes. Listing does not imply endorsement by MindfulKids.
+
+3. Appointments and clients
+You are solely responsible for the professional services you provide. MindfulKids is a scheduling and tool platform only. The therapeutic or professional relationship is between you and the client.
+
+4. Data and privacy
+You must handle client and user data in accordance with our Privacy Policy and applicable data protection laws. Do not use platform data for purposes outside the service.
+
+5. Termination
+We may suspend or remove access for breach of these terms or for operational reasons. You may stop using the platform at any time.
+
+6. Contact
+For provider-specific questions, contact us via the app or the contact details on our website.
+`.trim();

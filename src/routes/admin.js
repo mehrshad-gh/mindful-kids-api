@@ -1,5 +1,6 @@
 const express = require('express');
 const { authenticate, requireRole } = require('../middleware/auth');
+const { requireLegalAcceptances } = require('../middleware/requireLegalAcceptances');
 const adminTherapistController = require('../controllers/adminTherapistController');
 const adminReportsController = require('../controllers/adminReportsController');
 const adminDashboardController = require('../controllers/adminDashboardController');
@@ -22,6 +23,8 @@ router.get('/clinic-applications/document', clinicApplicationController.serveDoc
 
 router.use(authenticate);
 router.use(requireRole('admin'));
+// Force re-acceptance when CURRENT_LEGAL versions change (returns 428 LEGAL_REACCEPT_REQUIRED)
+router.use(requireLegalAcceptances);
 
 // Dashboard overview (counts)
 router.get('/dashboard', adminDashboardController.getDashboard);

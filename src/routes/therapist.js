@@ -2,6 +2,7 @@ const express = require('express');
 const { body, param } = require('express-validator');
 const { authenticate } = require('../middleware/auth');
 const { requireRole } = require('../middleware/auth');
+const { requireLegalAcceptances } = require('../middleware/requireLegalAcceptances');
 const { handleValidationErrors } = require('../middleware/validate');
 const therapistApplicationController = require('../controllers/therapistApplicationController');
 const credentialUploadController = require('../controllers/credentialUploadController');
@@ -11,6 +12,8 @@ const therapistAppointmentsController = require('../controllers/therapistAppoint
 const router = express.Router();
 
 router.use(authenticate);
+// Force re-acceptance when CURRENT_LEGAL versions change (returns 428 LEGAL_REACCEPT_REQUIRED)
+router.use(requireLegalAcceptances);
 
 // Credential document: upload (therapist only); serve (admin only — for application verification)
 router.post(
