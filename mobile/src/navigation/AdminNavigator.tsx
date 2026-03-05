@@ -13,6 +13,7 @@ import { AdminClinicApplicationsScreen } from '../screens/admin/AdminClinicAppli
 import { AdminClinicApplicationDetailScreen } from '../screens/admin/AdminClinicApplicationDetailScreen';
 import { AdminContentScreen } from '../screens/admin/AdminContentScreen';
 import { AdminContentDetailScreen } from '../screens/admin/AdminContentDetailScreen';
+import { AdminSafetyEscalationsScreen } from '../screens/admin/AdminSafetyEscalationsScreen';
 import { AdminUsersScreen } from '../screens/admin/AdminUsersScreen';
 import type { AdminStackParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
@@ -99,6 +100,11 @@ export function AdminNavigator() {
         name="AdminContentDetail"
         component={AdminContentDetailScreen}
         options={{ title: 'Content detail' }}
+      />
+      <Stack.Screen
+        name="AdminSafetyEscalations"
+        component={AdminSafetyEscalationsScreen}
+        options={{ title: 'Safety escalations' }}
       />
     </Stack.Navigator>
   );

@@ -367,3 +367,33 @@ export async function updateAdminContent(
   );
   return data;
 }
+
+// Safety escalations (read-only; metadata only, no raw user text)
+export interface AdminSafetyEscalationItem {
+  id: number;
+  user_id: string;
+  user_email: string | null;
+  user_name: string | null;
+  route: string;
+  field: string;
+  matches: string[];
+  created_at: string;
+}
+
+export interface AdminSafetyEscalationsResponse {
+  escalations: AdminSafetyEscalationItem[];
+  total: number;
+}
+
+export async function getSafetyEscalations(params?: {
+  limit?: number;
+  offset?: number;
+  user_id?: string;
+  from?: string;
+  to?: string;
+}): Promise<AdminSafetyEscalationsResponse> {
+  const { data } = await apiClient.get<AdminSafetyEscalationsResponse>('/admin/safety-escalations', {
+    params: params ?? {},
+  });
+  return data;
+}

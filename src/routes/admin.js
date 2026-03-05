@@ -3,6 +3,7 @@ const { authenticate, requireRole } = require('../middleware/auth');
 const { requireLegalAcceptances } = require('../middleware/requireLegalAcceptances');
 const adminTherapistController = require('../controllers/adminTherapistController');
 const adminReportsController = require('../controllers/adminReportsController');
+const adminSafetyController = require('../controllers/adminSafetyController');
 const adminDashboardController = require('../controllers/adminDashboardController');
 const adminContentController = require('../controllers/adminContentController');
 const adminUsersController = require('../controllers/adminUsersController');
@@ -29,6 +30,9 @@ router.use(requireLegalAcceptances);
 
 // Dashboard overview (counts)
 router.get('/dashboard', adminDashboardController.getDashboard);
+
+// Safety escalations (read-only; no raw user text)
+router.get('/safety-escalations', adminSafetyController.list);
 
 // User management by role (uses role-based views; list supports limit, offset, q, sort, include_deactivated)
 router.get('/users/summary', adminUsersController.summary);

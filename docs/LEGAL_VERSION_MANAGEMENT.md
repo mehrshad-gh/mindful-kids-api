@@ -50,11 +50,16 @@ Roles determine which of these are required (e.g. therapists and clinic admins r
 
 ## Audit trail
 
-All legal document version updates are recorded in the **`legal_document_updates`** table. Each row is created when an admin calls `PATCH /admin/legal-documents/:document_type` with a new version.
+Every legal document version change is recorded for compliance. When an admin calls `PATCH /admin/legal-documents/:document_type` with a new version, the API:
+
+1. Reads the existing version from `legal_documents`
+2. Updates `legal_documents` with the new version
+3. Inserts a row into **`legal_document_updates`**
+
+**Table: `legal_document_updates`**
 
 | Column          | Description                                      |
 |-----------------|--------------------------------------------------|
-| `id`            | UUID primary key                                 |
 | `document_type` | One of: terms, privacy_policy, professional_disclaimer, provider_terms |
 | `old_version`   | Version string before the update                 |
 | `new_version`   | Version string after the update                  |

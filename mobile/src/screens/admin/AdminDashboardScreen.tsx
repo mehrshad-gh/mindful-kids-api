@@ -151,6 +151,15 @@ export function AdminDashboardScreen() {
                   <Text style={styles.cardSubtitle}>Manage and publish library content</Text>
                 </Card>
               </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('AdminSafetyEscalations')}
+              >
+                <Card style={[styles.dashboardCard, { borderWidth: 1, borderColor: colors.border }]}>
+                  <Text style={styles.cardTitle}>Safety escalations</Text>
+                  <Text style={styles.cardSubtitle}>Review flagged safety-related submissions</Text>
+                </Card>
+              </TouchableOpacity>
             </View>
           </>
         ) : null}

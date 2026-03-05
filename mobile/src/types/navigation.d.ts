@@ -107,6 +107,7 @@ export type AdminStackParamList = {
   AdminClinicApplicationDetail: { applicationId: string };
   AdminContent: undefined;
   AdminContentDetail: { contentId: string };
+  AdminSafetyEscalations: undefined;
 };
 
 /** Therapist: dashboard (application status), availability, appointments, legal. */
@@ -142,6 +143,8 @@ export type ParentOnboardingStackParamList = {
 };
 
 export type RootStackParamList = {
+  /** Single root wrapper for all conditional flows; SafetyHelp is the only other root screen. */
+  Main: undefined;
   Onboarding: NavigatorScreenParams<OnboardingStackParamList> & {
     initialRouteName?: keyof OnboardingStackParamList;
     token?: string;
@@ -151,6 +154,7 @@ export type RootStackParamList = {
   TherapistOnboarding: NavigatorScreenParams<TherapistOnboardingStackParamList> & { initialScreen?: keyof TherapistOnboardingStackParamList };
   RoleSelect: undefined;
   App: undefined;
+  SafetyHelp: undefined;
 };
 
 declare global {

@@ -6,8 +6,8 @@ const jwt = require('jsonwebtoken');
 
 const DEFAULT_EXPIRES_IN_SECONDS = 300; // 5 minutes
 
-if (!process.env.DOCUMENT_TOKEN_SECRET || !process.env.DOCUMENT_TOKEN_SECRET.trim()) {
-  throw new Error('DOCUMENT_TOKEN_SECRET environment variable is required for document token signing.');
+if (!process.env.DOCUMENT_TOKEN_SECRET || process.env.DOCUMENT_TOKEN_SECRET.trim() === '') {
+  throw new Error('DOCUMENT_TOKEN_SECRET is required');
 }
 
 /**

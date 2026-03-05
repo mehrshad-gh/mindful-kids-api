@@ -11,6 +11,7 @@
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const mime = require('mime-types');
 const multer = require('multer');
 const config = require('../config');
 const { generateDocumentToken, verifyDocumentToken } = require('../utils/signedDocumentToken');
@@ -380,7 +381,7 @@ async function getDocumentLink(req, res, next) {
 /**
  * GET /clinic-documents/:token
  * Public route. Verifies token (expired → 401, invalid → 403), validates payload against DB,
- * blocks path traversal, then streams file from STORAGE_ROOT.
+ * blocks path traversal, then streams file from storage root.
  */
 async function serveClinicDocumentByToken(req, res, next) {
   try {
@@ -399,23 +400,38 @@ async function serveClinicDocumentByToken(req, res, next) {
     }
     // Validate token payload against database (prevents token manipulation)
     const application = await ClinicApplication.findById(payload.clinic_application_id);
-    if (!application || !application.document_storage_path) {
-      return res.status(404).json({ error: 'Document not found.' });
+    if (!application) {
+      return res.status(404).json({ error: 'Document not found' });
     }
     if (application.document_storage_path !== payload.file_path) {
       return res.status(403).json({ error: 'Invalid document token' });
     }
-    const file_path = payload.file_path;
-    // Prevent path traversal: reject ".." or any directory escape; never allow direct filesystem paths
-    if (file_path.includes('..') || file_path.includes('/') || file_path.includes('\\')) {
-      return res.status(400).json({ error: 'Invalid path.' });
+    if (!application.document_storage_path) {
+      return res.status(404).json({ error: 'Document not found' });
     }
-    const STORAGE_ROOT = path.resolve(getUploadDir());
-    const fullPath = path.join(STORAGE_ROOT, file_path);
-    if (!fullPath.startsWith(STORAGE_ROOT) || !fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) {
+    const file_path = payload.file_path;
+    // Allow nested paths; block path traversal only
+    if (file_path.includes('..')) {
+      return res.status(400).json({ error: 'Invalid file path' });
+    }
+    const root = path.resolve(getUploadDir());
+    const fullPath = path.join(root, file_path);
+    const resolvedFull = path.resolve(fullPath);
+    if (!resolvedFull.startsWith(root + path.sep)) {
+      return res.status(400).json({ error: 'Invalid file path' });
+    }
+    if (!fs.existsSync(resolvedFull) || !fs.statSync(resolvedFull).isFile()) {
       return res.status(404).json({ error: 'File not found.' });
     }
-    res.sendFile(file_path, { root: STORAGE_ROOT }, (err) => {
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${path.basename(resolvedFull)}"`
+    );
+    res.setHeader(
+      'Content-Type',
+      mime.lookup(resolvedFull) || 'application/octet-stream'
+    );
+    res.sendFile(path.relative(root, resolvedFull), { root }, (err) => {
       if (err) next(err);
     });
   } catch (err) {

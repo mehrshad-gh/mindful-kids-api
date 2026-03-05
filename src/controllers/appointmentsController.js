@@ -3,6 +3,8 @@ const Psychologist = require('../models/Psychologist');
 const AvailabilitySlot = require('../models/AvailabilitySlot');
 const Appointment = require('../models/Appointment');
 const AppointmentAuditLog = require('../models/AppointmentAuditLog');
+const { detectSafetyRisk, buildSafetyResponse } = require('../utils/safetyText');
+const SafetyEscalation = require('../models/SafetyEscalation');
 
 /** POST /appointments – parent books a slot. Transaction: lock slot, ensure open, create appointment, set booked, audit. */
 async function create(req, res, next) {
@@ -11,6 +13,21 @@ async function create(req, res, next) {
     const { therapist_id, availability_slot_id, parent_notes } = req.body;
     if (!therapist_id || !availability_slot_id) {
       return res.status(400).json({ error: 'therapist_id and availability_slot_id are required' });
+    }
+    // Safety guardrail: do not persist or log raw high-risk text; store minimal audit only
+    const notesText = parent_notes != null ? String(parent_notes) : '';
+    const safety = detectSafetyRisk(notesText);
+    if (safety.flagged) {
+      await SafetyEscalation.insert({
+        userId: req.user.id,
+        route: '/appointments',
+        field: 'parent_notes',
+        matches: safety.matches,
+      });
+      return res.status(422).json({
+        ...buildSafetyResponse(),
+        field: 'parent_notes',
+      });
     }
     const psychologist = await Psychologist.findById(therapist_id);
     if (!psychologist) {

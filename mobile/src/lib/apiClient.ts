@@ -1,9 +1,19 @@
 import axios, { type AxiosInstance } from 'axios';
+import { Alert } from 'react-native';
 import { getToken } from '../services/tokenStorage';
+import { navigateSafe } from '../navigation/navigationRef';
+
+const SAFETY_FALLBACK_MESSAGE =
+  "If you or someone else is in immediate danger, contact local emergency services. In the US and Canada you can call 911. Elsewhere, use your local emergency number.";
+
+function safetyHelpFallbackAlert() {
+  Alert.alert('Get help', SAFETY_FALLBACK_MESSAGE, [{ text: 'OK' }]);
+}
 
 const DEACTIVATED_MESSAGE = 'Account is deactivated';
 const DEACTIVATED_CODE = 'ACCOUNT_DEACTIVATED';
 const LEGAL_REACCEPT_CODE = 'LEGAL_REACCEPT_REQUIRED';
+const SAFETY_ESCALATION_CODE = 'SAFETY_ESCALATION';
 
 export type LegalGateMissingItem = { document_type: string; document_version: string };
 
@@ -33,6 +43,12 @@ function isLegalReacceptRequiredResponse(response: { status: number; data?: unkn
   if (response?.status !== 428) return false;
   const d = response.data as { code?: string; missing?: unknown } | undefined;
   return d?.code === LEGAL_REACCEPT_CODE && Array.isArray(d.missing);
+}
+
+function isSafetyEscalationResponse(response: { status: number; data?: unknown }): boolean {
+  if (response?.status !== 422) return false;
+  const d = response.data as { code?: string } | undefined;
+  return d?.code === SAFETY_ESCALATION_CODE;
 }
 
 const getBaseURL = () => {
@@ -66,6 +82,16 @@ function createClient(): AxiosInstance {
       if (err.response && isLegalReacceptRequiredResponse(err.response)) {
         const missing = (err.response.data as { missing: LegalGateMissingItem[] }).missing;
         onLegalReacceptRequired?.(missing);
+      }
+      if (err.response && isSafetyEscalationResponse(err.response)) {
+        const message =
+          (err.response.data as { message?: string })?.message ||
+          "If you or someone else is in immediate danger, call local emergency services. This app is not for emergencies.";
+        Alert.alert('Safety note', message, [
+          { text: 'OK', style: 'default' },
+          { text: 'Get help now', onPress: () => navigateSafe('SafetyHelp', undefined, safetyHelpFallbackAlert) },
+        ]);
+        // Do not retry the request
       }
       return Promise.reject(err);
     }

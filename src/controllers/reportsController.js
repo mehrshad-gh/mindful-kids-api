@@ -1,5 +1,7 @@
 const ProfessionalReport = require('../models/ProfessionalReport');
 const Psychologist = require('../models/Psychologist');
+const { detectSafetyRisk, buildSafetyResponse } = require('../utils/safetyText');
+const SafetyEscalation = require('../models/SafetyEscalation');
 
 const ALLOWED_REASONS = ['misconduct', 'inaccurate_info', 'inappropriate_behavior', 'other'];
 
@@ -13,6 +15,21 @@ async function reportProfessional(req, res, next) {
     if (!ALLOWED_REASONS.includes(normalizedReason)) {
       return res.status(400).json({
         error: `reason must be one of: ${ALLOWED_REASONS.join(', ')}`,
+      });
+    }
+    // Safety guardrail: check free-text details; do not persist or log raw high-risk text
+    const detailsText = details != null ? String(details) : '';
+    const safety = detectSafetyRisk(detailsText);
+    if (safety.flagged) {
+      await SafetyEscalation.insert({
+        userId: req.user.id,
+        route: '/reports/professional',
+        field: 'details',
+        matches: safety.matches,
+      });
+      return res.status(422).json({
+        ...buildSafetyResponse(),
+        field: 'details',
       });
     }
     const psychologist = await Psychologist.findById(psychologistId);

@@ -9,6 +9,7 @@ import { AppSwitch } from './AppSwitch';
 import { RoleSelectScreen } from '../screens/auth/RoleSelectScreen';
 import { AccountDeactivatedScreen } from '../screens/auth/AccountDeactivatedScreen';
 import { LegalReacceptGateScreen } from '../screens/auth/LegalReacceptGateScreen';
+import { SafetyHelpScreen } from '../screens/safety/SafetyHelpScreen';
 import { TermsOfServiceScreen } from '../screens/legal/TermsOfServiceScreen';
 import { PrivacyPolicyScreen } from '../screens/legal/PrivacyPolicyScreen';
 import { ProfessionalDisclaimerScreen } from '../screens/legal/ProfessionalDisclaimerScreen';
@@ -41,21 +42,9 @@ function parseSetPasswordLink(url: string | null): { token: string } | null {
   }
 }
 
-export function RootNavigator() {
+/** Conditional flows (legal gate, auth, app). SafetyHelp is NOT registered here – only in the single root stack. */
+function RootMainContent({ deepLink }: { deepLink: { token: string } | null }) {
   const { user, isAuthenticated, isRestoring, onboardingComplete, accountDeactivated, legalGateMissing } = useAuth();
-  const [deepLink, setDeepLink] = useState<{ token: string } | null>(null);
-
-  useEffect(() => {
-    Linking.getInitialURL().then((url) => {
-      const parsed = parseSetPasswordLink(url);
-      if (parsed) setDeepLink(parsed);
-    });
-    const sub = Linking.addEventListener('url', (e) => {
-      const parsed = parseSetPasswordLink(e.url);
-      if (parsed) setDeepLink(parsed);
-    });
-    return () => sub.remove();
-  }, []);
 
   if (isRestoring) {
     return (
@@ -126,6 +115,43 @@ export function RootNavigator() {
       {user?.role === 'therapist' && (
         <Stack.Screen name="TherapistOnboarding" component={TherapistOnboardingNavigator} />
       )}
+    </Stack.Navigator>
+  );
+}
+
+/**
+ * Single root stack: SafetyHelp registered once. All conditional flows live under Main.
+ * Prevents duplication bugs and ensures navigate('SafetyHelp') always targets this screen.
+ */
+export function RootNavigator() {
+  const [deepLink, setDeepLink] = useState<{ token: string } | null>(null);
+
+  useEffect(() => {
+    Linking.getInitialURL().then((url) => {
+      const parsed = parseSetPasswordLink(url);
+      if (parsed) setDeepLink(parsed);
+    });
+    const sub = Linking.addEventListener('url', (e) => {
+      const parsed = parseSetPasswordLink(e.url);
+      if (parsed) setDeepLink(parsed);
+    });
+    return () => sub.remove();
+  }, []);
+
+  return (
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName="Main"
+    >
+      {/* Main is required as the safe reset target for SafetyHelp fallback. */}
+      <Stack.Screen name="Main">
+        {() => <RootMainContent deepLink={deepLink} />}
+      </Stack.Screen>
+      <Stack.Screen
+        name="SafetyHelp"
+        component={SafetyHelpScreen}
+        options={{ title: 'Get help', headerShown: true }}
+      />
     </Stack.Navigator>
   );
 }
