@@ -1,6 +1,9 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { AuthLandingScreen } from '../screens/auth/AuthLandingScreen';
+import { FamilyAuthScreen } from '../screens/auth/FamilyAuthScreen';
+import { ProfessionalAccessScreen } from '../screens/auth/ProfessionalAccessScreen';
 import { WelcomeScreen } from '../screens/onboarding/WelcomeScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -21,8 +24,8 @@ const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
 export function OnboardingNavigator({ route }: Props) {
-  const initialRoute = route.params?.initialRouteName ?? 'Welcome';
   const setPasswordToken = route.params?.token ?? '';
+  const initialRoute = setPasswordToken ? 'SetPassword' : (route.params?.initialRouteName ?? 'AuthLanding');
 
   return (
     <Stack.Navigator
@@ -33,6 +36,21 @@ export function OnboardingNavigator({ route }: Props) {
         headerTintColor: colors.text,
       }}
     >
+      <Stack.Screen
+        name="AuthLanding"
+        component={AuthLandingScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="FamilyAuth"
+        component={FamilyAuthScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ProfessionalAccess"
+        component={ProfessionalAccessScreen}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen
         name="Welcome"
         component={WelcomeScreen}

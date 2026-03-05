@@ -56,6 +56,9 @@ export type ChildStackParamList = {
 };
 
 export type OnboardingStackParamList = {
+  AuthLanding: undefined;
+  FamilyAuth: AuthOnSuccessParams | undefined;
+  ProfessionalAccess: undefined;
   Welcome: undefined;
   Register: AuthOnSuccessParams | undefined;
   Login: AuthOnSuccessParams | undefined;

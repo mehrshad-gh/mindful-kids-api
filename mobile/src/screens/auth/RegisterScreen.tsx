@@ -138,12 +138,6 @@ export function RegisterScreen({ navigation, route }: Props) {
           >
             <Text style={styles.linkText}>Already have an account? Sign in</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ClinicApplicationForm')}
-            style={styles.clinicLink}
-          >
-            <Text style={styles.clinicLinkText}>Partner with us – apply as a clinic</Text>
-          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </ScreenLayout>
@@ -161,6 +155,4 @@ const styles = StyleSheet.create({
   primaryBtn: {},
   secondary: { alignItems: 'center' },
   linkText: { ...typography.link },
-  clinicLink: { marginTop: spacing.lg, paddingVertical: spacing.sm },
-  clinicLinkText: { ...typography.caption, color: colors.textTertiary },
 });

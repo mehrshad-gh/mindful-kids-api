@@ -7,6 +7,7 @@ import { OnboardingNavigator } from './OnboardingNavigator';
 import { TherapistOnboardingNavigator } from './TherapistOnboardingNavigator';
 import { AppSwitch } from './AppSwitch';
 import { RoleSelectScreen } from '../screens/auth/RoleSelectScreen';
+import { AccountDeactivatedScreen } from '../screens/auth/AccountDeactivatedScreen';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../types/navigation';
 
@@ -27,7 +28,7 @@ function parseSetPasswordLink(url: string | null): { token: string } | null {
 }
 
 export function RootNavigator() {
-  const { user, isAuthenticated, isRestoring, onboardingComplete } = useAuth();
+  const { user, isAuthenticated, isRestoring, onboardingComplete, accountDeactivated } = useAuth();
   const [deepLink, setDeepLink] = useState<{ token: string } | null>(null);
 
   useEffect(() => {
@@ -51,10 +52,17 @@ export function RootNavigator() {
   }
 
   if (!isAuthenticated) {
+    if (accountDeactivated) {
+      return (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="AccountDeactivated" component={AccountDeactivatedScreen} />
+        </Stack.Navigator>
+      );
+    }
     const onboardingInitial =
       deepLink?.token != null
         ? { initialRouteName: 'SetPassword' as const, token: deepLink.token }
-        : { initialRouteName: (onboardingComplete ? 'Login' : 'Welcome') as const };
+        : { initialRouteName: 'AuthLanding' as const };
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen

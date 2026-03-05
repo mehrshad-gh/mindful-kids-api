@@ -13,8 +13,8 @@ function authenticate(req, res, next) {
     const decoded = jwt.verify(token, config.jwt.secret);
     User.findById(decoded.sub)
       .then((user) => {
-        if (!user) {
-          return res.status(401).json({ error: 'User not found' });
+        if (!user || user.deactivated_at != null) {
+          return res.status(401).json({ code: 'ACCOUNT_DEACTIVATED', error: 'Account is deactivated' });
         }
         req.user = user;
         next();
@@ -37,7 +37,11 @@ function optionalAuthenticate(req, res, next) {
     const decoded = jwt.verify(token, config.jwt.secret);
     User.findById(decoded.sub)
       .then((user) => {
-        req.user = user || null;
+        if (!user || user.deactivated_at != null) {
+          req.user = null;
+        } else {
+          req.user = user;
+        }
         next();
       })
       .catch(() => {

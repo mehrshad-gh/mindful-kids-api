@@ -91,17 +91,6 @@ export function LoginScreen({ navigation, route }: Props) {
     );
   };
 
-  const handleTherapistRegister = () => {
-    (navigation.getParent() as any)?.navigate('TherapistOnboarding', {
-      screen: 'TherapistRegister',
-      params: { fromAuth: true },
-    });
-  };
-
-  const handleClinicApply = () => {
-    navigation.navigate('ClinicApplicationForm');
-  };
-
   return (
     <View style={styles.screen}>
       <KeyboardAvoidingView
@@ -197,30 +186,6 @@ export function LoginScreen({ navigation, route }: Props) {
             <Text style={styles.footerLabel}>New to MindfulKids?</Text>
             <TouchableOpacity onPress={handleCreateAccount} hitSlop={12}>
               <Text style={styles.footerLink}>Create an account</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.proSection}>
-            <Text style={styles.proSectionLabel}>For professionals</Text>
-            <TouchableOpacity
-              style={styles.proCard}
-              onPress={handleTherapistRegister}
-              activeOpacity={0.7}
-              accessibilityLabel="I'm a therapist – join as a provider"
-              accessibilityRole="button"
-            >
-              <Text style={styles.proCardTitle}>I'm a therapist</Text>
-              <Text style={styles.proCardSubtitle}>Join as a provider and support families</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.proCard, styles.proCardLast]}
-              onPress={handleClinicApply}
-              activeOpacity={0.7}
-              accessibilityLabel="Apply as a clinic"
-              accessibilityRole="button"
-            >
-              <Text style={styles.proCardTitle}>Apply as a clinic</Text>
-              <Text style={styles.proCardSubtitle}>Get your organization on MindfulKids</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -372,43 +337,5 @@ const styles = StyleSheet.create({
     ...typography.Body,
     color: colors.primary,
     fontWeight: '700',
-  },
-
-  proSection: {
-    marginTop: spacing[8],
-    marginBottom: spacing[24],
-  },
-  proSectionLabel: {
-    ...typography.Caption,
-    color: colors.textMuted,
-    marginBottom: spacing[12],
-    textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  proCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    paddingVertical: spacing[16],
-    paddingHorizontal: spacing[20],
-    marginBottom: spacing[12],
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  proCardLast: {
-    marginBottom: 0,
-  },
-  proCardTitle: {
-    ...typography.Body,
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: spacing[4],
-  },
-  proCardSubtitle: {
-    ...typography.Caption,
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 18,
   },
 });

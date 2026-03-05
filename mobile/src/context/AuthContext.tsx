@@ -3,6 +3,7 @@ import type { User, UserRole } from '../types/auth';
 import { getToken } from '../services/tokenStorage';
 import { getOnboardingComplete, setOnboardingComplete as persistOnboardingComplete } from '../services/onboardingStorage';
 import * as authService from '../services/authService';
+import { setAccountDeactivatedHandler } from '../lib/apiClient';
 
 interface AuthContextValue {
   user: User | null;
@@ -25,6 +26,9 @@ interface AuthContextValue {
   setPendingActivityId: (activityId: string | null) => void;
   /** Re-load user from token (e.g. after set-password-from-invite). */
   refreshAuth: () => Promise<void>;
+  /** True after 401 "Account is deactivated" – show deactivated screen then clear. */
+  accountDeactivated: boolean;
+  clearAccountDeactivated: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -47,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isRestoring, setIsRestoring] = useState(true);
   const [onboardingComplete, setOnboardingCompleteState] = useState<boolean>(false);
+  const [accountDeactivated, setAccountDeactivatedState] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -161,6 +166,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setPendingActivityIdState(activityId);
   }, []);
 
+  const clearAccountDeactivated = useCallback(() => setAccountDeactivatedState(false), []);
+
+  useEffect(() => {
+    setAccountDeactivatedHandler(() => {
+      authService.logout().then(() => {
+        setUser(null);
+        setAppRoleState('parent');
+        setSelectedChildId(null);
+        setPendingActivityIdState(null);
+        setAccountDeactivatedState(true);
+      });
+    });
+    return () => setAccountDeactivatedHandler(null);
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -179,6 +199,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSelectedChild,
       setPendingActivityId,
       refreshAuth,
+      accountDeactivated,
+      clearAccountDeactivated,
     }),
     [
       user,
@@ -196,6 +218,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSelectedChild,
       setPendingActivityId,
       refreshAuth,
+      accountDeactivated,
+      clearAccountDeactivated,
     ]
   );
 

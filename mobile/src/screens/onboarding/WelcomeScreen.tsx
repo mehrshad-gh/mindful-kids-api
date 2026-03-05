@@ -18,7 +18,7 @@ export function WelcomeScreen({ navigation }: Props) {
     <ScreenLayout centered>
       <View style={styles.hero}>
         <Text style={styles.title}>Mindful Kids</Text>
-        <Text style={styles.headline}>Structured emotional skill practice for families.</Text>
+        <Text style={styles.headline}>Daily emotional skill practice for families.</Text>
         <Text style={styles.subtitle}>
           Practice five core emotional skills through guided activities. Designed for home use and aligned with professional support when present.
         </Text>

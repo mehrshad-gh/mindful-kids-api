@@ -1,6 +1,25 @@
 import axios, { type AxiosInstance } from 'axios';
 import { getToken } from '../services/tokenStorage';
 
+const DEACTIVATED_MESSAGE = 'Account is deactivated';
+const DEACTIVATED_CODE = 'ACCOUNT_DEACTIVATED';
+
+let onAccountDeactivated: (() => void) | null = null;
+
+/** Register handler for 401 with error "Account is deactivated". Called before reject. */
+export function setAccountDeactivatedHandler(fn: (() => void) | null) {
+  onAccountDeactivated = fn;
+}
+
+function isAccountDeactivatedResponse(response: { status: number; data?: unknown }): boolean {
+  if (response?.status !== 401) return false;
+  const d = response.data as { code?: string; error?: string; message?: string } | undefined;
+  if (!d) return false;
+  if (d.code === DEACTIVATED_CODE) return true;
+  const msg = d.error ?? d.message ?? '';
+  return msg === DEACTIVATED_MESSAGE;
+}
+
 const getBaseURL = () => {
   // Expo: EXPO_PUBLIC_* is available at build time
   const url = process.env.EXPO_PUBLIC_API_URL;
@@ -26,8 +45,8 @@ function createClient(): AxiosInstance {
   client.interceptors.response.use(
     (res) => res,
     (err) => {
-      if (err.response?.status === 401) {
-        // Token invalid/expired – caller or auth context can handle (e.g. logout)
+      if (err.response && isAccountDeactivatedResponse(err.response)) {
+        onAccountDeactivated?.();
       }
       return Promise.reject(err);
     }
