@@ -1,6 +1,42 @@
 const { query } = require('../database/connection');
+const TherapistClinic = require('./TherapistClinic');
 
 const COLUMNS = 'id, name, slug, description, location, address, country, website, logo_url, phone, is_active, verification_status, verified_at, verified_by, documentation_url, created_at, updated_at';
+
+/** Admin list: filters status (verified|pending|suspended|rejected|all), country, q (name search), limit, offset. Returns rows with therapist_count. */
+async function findAllForAdmin(filters = {}) {
+  let sql = `SELECT ${COLUMNS} FROM clinics WHERE 1=1`;
+  const params = [];
+  let i = 1;
+  const status = filters.status === 'all' || !filters.status ? null : filters.status;
+  if (status) {
+    sql += ` AND verification_status = $${i++}`;
+    params.push(status);
+  }
+  if (filters.country) {
+    sql += ` AND country = $${i++}`;
+    params.push(filters.country);
+  }
+  if (filters.q && String(filters.q).trim()) {
+    sql += ` AND (name ILIKE $${i++} OR description ILIKE $${i++})`;
+    const q = `%${String(filters.q).trim()}%`;
+    params.push(q, q);
+  }
+  sql += ' ORDER BY name ASC';
+  const limit = Math.min(parseInt(filters.limit, 10) || 50, 100);
+  const offset = Math.max(0, parseInt(filters.offset, 10) || 0);
+  sql += ` LIMIT $${i++} OFFSET $${i++}`;
+  params.push(limit, offset);
+  const result = await query(sql, params);
+  const rows = result.rows;
+  if (rows.length === 0) return [];
+  const clinicIds = rows.map((r) => r.id);
+  const countMap = await TherapistClinic.getTherapistCountByClinicIds(clinicIds);
+  return rows.map((r) => ({
+    ...r,
+    therapist_count: countMap[r.id] ?? 0,
+  }));
+}
 
 async function findAll(filters = {}) {
   let sql = `SELECT ${COLUMNS} FROM clinics WHERE 1=1`;
@@ -110,6 +146,7 @@ async function updateProfile(id, data) {
 
 module.exports = {
   findAll,
+  findAllForAdmin,
   findById,
   findBySlug,
   create,

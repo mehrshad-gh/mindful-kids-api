@@ -290,11 +290,12 @@ async function review(req, res, next) {
 
       // Create clinic invite so contact can set password and get a clinic_admin account (before updating application with token)
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-      const token = await ClinicInvite.create({
+      const invite = await ClinicInvite.create({
         clinicId: clinic.id,
         contactEmail: application.contact_email,
         expiresAt,
       });
+      const token = invite.token;
 
       await ClinicApplication.update(req.params.id, {
         status: 'approved',

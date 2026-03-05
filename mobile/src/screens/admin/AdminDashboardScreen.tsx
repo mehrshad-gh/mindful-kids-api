@@ -137,6 +137,11 @@ export function AdminDashboardScreen() {
                 onPress={() => navigation.navigate('AdminClinics')}
                 accent="success"
               />
+              <DashboardCard
+                title="Users"
+                count={0}
+                onPress={() => navigation.navigate('AdminUsers')}
+              />
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => navigation.navigate('AdminContent')}

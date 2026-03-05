@@ -4,6 +4,8 @@ const adminTherapistController = require('../controllers/adminTherapistControlle
 const adminReportsController = require('../controllers/adminReportsController');
 const adminDashboardController = require('../controllers/adminDashboardController');
 const adminContentController = require('../controllers/adminContentController');
+const adminUsersController = require('../controllers/adminUsersController');
+const adminClinicsController = require('../controllers/adminClinicsController');
 const clinicApplicationController = require('../controllers/clinicApplicationController');
 const adminClinicApplicationsRoutes = require('./adminClinicApplications');
 const Clinic = require('../models/Clinic');
@@ -24,6 +26,14 @@ router.use(requireRole('admin'));
 // Dashboard overview (counts)
 router.get('/dashboard', adminDashboardController.getDashboard);
 
+// User management by role (uses role-based views; list supports limit, offset, q, sort, include_deactivated)
+router.get('/users/summary', adminUsersController.summary);
+router.get('/users', adminUsersController.list);
+router.post('/users/:id/deactivate', adminUsersController.deactivate);
+router.post('/users/:id/reactivate', adminUsersController.reactivate);
+router.delete('/users/:id', adminUsersController.deleteUser);
+router.get('/users/:id', adminUsersController.getOne);
+
 // Content (articles, videos, activities)
 router.get('/content', adminContentController.list);
 router.get('/content/:id', adminContentController.getOne);
@@ -43,15 +53,9 @@ router.get('/reports', adminReportsController.list);
 router.get('/reports/:id', adminReportsController.getOne);
 router.patch('/reports/:id', adminReportsController.update);
 
-// Clinics (admin create for therapist affiliation)
-router.get('/clinics', async (req, res, next) => {
-  try {
-    const clinics = await Clinic.findAll({});
-    res.json({ clinics });
-  } catch (err) {
-    next(err);
-  }
-});
+// Clinics (admin control center: list filtered/paginated, detail, admins, invites)
+router.get('/clinics', adminClinicsController.list);
+router.get('/clinics/:id', adminClinicsController.getOne);
 
 router.post('/clinics', async (req, res, next) => {
   try {
@@ -108,32 +112,8 @@ router.patch('/clinics/:id', async (req, res, next) => {
   }
 });
 
-// Assign clinic_admin to a clinic (user gains access to manage that clinic)
-router.post('/clinics/:id/admins', async (req, res, next) => {
-  try {
-    const { user_id } = req.body;
-    if (!user_id) {
-      return res.status(400).json({ error: 'user_id is required' });
-    }
-    const user = await User.findById(user_id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    const clinic = await Clinic.findById(req.params.id);
-    if (!clinic) {
-      return res.status(404).json({ error: 'Clinic not found' });
-    }
-    if (user.role !== 'admin' && user.role !== 'clinic_admin') {
-      await User.updateRole(user_id, 'clinic_admin');
-    }
-    await ClinicAdmin.add(user_id, req.params.id);
-    const admins = await ClinicAdmin.findByClinicId(req.params.id);
-    res.status(201).json({ message: 'Clinic admin assigned', admins });
-  } catch (err) {
-    next(err);
-  }
-});
-
+// Clinic admins: add (by email) or remove; audit logged
+router.post('/clinics/:id/admins', adminClinicsController.addClinicAdmin);
 router.get('/clinics/:id/admins', async (req, res, next) => {
   try {
     const clinic = await Clinic.findById(req.params.id);
@@ -146,14 +126,20 @@ router.get('/clinics/:id/admins', async (req, res, next) => {
     next(err);
   }
 });
+router.delete('/clinics/:id/admins/:userId', adminClinicsController.removeClinicAdmin);
 
-router.delete('/clinics/:id/admins/:userId', async (req, res, next) => {
+// Clinic invites: rotate (new token, extend expiry) or revoke
+router.post('/clinic-invites/:inviteId/rotate', adminClinicsController.rotateInvite);
+router.delete('/clinic-invites/:inviteId', adminClinicsController.revokeInvite);
+
+// Psychologist detail (admin): get one by id for therapist detail screen
+router.get('/psychologists/:id', async (req, res, next) => {
   try {
-    const removed = await ClinicAdmin.remove(req.params.userId, req.params.id);
-    if (!removed) {
-      return res.status(404).json({ error: 'User is not an admin of this clinic' });
+    const psychologist = await Psychologist.findById(req.params.id);
+    if (!psychologist) {
+      return res.status(404).json({ error: 'Psychologist not found' });
     }
-    res.json({ message: 'Clinic admin removed' });
+    res.json({ psychologist });
   } catch (err) {
     next(err);
   }

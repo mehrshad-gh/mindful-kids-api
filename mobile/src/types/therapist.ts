@@ -50,8 +50,19 @@ export interface Clinic {
   country?: string;
   website?: string;
   logo_url?: string;
+  phone?: string;
   is_active: boolean;
   verification_status?: 'pending' | 'verified' | 'rejected' | 'suspended';
+  verified_at?: string | null;
+  therapist_count?: number;
+}
+
+/** Admin clinic detail: clinic + therapists + clinic_admins + invite_status */
+export interface AdminClinicDetailResponse {
+  clinic: Clinic & { therapist_count?: number };
+  therapists: { id: string; name: string; specialty?: string | null; verification_status?: string }[];
+  clinic_admins: { user_id: string; name: string; email: string; created_at: string }[];
+  invite_status?: { invite_id: string; contact_email: string; expires_at: string }[];
 }
 
 /** Therapist on a clinic public page (summary for listing). */

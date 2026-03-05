@@ -3,7 +3,7 @@
  */
 
 import { apiClient } from '../lib/apiClient';
-import type { TherapistApplication, Clinic, ClinicApplication } from '../types/therapist';
+import type { TherapistApplication, Clinic, ClinicApplication, AdminClinicDetailResponse } from '../types/therapist';
 
 export interface AdminDashboard {
   pending_therapist_applications: number;
@@ -15,6 +15,61 @@ export interface AdminDashboard {
 
 export async function getDashboard(): Promise<AdminDashboard> {
   const { data } = await apiClient.get<AdminDashboard>('/admin/dashboard');
+  return data;
+}
+
+// User management by role
+export type AdminUserRole = 'parent' | 'therapist' | 'clinic_admin' | 'admin';
+
+export interface AdminUserListItem {
+  id: string;
+  email: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminUsersSummary {
+  parents: number;
+  therapists: number;
+  clinic_admins: number;
+  admins: number;
+}
+
+export type AdminUserSort =
+  | 'created_at_desc'
+  | 'created_at_asc'
+  | 'name_asc'
+  | 'name_desc'
+  | 'email_asc'
+  | 'email_desc';
+
+export async function listAdminUsers(params: {
+  role: AdminUserRole;
+  limit?: number;
+  offset?: number;
+  q?: string;
+  sort?: AdminUserSort;
+}): Promise<{ users: AdminUserListItem[]; total: number }> {
+  const { data } = await apiClient.get<{ users: AdminUserListItem[]; total: number }>('/admin/users', {
+    params,
+  });
+  return data;
+}
+
+export interface AdminUserDetailResponse {
+  user: AdminUserListItem & { role: string };
+  clinics?: { id: string; name: string }[];
+  psychologist_id?: string;
+}
+
+export async function getAdminUser(id: string): Promise<AdminUserDetailResponse> {
+  const { data } = await apiClient.get<AdminUserDetailResponse>(`/admin/users/${id}`);
+  return data;
+}
+
+export async function getAdminUsersSummary(): Promise<AdminUsersSummary> {
+  const { data } = await apiClient.get<AdminUsersSummary>('/admin/users/summary');
   return data;
 }
 
@@ -59,6 +114,22 @@ export async function reviewTherapistApplication(
     `/admin/therapist-applications/${id}`,
     status === 'rejected' ? { status, rejection_reason: rejectionReason } : { status }
   );
+  return data;
+}
+
+/** GET /admin/psychologists/:id – admin therapist/psychologist detail (for clinic detail → therapist tap) */
+export interface AdminPsychologistDetail {
+  id: string;
+  name: string;
+  specialty?: string | null;
+  verification_status?: string;
+  is_active?: boolean;
+  user_id?: string | null;
+  [key: string]: unknown;
+}
+
+export async function getAdminPsychologist(id: string): Promise<{ psychologist: AdminPsychologistDetail }> {
+  const { data } = await apiClient.get<{ psychologist: AdminPsychologistDetail }>(`/admin/psychologists/${id}`);
   return data;
 }
 
@@ -143,9 +214,50 @@ export async function updateReport(
   return data;
 }
 
-// Clinics (admin create for therapist affiliation)
-export async function listAdminClinics(): Promise<{ clinics: Clinic[] }> {
-  const { data } = await apiClient.get<{ clinics: Clinic[] }>('/admin/clinics');
+// Clinics (admin control: list with filters/pagination, detail, admins, invites)
+export type AdminClinicStatusFilter = 'verified' | 'pending' | 'suspended' | 'rejected' | 'all';
+
+export async function listAdminClinics(params?: {
+  status?: AdminClinicStatusFilter;
+  country?: string;
+  q?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ clinics: Clinic[] }> {
+  const { data } = await apiClient.get<{ clinics: Clinic[] }>('/admin/clinics', { params });
+  return data;
+}
+
+export async function getAdminClinic(id: string): Promise<AdminClinicDetailResponse> {
+  const { data } = await apiClient.get<AdminClinicDetailResponse>(`/admin/clinics/${id}`);
+  return data;
+}
+
+export async function addClinicAdmin(
+  clinicId: string,
+  body: { email: string; name?: string }
+): Promise<
+  | { message: string; added: { user_id: string; email: string; name: string }; admins: { user_id: string; name: string; email: string; created_at: string }[] }
+  | { message: string; invite_link: string; invite_id: string; contact_email: string; expires_at: string }
+> {
+  const { data } = await apiClient.post(`/admin/clinics/${clinicId}/admins`, body);
+  return data as any;
+}
+
+export async function removeClinicAdmin(clinicId: string, userId: string): Promise<{ message: string }> {
+  const { data } = await apiClient.delete<{ message: string }>(`/admin/clinics/${clinicId}/admins/${userId}`);
+  return data;
+}
+
+export async function rotateClinicInvite(inviteId: string): Promise<{ message: string; invite_link: string; expires_at: string }> {
+  const { data } = await apiClient.post<{ message: string; invite_link: string; expires_at: string }>(
+    `/admin/clinic-invites/${inviteId}/rotate`
+  );
+  return data;
+}
+
+export async function revokeClinicInvite(inviteId: string): Promise<{ message: string }> {
+  const { data } = await apiClient.delete<{ message: string }>(`/admin/clinic-invites/${inviteId}`);
   return data;
 }
 

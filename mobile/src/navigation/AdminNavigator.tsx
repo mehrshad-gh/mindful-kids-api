@@ -6,11 +6,14 @@ import { AdminApplicationDetailScreen } from '../screens/admin/AdminApplicationD
 import { AdminReportsScreen } from '../screens/admin/AdminReportsScreen';
 import { AdminReportDetailScreen } from '../screens/admin/AdminReportDetailScreen';
 import { AdminClinicsScreen } from '../screens/admin/AdminClinicsScreen';
+import { AdminClinicDetailScreen } from '../screens/admin/AdminClinicDetailScreen';
+import { AdminPsychologistDetailScreen } from '../screens/admin/AdminPsychologistDetailScreen';
 import { AdminClinicFormScreen } from '../screens/admin/AdminClinicFormScreen';
 import { AdminClinicApplicationsScreen } from '../screens/admin/AdminClinicApplicationsScreen';
 import { AdminClinicApplicationDetailScreen } from '../screens/admin/AdminClinicApplicationDetailScreen';
 import { AdminContentScreen } from '../screens/admin/AdminContentScreen';
 import { AdminContentDetailScreen } from '../screens/admin/AdminContentDetailScreen';
+import { AdminUsersScreen } from '../screens/admin/AdminUsersScreen';
 import type { AdminStackParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
 
@@ -31,6 +34,11 @@ export function AdminNavigator() {
         name="AdminMain"
         component={AdminDashboardScreen}
         options={{ title: 'Admin' }}
+      />
+      <Stack.Screen
+        name="AdminUsers"
+        component={AdminUsersScreen}
+        options={{ title: 'Users' }}
       />
       <Stack.Screen
         name="TherapistApplications"
@@ -56,6 +64,16 @@ export function AdminNavigator() {
         name="AdminClinics"
         component={AdminClinicsScreen}
         options={{ title: 'Clinics' }}
+      />
+      <Stack.Screen
+        name="AdminClinicDetail"
+        component={AdminClinicDetailScreen}
+        options={{ title: 'Clinic' }}
+      />
+      <Stack.Screen
+        name="AdminPsychologistDetail"
+        component={AdminPsychologistDetailScreen}
+        options={{ title: 'Therapist' }}
       />
       <Stack.Screen
         name="AdminClinicForm"

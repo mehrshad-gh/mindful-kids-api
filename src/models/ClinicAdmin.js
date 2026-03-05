@@ -58,6 +58,14 @@ async function remove(userId, clinicId) {
   return result.rowCount > 0;
 }
 
+async function countByClinicId(clinicId) {
+  const result = await query(
+    'SELECT COUNT(*)::int AS count FROM clinic_admins WHERE clinic_id = $1',
+    [clinicId]
+  );
+  return result.rows[0]?.count ?? 0;
+}
+
 module.exports = {
   getManagedClinicIds,
   findByUserId,
@@ -65,4 +73,5 @@ module.exports = {
   isAdminOfClinic,
   add,
   remove,
+  countByClinicId,
 };

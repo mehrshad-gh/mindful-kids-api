@@ -87,11 +87,14 @@ export type TherapistOnboardingStackParamList = {
 /** Admin: dashboard, therapist applications, reports (trust & safety), clinics, clinic applications, content. */
 export type AdminStackParamList = {
   AdminMain: undefined;
+  AdminUsers: undefined;
   TherapistApplications: undefined;
   TherapistApplicationDetail: { applicationId: string };
   AdminReports: undefined;
   AdminReportDetail: { reportId: string };
   AdminClinics: undefined;
+  AdminClinicDetail: { clinicId: string };
+  AdminPsychologistDetail: { psychologistId: string };
   AdminClinicForm: undefined;
   AdminClinicApplications: undefined;
   AdminClinicApplicationDetail: { applicationId: string };
