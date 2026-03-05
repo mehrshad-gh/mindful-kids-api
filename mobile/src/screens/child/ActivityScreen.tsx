@@ -30,6 +30,9 @@ import { SmallWinsActivity } from '../../components/SmallWinsActivity';
 import { TryAgainPlanActivity } from '../../components/TryAgainPlanActivity';
 import { BraveStepsActivity } from '../../components/BraveStepsActivity';
 import { useAuth } from '../../context/AuthContext';
+import { useChildren } from '../../hooks/useChildren';
+import { EMOTIONAL_DOMAINS } from '../../constants/emotionalDomains';
+import { updateDailyQuestOnCompletion } from '../../utils/childGamificationStorage';
 import { fetchActivityById, type Activity } from '../../services/activitiesService';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
@@ -51,11 +54,21 @@ function formatInstructions(instructions: string | null): string[] {
 export function ActivityScreen({ navigation, route }: Props) {
   const activityId = route.params?.activityId;
   const { selectedChildId } = useAuth();
+  const { children } = useChildren();
   const stackNav = navigation.getParent<NativeStackNavigationProp<ChildStackParamList>>();
-  const handleRecorded = (stars: number) => {
-    stackNav?.navigate('CompletionReward', { starsEarned: stars });
-  };
   const [activity, setActivity] = useState<Activity | null>(null);
+  const child = selectedChildId ? children.find((c) => c.id === selectedChildId) : undefined;
+  const domain = activity?.domain_id ? EMOTIONAL_DOMAINS.find((d) => d.id === activity.domain_id) : undefined;
+  const handleRecorded = (stars: number) => {
+    if (selectedChildId && activity) {
+      updateDailyQuestOnCompletion(selectedChildId, activity.slug, activity.domain_id ?? '').then(() => {});
+    }
+    stackNav?.navigate('CompletionReward', {
+      starsEarned: stars,
+      domainTitle: domain?.title,
+      childName: child?.name,
+    });
+  };
   const [loading, setLoading] = useState(!!activityId);
   const [error, setError] = useState<string | null>(null);
 

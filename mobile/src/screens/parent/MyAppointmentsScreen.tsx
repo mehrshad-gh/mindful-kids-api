@@ -18,7 +18,7 @@ import { fetchMyAppointments, cancelAppointment, type Appointment } from '../../
 import { formatAppointmentTime } from '../../utils/dateTime';
 import type { ParentStackParamList } from '../../types/navigation';
 import { colors } from '../../theme/colors';
-import { spacing, typography } from '../../theme';
+import { spacing, typography, borderRadius, layout } from '../../theme';
 
 type Nav = NativeStackNavigationProp<ParentStackParamList, 'MyAppointments'>;
 
@@ -114,19 +114,51 @@ export function MyAppointmentsScreen() {
     );
   }
 
-  const counts = getStatusCounts(appointments);
-  const countParts = [
-    counts.requested > 0 && `${counts.requested} pending`,
-    counts.confirmed > 0 && `${counts.confirmed} confirmed`,
-    counts.completed > 0 && `${counts.completed} completed`,
-  ].filter(Boolean);
+  const requested = appointments.filter((a) => a.status === 'requested');
+  const confirmed = appointments.filter((a) => a.status === 'confirmed');
+  const past = appointments.filter((a) => ['completed', 'declined', 'cancelled'].includes(a.status));
+
+  const renderAppointment = (apt: Appointment) => (
+    <Card key={apt.id} style={styles.aptCard}>
+      <Text style={styles.aptName}>{apt.psychologist_name ?? 'Therapist'}</Text>
+      <Text style={styles.aptTime}>{formatAppointmentTime(apt.starts_at_utc, 'parent')}</Text>
+      <View style={styles.statusRow}>
+        <View style={[styles.statusPill, styles[`statusPill_${apt.status}` as keyof typeof styles] as object]}>
+          <Text style={[styles.statusPillText, styles[`statusPillText_${apt.status}` as keyof typeof styles] as object]}>
+            {statusLabel(apt.status)}
+          </Text>
+        </View>
+      </View>
+      {apt.status === 'declined' && apt.cancellation_reason ? (
+        <Text style={styles.reasonText}>Therapist: {apt.cancellation_reason}</Text>
+      ) : null}
+      {apt.status === 'cancelled' && apt.cancellation_reason ? (
+        <Text style={styles.reasonText}>Reason: {apt.cancellation_reason}</Text>
+      ) : null}
+      {apt.parent_notes ? (
+        <Text style={styles.aptNotes} numberOfLines={2}>{apt.parent_notes}</Text>
+      ) : null}
+      {apt.status === 'requested' ? (
+        <Button
+          title={cancellingId === apt.id ? 'Cancelling…' : 'Cancel request'}
+          variant="outline"
+          size="small"
+          onPress={() => handleCancel(apt)}
+          disabled={!!cancellingId}
+          style={styles.cardAction}
+        />
+      ) : null}
+      {apt.status === 'declined' ? (
+        <TouchableOpacity onPress={() => handleBookAgain(apt.psychologist_id)} style={styles.bookAgain}>
+          <Text style={styles.bookAgainText}>Book another time</Text>
+        </TouchableOpacity>
+      ) : null}
+    </Card>
+  );
 
   return (
     <ScreenLayout>
       <Text style={styles.title}>My appointments</Text>
-      {appointments.length > 0 && countParts.length > 0 ? (
-        <Text style={styles.countsBadge}>{countParts.join(' · ')}</Text>
-      ) : null}
       {error ? (
         <Card style={styles.card}>
           <Text style={styles.errorText}>{error}</Text>
@@ -141,41 +173,24 @@ export function MyAppointmentsScreen() {
           contentContainerStyle={styles.scrollContent}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
         >
-          {appointments.map((apt) => (
-            <Card key={apt.id} style={styles.aptCard}>
-              <Text style={styles.aptName}>{apt.psychologist_name ?? 'Therapist'}</Text>
-              <Text style={styles.aptTime}>{formatAppointmentTime(apt.starts_at_utc, 'parent')}</Text>
-              <View style={styles.statusRow}>
-                <Text style={[styles.statusBadge, styles[`status_${apt.status}` as keyof typeof styles] as object]}>
-                  {statusLabel(apt.status)}
-                </Text>
-              </View>
-              {apt.status === 'declined' && apt.cancellation_reason ? (
-                <Text style={styles.reasonText}>Therapist: {apt.cancellation_reason}</Text>
-              ) : null}
-              {apt.status === 'cancelled' && apt.cancellation_reason ? (
-                <Text style={styles.reasonText}>Reason: {apt.cancellation_reason}</Text>
-              ) : null}
-              {apt.parent_notes ? (
-                <Text style={styles.aptNotes} numberOfLines={2}>{apt.parent_notes}</Text>
-              ) : null}
-              {apt.status === 'requested' ? (
-                <Button
-                  title={cancellingId === apt.id ? 'Cancelling…' : 'Cancel request'}
-                  variant="outline"
-                  size="small"
-                  onPress={() => handleCancel(apt)}
-                  disabled={!!cancellingId}
-                  style={styles.cardAction}
-                />
-              ) : null}
-              {apt.status === 'declined' ? (
-                <TouchableOpacity onPress={() => handleBookAgain(apt.psychologist_id)} style={styles.bookAgain}>
-                  <Text style={styles.bookAgainText}>Book another time</Text>
-                </TouchableOpacity>
-              ) : null}
-            </Card>
-          ))}
+          {requested.length > 0 ? (
+            <>
+              <Text style={styles.sectionHeaderFirst}>Requested</Text>
+              {requested.map(renderAppointment)}
+            </>
+          ) : null}
+          {confirmed.length > 0 ? (
+            <>
+              <Text style={styles.sectionHeader}>Confirmed</Text>
+              {confirmed.map(renderAppointment)}
+            </>
+          ) : null}
+          {past.length > 0 ? (
+            <>
+              <Text style={styles.sectionHeader}>Past</Text>
+              {past.map(renderAppointment)}
+            </>
+          ) : null}
         </ScrollView>
       )}
     </ScreenLayout>
@@ -183,23 +198,30 @@ export function MyAppointmentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { ...typography.h2, color: colors.text, marginBottom: spacing.xs },
-  countsBadge: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.md },
+  title: { ...typography.h2, color: colors.text, marginBottom: spacing.md },
   card: { marginBottom: spacing.md },
   errorText: { ...typography.body, color: colors.error },
   emptyText: { ...typography.body, color: colors.textSecondary },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: spacing.xl },
+  sectionHeader: { ...typography.SectionTitle, color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
+  sectionHeaderFirst: { ...typography.SectionTitle, color: colors.text, marginTop: 0, marginBottom: spacing.sm },
   aptCard: { marginBottom: spacing.md },
   aptName: { ...typography.body, fontWeight: '600', color: colors.text },
   aptTime: { ...typography.subtitle, color: colors.textSecondary, marginTop: spacing.xs },
   statusRow: { marginTop: spacing.sm },
-  statusBadge: { ...typography.caption, fontWeight: '600', alignSelf: 'flex-start' },
-  status_requested: { color: colors.warning },
-  status_confirmed: { color: colors.success },
-  status_declined: { color: colors.error },
-  status_cancelled: { color: colors.textTertiary },
-  status_completed: { color: colors.textSecondary },
+  statusPill: { alignSelf: 'flex-start', paddingVertical: spacing.xs, paddingHorizontal: spacing.sm, borderRadius: borderRadius.full, minHeight: 28, justifyContent: 'center' },
+  statusPillText: { ...typography.caption, fontWeight: '600' },
+  statusPill_requested: { backgroundColor: colors.warningMuted },
+  statusPillText_requested: { color: colors.warning },
+  statusPill_confirmed: { backgroundColor: colors.successMuted },
+  statusPillText_confirmed: { color: colors.success },
+  statusPill_declined: { backgroundColor: colors.errorMuted },
+  statusPillText_declined: { color: colors.error },
+  statusPill_cancelled: { backgroundColor: colors.surfaceSoft },
+  statusPillText_cancelled: { color: colors.textTertiary },
+  statusPill_completed: { backgroundColor: colors.surfaceSoft },
+  statusPillText_completed: { color: colors.textSecondary },
   reasonText: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs, fontStyle: 'italic' },
   aptNotes: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
   cardAction: { marginTop: spacing.sm },

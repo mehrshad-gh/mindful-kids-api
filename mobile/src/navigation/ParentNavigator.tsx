@@ -18,6 +18,7 @@ import { ContentDetailScreen } from '../screens/parent/ContentDetailScreen';
 import { KidsActivitiesScreen } from '../screens/parent/KidsActivitiesScreen';
 import { BookingScreen } from '../screens/parent/BookingScreen';
 import { MyAppointmentsScreen } from '../screens/parent/MyAppointmentsScreen';
+import { ChildSettingsScreen } from '../screens/parent/ChildSettingsScreen';
 import { TermsOfServiceScreen } from '../screens/legal/TermsOfServiceScreen';
 import { PrivacyPolicyScreen } from '../screens/legal/PrivacyPolicyScreen';
 import { ProfessionalDisclaimerScreen } from '../screens/legal/ProfessionalDisclaimerScreen';
@@ -65,6 +66,7 @@ export function ParentNavigator() {
       <Stack.Screen name="KidsActivities" component={KidsActivitiesScreen} options={{ title: 'Kids activities' }} />
       <Stack.Screen name="Booking" component={BookingScreen} options={{ title: 'Book session' }} />
       <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} options={{ title: 'My appointments' }} />
+      <Stack.Screen name="ChildSettings" component={ChildSettingsScreen} options={{ title: 'Child settings' }} />
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} options={{ title: 'Terms of Service' }} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
       <Stack.Screen name="ProfessionalDisclaimer" component={ProfessionalDisclaimerScreen} options={{ title: 'Professional Disclaimer' }} />

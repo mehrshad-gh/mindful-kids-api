@@ -1,10 +1,13 @@
-import React, { useCallback, useState, useRef } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, RefreshControl, ScrollView, ActivityIndicator, Modal, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
+import { useParentOnboardingSuccess } from '../../context/ParentOnboardingSuccessContext';
 import { useChildren } from '../../hooks/useChildren';
+import { getParentOnboardingComplete, getParentOnboardingActivityStarted, setParentOnboardingActivityStarted } from '../../utils/onboardingStorage';
+import { getChildGamificationSettings, type ChildGamificationSettings } from '../../utils/childGamificationSettingsStorage';
 import { useProgressSummary } from '../../hooks/useProgressSummary';
 import { fetchFeaturedAdvice, type AdviceItem } from '../../api/advice';
 import { fetchDailyTip, recordDailyTipViewed, fetchDailyTipSuggestions, type DailyTip, type DailyTipSuggestion, type DailyTipSuggestedTool } from '../../api/dailyTip';
@@ -20,8 +23,10 @@ import { FAB } from '../../components/ui/FAB';
 import { Avatar } from '../../components/ui/Avatar';
 import { Badge } from '../../components/ui/Badge';
 import { ProgressBar } from '../../components/ui/ProgressBar';
+import { IconCircle } from '../../components/ui/IconCircle';
+import { DomainIcon } from '../../components/ui/DomainIcon';
 import { colors, getDomainColor } from '../../design/colors';
-import { spacing, layout } from '../../theme';
+import { spacing, layout, borderRadius } from '../../theme';
 import { typography } from '../../theme/typography';
 import { getParentInsight } from '../../utils/parentInsight';
 import type { ParentTabParamList } from '../../types/navigation';
@@ -108,6 +113,7 @@ function formatCompletedAt(iso: string): string {
 export function DashboardScreen() {
   const navigation = useNavigation<TabNav>();
   const { user, setAppRole, selectedChildId, setSelectedChild, logout } = useAuth();
+  const { banner, clearBanner } = useParentOnboardingSuccess();
   const { children, loading, error, refresh, deleteChild } = useChildren();
   const { summary, loading: summaryLoading, refresh: refreshSummary } = useProgressSummary(selectedChildId);
   const [featuredAdvice, setFeaturedAdvice] = useState<AdviceItem | null>(null);
@@ -122,6 +128,12 @@ export function DashboardScreen() {
   const [domainProgressLoading, setDomainProgressLoading] = useState(false);
   const [levelUpCelebration, setLevelUpCelebration] = useState<{ childName: string; domainTitle: string; levelLabel: string } | null>(null);
   const [expandedInsightDomainId, setExpandedInsightDomainId] = useState<string | null>(null);
+  const [resumeOnboardingVisible, setResumeOnboardingVisible] = useState(false);
+  const [childGamificationPreview, setChildGamificationPreview] = useState<ChildGamificationSettings>({
+    dailyQuestEnabled: true,
+    stickersEnabled: true,
+    reducedMotion: false,
+  });
   const previousDomainLevels = useRef<Record<string, Record<string, number>>>({});
 
   const loadAdvice = useCallback(async () => {
@@ -157,6 +169,29 @@ export function DashboardScreen() {
     } catch {
       setStreak(null);
     }
+  }, []);
+
+  const loadResumeOnboardingState = useCallback(async () => {
+    const [started, complete] = await Promise.all([
+      getParentOnboardingActivityStarted(),
+      getParentOnboardingComplete(),
+    ]);
+    setResumeOnboardingVisible(started && !complete);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadResumeOnboardingState();
+    }, [loadResumeOnboardingState])
+  );
+
+  const handleResumeInChildMode = useCallback(() => {
+    setAppRole('child');
+  }, [setAppRole]);
+
+  const handleSkipResumeOnboarding = useCallback(async () => {
+    await setParentOnboardingActivityStarted(false);
+    setResumeOnboardingVisible(false);
   }, []);
 
   const loadDomainProgress = useCallback(async () => {
@@ -225,6 +260,13 @@ export function DashboardScreen() {
     }, [refresh, refreshSummary, loadAdvice, loadDailyTip, loadParentStreak, loadDomainProgress])
   );
 
+  useEffect(() => {
+    if (!selectedChildId) return;
+    getChildGamificationSettings(selectedChildId)
+      .then(setChildGamificationPreview)
+      .catch(() => setChildGamificationPreview({ dailyQuestEnabled: true, stickersEnabled: true, reducedMotion: false }));
+  }, [selectedChildId]);
+
   const selectedChild = children.find((c) => c.id === selectedChildId);
   const parentStack = navigation.getParent<NativeStackNavigationProp<ParentStackParamList>>();
 
@@ -280,7 +322,32 @@ export function DashboardScreen() {
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={colors.parentAccent} />}
       >
-        <HeaderBar title="Dashboard" subtitle={`Hello, ${user?.name ?? 'Parent'}!`} />
+        <View style={styles.headerSection}>
+          <HeaderBar title="Dashboard" subtitle={`Hello, ${user?.name ?? 'Parent'}!`} />
+        </View>
+
+        {banner ? (
+          <Card style={styles.onboardingBanner} variant="glow" accentColor={colors.success}>
+            <Text style={styles.onboardingBannerText}>
+              Great start! You practiced {banner.domainTitle} with {banner.childName}.
+            </Text>
+            <View style={styles.onboardingBannerActions}>
+              <Button title="Try today's tip" onPress={() => { openTipDetail(); clearBanner(); }} variant="soft" size="small" style={styles.onboardingBannerBtn} />
+              <Button title="Explore more tools" onPress={() => { parentStack?.navigate('KidsActivities'); clearBanner(); }} variant="soft" size="small" style={styles.onboardingBannerBtn} />
+            </View>
+          </Card>
+        ) : null}
+
+        {resumeOnboardingVisible ? (
+          <Card style={styles.resumeOnboardingCard} variant="outlined">
+            <Text style={styles.resumeOnboardingTitle}>Resume practice</Text>
+            <Text style={styles.resumeOnboardingText}>You started a practice in Child mode. Resume or skip for now.</Text>
+            <View style={styles.resumeOnboardingActions}>
+              <Button title="Resume in Child mode" onPress={handleResumeInChildMode} variant="primary" size="small" style={styles.resumeOnboardingBtn} />
+              <Button title="Skip for now" onPress={handleSkipResumeOnboarding} variant="ghost" size="small" style={styles.resumeOnboardingBtn} />
+            </View>
+          </Card>
+        ) : null}
 
         <Card style={styles.insightCard} variant="elevated" accentColor={colors.primary}>
           <Text style={styles.insightLabel}>Insight for you</Text>
@@ -472,25 +539,35 @@ export function DashboardScreen() {
                 const isExpanded = expandedInsightDomainId === domain.id;
                 return (
                   <Card key={domain.id} variant="domain" accentColor={domainColor} style={styles.domainCardItem}>
-                    <View style={styles.domainRow}>
-                      <Text style={[styles.domainLabel, { color: domainColor }]}>{domain.title}</Text>
-                      <Badge label={levelLabel} variant="domain" color={domainColor} />
+                    <View style={styles.domainRowNew}>
+                      <View style={styles.domainRowLeft}>
+                        <IconCircle size={40} backgroundColor={domainColor + '20'}>
+                          <DomainIcon domainId={domain.id} size={22} color={domainColor} />
+                        </IconCircle>
+                        <View>
+                          <Text style={[styles.domainLabel, { color: domainColor }]}>{domain.title}</Text>
+                          <Badge label={levelLabel} variant="domain" color={domainColor} style={styles.domainBadgeInline} />
+                        </View>
+                      </View>
+                      <View style={styles.domainStatsBlock}>
+                        <ProgressBar progress={barPct} fillColor={domainColor} height={8} animated />
+                        <Text style={styles.domainMeta}>{stars} stars · {sessions} session{sessions !== 1 ? 's' : ''}</Text>
+                      </View>
                     </View>
-                    <ProgressBar progress={barPct} fillColor={domainColor} height={10} animated />
-                    <Text style={styles.domainMeta}>{stars} stars · {sessions} session{sessions !== 1 ? 's' : ''}</Text>
                     {showInsight && insight && (
                       <>
                         <TouchableOpacity
-                          style={styles.insightToggle}
+                          style={styles.insightDrawerToggle}
                           onPress={() => setExpandedInsightDomainId(isExpanded ? null : domain.id)}
                           activeOpacity={0.7}
                         >
+                          <Text style={styles.insightDrawerIcon}>💡</Text>
                           <Text style={styles.insightToggleText}>
                             {isExpanded ? 'Hide' : 'Show'} Growth Insight
                           </Text>
                         </TouchableOpacity>
                         {isExpanded && (
-                          <View style={styles.insightBlock}>
+                          <View style={styles.insightDrawer}>
                             <Text style={styles.insightTitle}>Growth Insight</Text>
                             <Text style={styles.insightMessage}>{insight.message}</Text>
                             <Text style={styles.insightExplanation}>{insight.explanation}</Text>
@@ -527,22 +604,25 @@ export function DashboardScreen() {
             <Button title="Add child" onPress={handleAddChild} style={styles.addBtn} />
           </Card>
         ) : (
-          <View style={styles.childSelectorRow}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childPillRow}>
             {children.map((c) => (
               <TouchableOpacity
                 key={c.id}
                 onPress={() => setSelectedChild(c.id)}
                 activeOpacity={0.8}
-                style={[styles.childSelectorItem, selectedChildId === c.id && styles.childSelectorItemSelected]}
+                style={[styles.childPill, selectedChildId === c.id && styles.childPillSelected]}
               >
-                <Avatar name={c.name} size={56} />
-                <Text style={styles.childSelectorName} numberOfLines={1}>{c.name}</Text>
+                <Avatar name={c.name} size={44} />
+                <Text style={styles.childPillName} numberOfLines={1}>{c.name}</Text>
               </TouchableOpacity>
             ))}
-            <TouchableOpacity onPress={handleAddChild} style={styles.childSelectorAdd} activeOpacity={0.8}>
-              <Text style={styles.childSelectorAddText}>+ Add</Text>
+            <TouchableOpacity onPress={handleAddChild} style={styles.childPillAdd} activeOpacity={0.8}>
+              <IconCircle size={44} backgroundColor={colors.surfaceSoft}>
+                <Text style={styles.childPillAddIcon}>+</Text>
+              </IconCircle>
+              <Text style={styles.childPillAddText}>Add</Text>
             </TouchableOpacity>
-          </View>
+          </ScrollView>
         )}
         {selectedChild && children.some((c) => c.id === selectedChildId) && (
           <TouchableOpacity onPress={() => handleRemoveChild(selectedChildId!, selectedChild!.name)} style={styles.removeChildLink}>
@@ -550,17 +630,51 @@ export function DashboardScreen() {
           </TouchableOpacity>
         )}
 
-        <Card style={styles.card} title="Quick actions" subtitle="Practice, appointments, and resources.">
-          <TouchableOpacity onPress={() => parentStack?.navigate('MyAppointments')} style={styles.quickActionLink}>
-            <Text style={styles.quickActionLinkText}>My appointments</Text>
+        <View style={styles.quickActionsSection}>
+          <Text style={styles.quickActionsTitle}>Quick actions</Text>
+          <View style={styles.quickActionsGrid}>
+            <TouchableOpacity style={styles.quickActionCell} onPress={() => parentStack?.navigate('MyAppointments')} activeOpacity={0.8}>
+              <IconCircle size={48} backgroundColor={colors.primaryMuted}>
+                <Text style={styles.quickActionEmoji}>📅</Text>
+              </IconCircle>
+              <Text style={styles.quickActionLabel}>Appointments</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickActionCell} onPress={openTipDetail} activeOpacity={0.8}>
+              <IconCircle size={48} backgroundColor={colors.primaryMuted}>
+                <Text style={styles.quickActionEmoji}>💡</Text>
+              </IconCircle>
+              <Text style={styles.quickActionLabel}>Tips</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickActionCell} onPress={() => navigation.navigate('ContentLibrary')} activeOpacity={0.8}>
+              <IconCircle size={48} backgroundColor={colors.primaryMuted}>
+                <Text style={styles.quickActionEmoji}>📚</Text>
+              </IconCircle>
+              <Text style={styles.quickActionLabel}>Library</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickActionCell} onPress={() => parentStack?.navigate('TrustAndSafety')} activeOpacity={0.8}>
+              <IconCircle size={48} backgroundColor={colors.primaryMuted}>
+                <Text style={styles.quickActionEmoji}>🛡️</Text>
+              </IconCircle>
+              <Text style={styles.quickActionLabel}>Trust & safety</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {selectedChildId ? (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => parentStack?.navigate('ChildSettings', { childId: selectedChildId })}
+            style={styles.childSettingsCard}
+          >
+            <Card variant="outlined" style={styles.childSettingsCardInner}>
+              <Text style={styles.childSettingsTitle}>Child settings</Text>
+              <Text style={styles.childSettingsSubtitle}>Daily practice, rewards, and accessibility</Text>
+              <Text style={styles.childSettingsStatus}>
+                Quest: {childGamificationPreview.dailyQuestEnabled ? 'On' : 'Off'} · Stickers: {childGamificationPreview.stickersEnabled ? 'On' : 'Off'} · Motion: {childGamificationPreview.reducedMotion ? 'Reduced' : 'Normal'}
+              </Text>
+            </Card>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => parentStack?.navigate('ParentResources')} style={styles.quickActionLink}>
-            <Text style={styles.quickActionLinkText}>Parent resources</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => parentStack?.navigate('TrustAndSafety')} style={styles.quickActionLink}>
-            <Text style={styles.quickActionLinkText}>Trust & safety</Text>
-          </TouchableOpacity>
-        </Card>
+        ) : null}
 
         <Button
           title="Use app as Child"
@@ -663,8 +777,24 @@ const styles = StyleSheet.create({
     padding: layout.screenPadding,
     paddingBottom: layout.fabContentPaddingBottom,
   },
+  headerSection: { marginBottom: layout.sectionGapSmall },
   title: { ...typography.h2, marginBottom: spacing.xs },
   subtitle: { ...typography.body, color: colors.textSecondary, marginBottom: layout.sectionGapSmall },
+  onboardingBanner: {
+    marginBottom: layout.sectionGapSmall,
+  },
+  onboardingBannerText: {
+    ...typography.body,
+    color: colors.text,
+    marginBottom: spacing.md,
+  },
+  onboardingBannerActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  onboardingBannerBtn: { minWidth: 140 },
+  resumeOnboardingCard: { marginBottom: layout.sectionGapSmall },
+  resumeOnboardingTitle: { ...typography.CardTitle, color: colors.text, marginBottom: spacing.xs },
+  resumeOnboardingText: { ...typography.Caption, color: colors.textSecondary, marginBottom: spacing.md },
+  resumeOnboardingActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  resumeOnboardingBtn: { minWidth: 140 },
   insightCard: {
     marginBottom: layout.sectionGapSmall,
     backgroundColor: colors.primary + '0C',
@@ -773,12 +903,30 @@ const styles = StyleSheet.create({
   domainMeta: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
   domainEmpty: { ...typography.bodySmall, color: colors.textSecondary },
   domainLoader: { marginVertical: spacing.sm },
-  childSelectorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.md },
-  childSelectorItem: { alignItems: 'center', minWidth: 72, paddingVertical: spacing.sm, paddingHorizontal: spacing.xs, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.border },
-  childSelectorItemSelected: { borderColor: colors.primary, backgroundColor: colors.surfaceSoft },
-  childSelectorName: { ...typography.Caption, marginTop: spacing.sm, maxWidth: 72, textAlign: 'center' },
-  childSelectorAdd: { alignItems: 'center', justifyContent: 'center', minWidth: 72, paddingVertical: spacing.sm, paddingHorizontal: spacing.xs, borderRadius: 12, borderWidth: 2, borderColor: colors.border, borderStyle: 'dashed' },
-  childSelectorAddText: { ...typography.Caption, color: colors.textSecondary },
+  childPillRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md, paddingVertical: spacing.xs },
+  childPill: { alignItems: 'center', paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: borderRadius.full, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.border, minWidth: 88 },
+  childPillSelected: { borderColor: colors.primary, backgroundColor: colors.primaryMuted },
+  childPillName: { ...typography.Caption, marginTop: spacing.xs, maxWidth: 80, textAlign: 'center' },
+  childPillAdd: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: borderRadius.full, borderWidth: 2, borderColor: colors.border, borderStyle: 'dashed', minWidth: 88 },
+  childPillAddIcon: { ...typography.h3, color: colors.textSecondary },
+  childPillAddText: { ...typography.Caption, color: colors.textSecondary, marginTop: spacing.xs },
+  quickActionsSection: { marginBottom: spacing.lg },
+  quickActionsTitle: { ...typography.SectionTitle, marginBottom: spacing.md },
+  quickActionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  quickActionCell: { width: '47%', minWidth: 140, backgroundColor: colors.surface, borderRadius: borderRadius.lg, padding: layout.cardPaddingCompact, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  quickActionEmoji: { fontSize: 24 },
+  quickActionLabel: { ...typography.Caption, color: colors.text, marginTop: spacing.sm, fontWeight: '600' },
+  childSettingsCard: { marginBottom: layout.listItemGap },
+  childSettingsCardInner: { marginBottom: 0 },
+  childSettingsTitle: { ...typography.CardTitle, color: colors.text },
+  childSettingsSubtitle: { ...typography.Caption, color: colors.textSecondary, marginTop: spacing.xs },
+  domainRowNew: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', marginBottom: spacing.sm },
+  domainRowLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1, minWidth: 0 },
+  domainBadgeInline: { alignSelf: 'flex-start', marginTop: 2 },
+  domainStatsBlock: { width: 100, alignItems: 'flex-end' },
+  insightDrawerToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm, paddingVertical: spacing.sm },
+  insightDrawerIcon: { fontSize: 18 },
+  insightDrawer: { marginTop: spacing.xs, padding: spacing.md, backgroundColor: colors.surfaceSubtle, borderRadius: borderRadius.md, borderLeftWidth: 3, borderLeftColor: colors.primary },
   insightToggle: { marginTop: spacing.sm },
   insightToggleText: { ...typography.caption, color: colors.primary, textDecorationLine: 'underline' },
   insightBlock: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
@@ -797,6 +945,7 @@ const styles = StyleSheet.create({
   cardDesc: { ...typography.subtitle, marginTop: spacing.xs },
   quickActionLink: { marginTop: spacing.sm },
   quickActionLinkText: { ...typography.body, color: colors.primary, textDecorationLine: 'underline' },
+  childSettingsStatus: { ...typography.Caption, color: colors.textSecondary, marginTop: spacing.xs },
   hint: { ...typography.subtitle, marginBottom: spacing.sm },
   errorText: { ...typography.error, marginBottom: spacing.sm },
   retryBtn: { alignSelf: 'flex-start' },

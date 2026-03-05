@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { ChildHomeScreen } from '../screens/child/ChildHomeScreen';
 import { ActivityHubScreen } from '../screens/child/ActivityHubScreen';
 import { ActivityScreen } from '../screens/child/ActivityScreen';
 import { DomainDetailScreen } from '../screens/child/DomainDetailScreen';
@@ -16,6 +17,7 @@ const Stack = createNativeStackNavigator<ChildStackParamList>();
 function ChildTabs() {
   return (
     <Tab.Navigator
+      initialRouteName="Home"
       screenOptions={{
         tabBarActiveTintColor: colors.childAccent,
         tabBarInactiveTintColor: colors.textSecondary,
@@ -26,6 +28,7 @@ function ChildTabs() {
         headerShadowVisible: false,
       }}
     >
+      <Tab.Screen name="Home" component={ChildHomeScreen} options={{ tabBarLabel: 'Home' }} />
       <Tab.Screen name="ActivityHub" component={ActivityHubScreen} options={{ tabBarLabel: 'Activities' }} />
       <Tab.Screen name="Activity" component={ActivityScreen} options={{ tabBarLabel: 'Do Activity' }} />
       <Tab.Screen name="Reward" component={RewardScreen} options={{ tabBarLabel: 'Rewards' }} />

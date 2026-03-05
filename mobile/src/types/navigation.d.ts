@@ -40,9 +40,11 @@ export type ParentStackParamList = {
   KidsActivities: undefined;
   Booking: { psychologistId: string };
   MyAppointments: undefined;
+  ChildSettings: { childId: string };
 };
 
 export type ChildTabParamList = {
+  Home: undefined;
   ActivityHub: undefined;
   Activity: { activityId?: string };
   Reward: undefined;
@@ -52,7 +54,7 @@ export type ChildTabParamList = {
 export type ChildStackParamList = {
   Main: undefined;
   DomainDetail: { domainId: string };
-  CompletionReward: { starsEarned: number };
+  CompletionReward: { starsEarned: number; domainTitle?: string; childName?: string };
 };
 
 export type OnboardingStackParamList = {
@@ -128,11 +130,19 @@ export type ClinicStackParamList = {
   ProfessionalDisclaimer: undefined;
 };
 
+/** Parent onboarding: Welcome -> AddChild -> FirstPractice (then Child mode for activity). */
+export type ParentOnboardingStackParamList = {
+  ParentOnboardingWelcome: undefined;
+  ParentOnboardingAddChild: undefined;
+  ParentOnboardingFirstPractice: undefined;
+};
+
 export type RootStackParamList = {
   Onboarding: NavigatorScreenParams<OnboardingStackParamList> & {
     initialRouteName?: keyof OnboardingStackParamList;
     token?: string;
   };
+  ParentOnboarding: NavigatorScreenParams<ParentOnboardingStackParamList>;
   Auth: NavigatorScreenParams<AuthStackParamList>;
   TherapistOnboarding: NavigatorScreenParams<TherapistOnboardingStackParamList> & { initialScreen?: keyof TherapistOnboardingStackParamList };
   RoleSelect: undefined;
@@ -150,5 +160,6 @@ declare global {
     interface AdminParamList extends AdminStackParamList {}
     interface TherapistParamList extends TherapistStackParamList {}
     interface ClinicParamList extends ClinicStackParamList {}
+    interface ParentOnboardingParamList extends ParentOnboardingStackParamList {}
   }
 }

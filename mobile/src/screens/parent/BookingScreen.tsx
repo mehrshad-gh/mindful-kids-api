@@ -19,9 +19,8 @@ import { createAppointment } from '../../api/appointments';
 import { fetchPsychologistById } from '../../api/psychologists';
 import type { ParentStackParamList } from '../../types/navigation';
 import { HeaderBar } from '../../components/layout/HeaderBar';
-import { colors } from '../../design/colors';
-import { radius } from '../../design/radius';
-import { spacing, typography } from '../../theme';
+import { colors } from '../../theme/colors';
+import { spacing, typography, borderRadius, layout } from '../../theme';
 
 type Props = NativeStackScreenProps<ParentStackParamList, 'Booking'>;
 
@@ -132,7 +131,7 @@ export function BookingScreen({ route, navigation }: Props) {
                   onPress={() => setSelectedSlot(slot)}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.slotPillText, isSelected && styles.slotPillTextSelected]}>
+                  <Text style={[styles.slotPillText, isSelected && styles.slotPillTextSelected]} numberOfLines={1}>
                     {formatSlotLabel(slot.starts_at_utc)}
                   </Text>
                 </TouchableOpacity>
@@ -169,22 +168,25 @@ export function BookingScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   card: { marginBottom: spacing.md },
   emptyText: { ...typography.body, color: colors.textSecondary },
-  slotSectionLabel: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm },
-  slotPillWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
+  slotSectionLabel: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.md },
+  slotPillWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.lg },
   slotPill: {
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.xl,
+    minHeight: layout.touchTargetMin,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md + 4,
+    borderRadius: borderRadius.full,
     backgroundColor: colors.surface,
     borderWidth: 2,
     borderColor: colors.border,
+    justifyContent: 'center',
   },
   slotPillSelected: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryMuted,
     borderColor: colors.primary,
+    borderWidth: 2,
   },
-  slotPillText: { ...typography.Body, color: colors.textPrimary, fontWeight: '500' },
-  slotPillTextSelected: { color: colors.textInverse },
+  slotPillText: { ...typography.body, color: colors.text, fontWeight: '500' },
+  slotPillTextSelected: { color: colors.primaryDark, fontWeight: '600' },
   confirmCard: { marginTop: spacing.sm },
   notesInput: { marginBottom: spacing.md },
   confirmBtn: {},

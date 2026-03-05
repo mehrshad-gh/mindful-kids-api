@@ -5,3 +5,6 @@ export { ProgressBar } from './ProgressBar';
 export { Badge } from './Badge';
 export { Avatar } from './Avatar';
 export { SectionHeader } from './SectionHeader';
+export { IconCircle } from './IconCircle';
+export { StatPill } from './StatPill';
+export { DomainIcon } from './DomainIcon';

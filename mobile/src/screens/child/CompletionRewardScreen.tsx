@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -6,6 +6,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useProgressSummary } from '../../hooks/useProgressSummary';
+import { setParentOnboardingComplete, getParentOnboardingActivityStarted, setParentOnboardingActivityStarted } from '../../utils/onboardingStorage';
+import { useParentOnboardingSuccess } from '../../context/ParentOnboardingSuccessContext';
+import { getChildGamificationSettings } from '../../utils/childGamificationSettingsStorage';
 import { colors } from '../../design/colors';
 import { radius, spacing } from '../../design/theme';
 import { typography } from '../../design/typography';
@@ -29,20 +32,41 @@ function getEncouragingMessage(stars: number): string {
 }
 
 export function CompletionRewardScreen({ navigation, route }: Props) {
-  const { starsEarned } = route.params;
-  const { selectedChildId } = useAuth();
+  const { starsEarned, domainTitle, childName } = route.params;
+  const { selectedChildId, setAppRole } = useAuth();
+  const { setBanner } = useParentOnboardingSuccess();
   const { summary, refresh } = useProgressSummary(selectedChildId);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const starScale = useRef(new Animated.Value(0)).current;
+
+  const handleDone = async () => {
+    const fromParentOnboarding = await getParentOnboardingActivityStarted();
+    if (fromParentOnboarding) {
+      await setParentOnboardingComplete(true);
+      await setParentOnboardingActivityStarted(false);
+      if (domainTitle && childName) {
+        setBanner({ domainTitle, childName });
+      }
+      setAppRole('parent');
+    } else {
+      navigation.navigate('Main');
+    }
+  };
   const streakScale = useRef(new Animated.Value(0)).current;
   const messageOpacity = useRef(new Animated.Value(0)).current;
 
   useFocusEffect(
     React.useCallback(() => {
       refresh();
-    }, [refresh])
+      if (selectedChildId) {
+        getChildGamificationSettings(selectedChildId).then((s) => setReducedMotion(s.reducedMotion));
+      }
+    }, [refresh, selectedChildId])
   );
 
+  // When reducedMotion is true, reward animations (star/streak scale, message opacity) are disabled; content renders statically.
   useEffect(() => {
+    if (reducedMotion) return;
     Animated.sequence([
       Animated.timing(starScale, {
         toValue: 1,
@@ -62,46 +86,67 @@ export function CompletionRewardScreen({ navigation, route }: Props) {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [starScale, streakScale, messageOpacity]);
+  }, [reducedMotion, starScale, streakScale, messageOpacity]);
 
   const currentStreak = summary?.current_streak ?? 0;
+
+  const starsContent = (
+    <>
+      <Text style={styles.starsEmoji}>{'⭐'.repeat(Math.min(5, Math.max(0, starsEarned)))}</Text>
+      <Text style={styles.starsLabel}>+{starsEarned} Stars Earned</Text>
+    </>
+  );
+  const streakContent = (
+    <>
+      <Text style={styles.streakEmoji}>🔥</Text>
+      <Text style={styles.streakLabel}>Current streak</Text>
+      <Text style={styles.streakValue}>{currentStreak} day{currentStreak !== 1 ? 's' : ''}</Text>
+    </>
+  );
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>You did it!</Text>
 
-      <Animated.View
-        style={[
-          styles.starsBox,
-          {
-            transform: [{ scale: starScale }],
-          },
-        ]}
-      >
-        <Text style={styles.starsEmoji}>{'⭐'.repeat(Math.min(5, Math.max(0, starsEarned)))}</Text>
-        <Text style={styles.starsLabel}>+{starsEarned} Stars Earned</Text>
-      </Animated.View>
+      {reducedMotion ? (
+        <View style={styles.starsBox}>{starsContent}</View>
+      ) : (
+        <Animated.View style={[styles.starsBox, { transform: [{ scale: starScale }] }]}>
+          {starsContent}
+        </Animated.View>
+      )}
 
-      <Animated.View
-        style={[
-          styles.streakBox,
-          {
-            transform: [{ scale: streakScale }],
-          },
-        ]}
-      >
-        <Text style={styles.streakEmoji}>🔥</Text>
-        <Text style={styles.streakLabel}>Current streak</Text>
-        <Text style={styles.streakValue}>{currentStreak} day{currentStreak !== 1 ? 's' : ''}</Text>
-      </Animated.View>
+      {reducedMotion ? (
+        <View style={styles.streakBox}>{streakContent}</View>
+      ) : (
+        <Animated.View style={[styles.streakBox, { transform: [{ scale: streakScale }] }]}>
+          {streakContent}
+        </Animated.View>
+      )}
 
-      <Animated.Text style={[styles.message, { opacity: messageOpacity }]}>
-        Great practice!
-      </Animated.Text>
+      {reducedMotion ? (
+        <>
+          <Text style={styles.message}>Great practice!</Text>
+          {domainTitle ? (
+            <Text style={styles.skillMessage}>You just practiced {domainTitle}.</Text>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <Animated.Text style={[styles.message, { opacity: messageOpacity }]}>
+            Great practice!
+          </Animated.Text>
+          {domainTitle ? (
+            <Animated.Text style={[styles.skillMessage, { opacity: messageOpacity }]}>
+              You just practiced {domainTitle}.
+            </Animated.Text>
+          ) : null}
+        </>
+      )}
 
       <Button
         title="Done"
-        onPress={() => navigation.navigate('Main')}
+        onPress={handleDone}
         style={styles.doneBtn}
       />
     </View>
@@ -168,6 +213,13 @@ const styles = StyleSheet.create({
   message: {
     ...typography.SectionTitle,
     color: colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  skillMessage: {
+    ...typography.Caption,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
