@@ -13,10 +13,14 @@ import { fetchDomainProgress, type DomainProgressItem } from '../../api/domainPr
 import { EMOTIONAL_DOMAINS } from '../../constants/emotionalDomains';
 import { DOMAIN_INSIGHTS } from '../../constants/domainInsights';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
+import { HeaderBar } from '../../components/layout/HeaderBar';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { FAB } from '../../components/ui/FAB';
-import { colors } from '../../theme/colors';
+import { Avatar } from '../../components/ui/Avatar';
+import { Badge } from '../../components/ui/Badge';
+import { ProgressBar } from '../../components/ui/ProgressBar';
+import { colors, getDomainColor } from '../../design/colors';
 import { spacing, layout } from '../../theme';
 import { typography } from '../../theme/typography';
 import { getParentInsight } from '../../utils/parentInsight';
@@ -276,8 +280,7 @@ export function DashboardScreen() {
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={colors.parentAccent} />}
       >
-        <Text style={styles.title}>Dashboard</Text>
-        <Text style={styles.subtitle}>Hello, {user?.name ?? 'Parent'}!</Text>
+        <HeaderBar title="Dashboard" subtitle={`Hello, ${user?.name ?? 'Parent'}!`} />
 
         <Card style={styles.insightCard} variant="elevated" accentColor={colors.primary}>
           <Text style={styles.insightLabel}>Insight for you</Text>
@@ -413,7 +416,7 @@ export function DashboardScreen() {
                     )}
                   </View>
                   {summary.last_emotion ? (
-                    <Text style={styles.insightText}>{getEmotionInsight(summary.last_emotion.emotion)}</Text>
+                    <Text style={styles.emotionInsightText}>{getEmotionInsight(summary.last_emotion.emotion)}</Text>
                   ) : null}
                 </View>
 
@@ -448,11 +451,11 @@ export function DashboardScreen() {
           </TouchableOpacity>
         ) : null}
         {selectedChild && (
-          <Card style={styles.domainCard} variant="outlined">
+          <View style={styles.domainSection}>
             <Text style={styles.domainCardTitle}>Emotional Growth Overview</Text>
             <Text style={styles.domainCardSubtitle}>Emotional skills grow through consistent practice.</Text>
             {domainProgressLoading && !domainProgress ? (
-              <ActivityIndicator size="small" color={colors.parentAccent} style={styles.domainLoader} />
+              <ActivityIndicator size="small" color={colors.primary} style={styles.domainLoader} />
             ) : domainProgress ? (
               EMOTIONAL_DOMAINS.map((domain) => {
                 const prog = domainProgress.find((d) => d.domain_id === domain.id);
@@ -461,18 +464,19 @@ export function DashboardScreen() {
                 const levelLabel = prog?.level_label ?? 'Starting';
                 const barMax = 10;
                 const barPct = Math.min(1, sessions / barMax);
+                const domainColor = getDomainColor(domain.id);
                 const insightConfig = DOMAIN_INSIGHTS[domain.id];
                 const showInsight = sessions >= 5 && insightConfig;
                 const insightTier = sessions >= 10 ? 'strong' : 'growing';
                 const insight = showInsight ? insightConfig[insightTier] : null;
                 const isExpanded = expandedInsightDomainId === domain.id;
                 return (
-                  <View key={domain.id} style={styles.domainRow}>
-                    <Text style={styles.domainLabel}>{domain.title}</Text>
-                    <Text style={styles.domainLevelLabel}>{levelLabel}</Text>
-                    <View style={styles.domainBarBg}>
-                      <View style={[styles.domainBarFill, { width: `${barPct * 100}%` }]} />
+                  <Card key={domain.id} variant="domain" accentColor={domainColor} style={styles.domainCardItem}>
+                    <View style={styles.domainRow}>
+                      <Text style={[styles.domainLabel, { color: domainColor }]}>{domain.title}</Text>
+                      <Badge label={levelLabel} variant="domain" color={domainColor} />
                     </View>
+                    <ProgressBar progress={barPct} fillColor={domainColor} height={10} animated />
                     <Text style={styles.domainMeta}>{stars} stars · {sessions} session{sessions !== 1 ? 's' : ''}</Text>
                     {showInsight && insight && (
                       <>
@@ -486,7 +490,7 @@ export function DashboardScreen() {
                           </Text>
                         </TouchableOpacity>
                         {isExpanded && (
-                          <View style={styles.insightCard}>
+                          <View style={styles.insightBlock}>
                             <Text style={styles.insightTitle}>Growth Insight</Text>
                             <Text style={styles.insightMessage}>{insight.message}</Text>
                             <Text style={styles.insightExplanation}>{insight.explanation}</Text>
@@ -498,13 +502,13 @@ export function DashboardScreen() {
                         )}
                       </>
                     )}
-                  </View>
+                  </Card>
                 );
               })
             ) : (
-              <Text style={styles.domainEmpty}>No domain progress yet.</Text>
+              <Card style={styles.domainCardItem}><Text style={styles.domainEmpty}>No domain progress yet.</Text></Card>
             )}
-          </Card>
+          </View>
         )}
 
         <Text style={styles.sectionTitle}>Child for “Child mode”</Text>
@@ -523,40 +527,38 @@ export function DashboardScreen() {
             <Button title="Add child" onPress={handleAddChild} style={styles.addBtn} />
           </Card>
         ) : (
-          <>
+          <View style={styles.childSelectorRow}>
             {children.map((c) => (
-              <View key={c.id}>
-                <TouchableOpacity
-                  onPress={() => setSelectedChild(c.id)}
-                  activeOpacity={0.8}
-                >
-                  <Card style={[styles.card, selectedChildId === c.id && styles.cardSelected]}>
-                    <Text style={styles.childName}>{c.name}</Text>
-                    {c.age_group ? <Text style={styles.childMeta}>{c.age_group}</Text> : null}
-                  </Card>
-                </TouchableOpacity>
-                {selectedChildId === c.id ? (
-                  <TouchableOpacity
-                    onPress={() => handleRemoveChild(c.id, c.name)}
-                    style={styles.removeChildLink}
-                  >
-                    <Text style={styles.removeChildText}>Remove this child's profile</Text>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
+              <TouchableOpacity
+                key={c.id}
+                onPress={() => setSelectedChild(c.id)}
+                activeOpacity={0.8}
+                style={[styles.childSelectorItem, selectedChildId === c.id && styles.childSelectorItemSelected]}
+              >
+                <Avatar name={c.name} size={56} />
+                <Text style={styles.childSelectorName} numberOfLines={1}>{c.name}</Text>
+              </TouchableOpacity>
             ))}
-            <Button title="Add another child" onPress={handleAddChild} variant="ghost" style={styles.addAnother} />
-          </>
+            <TouchableOpacity onPress={handleAddChild} style={styles.childSelectorAdd} activeOpacity={0.8}>
+              <Text style={styles.childSelectorAddText}>+ Add</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {selectedChild && children.some((c) => c.id === selectedChildId) && (
+          <TouchableOpacity onPress={() => handleRemoveChild(selectedChildId!, selectedChild!.name)} style={styles.removeChildLink}>
+            <Text style={styles.removeChildText}>Remove selected child's profile</Text>
+          </TouchableOpacity>
         )}
 
-        <Card style={styles.card}>
-          <Text style={styles.cardTitle}>Quick actions</Text>
-          <Text style={styles.cardDesc}>View advice, library, and child progress in the tabs.</Text>
-          <TouchableOpacity
-            onPress={() => parentStack?.navigate('MyAppointments')}
-            style={styles.quickActionLink}
-          >
+        <Card style={styles.card} title="Quick actions" subtitle="Practice, appointments, and resources.">
+          <TouchableOpacity onPress={() => parentStack?.navigate('MyAppointments')} style={styles.quickActionLink}>
             <Text style={styles.quickActionLinkText}>My appointments</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => parentStack?.navigate('ParentResources')} style={styles.quickActionLink}>
+            <Text style={styles.quickActionLinkText}>Parent resources</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => parentStack?.navigate('TrustAndSafety')} style={styles.quickActionLink}>
+            <Text style={styles.quickActionLinkText}>Trust & safety</Text>
           </TouchableOpacity>
         </Card>
 
@@ -753,7 +755,7 @@ const styles = StyleSheet.create({
   lastEmotionValue: { ...typography.caption, fontSize: 13, fontWeight: '600', color: colors.text },
   lastEmotionWhen: { ...typography.caption },
   noEmotionYet: { ...typography.caption, fontSize: 13, marginTop: 2 },
-  insightText: { ...typography.caption, fontSize: 13, lineHeight: 20, marginTop: spacing.sm },
+  emotionInsightText: { ...typography.caption, fontSize: 13, lineHeight: 20, marginTop: spacing.sm },
   recentSection: { marginTop: spacing.sm, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
   recentTitle: { ...typography.label, marginBottom: spacing.sm },
   recentRow: { marginBottom: spacing.sm },
@@ -762,20 +764,24 @@ const styles = StyleSheet.create({
   noActivity: { ...typography.subtitle },
   levelUpBanner: { backgroundColor: colors.primaryLight, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: 8, marginBottom: spacing.sm },
   levelUpBannerText: { ...typography.subtitle, color: colors.text, textAlign: 'center' },
-  domainCard: { marginBottom: layout.listItemGap },
-  domainCardTitle: { ...typography.h3, marginBottom: spacing.xs },
+  domainSection: { marginBottom: spacing.lg },
+  domainCardTitle: { ...typography.SectionTitle, marginBottom: spacing.xs },
   domainCardSubtitle: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.md },
-  domainRow: { marginBottom: spacing.sm },
-  domainLabel: { ...typography.subtitle, marginBottom: spacing.xs },
-  domainLevelLabel: { ...typography.caption, color: colors.parentAccent, marginBottom: spacing.xs },
-  domainBarBg: { height: 8, backgroundColor: colors.border, borderRadius: 4, overflow: 'hidden', marginBottom: spacing.xs },
-  domainBarFill: { height: '100%', backgroundColor: colors.parentAccent, borderRadius: 4 },
-  domainMeta: { ...typography.caption, color: colors.textSecondary },
+  domainCardItem: { marginBottom: spacing.sm },
+  domainRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
+  domainLabel: { ...typography.subtitle, fontWeight: '600', flex: 1 },
+  domainMeta: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
   domainEmpty: { ...typography.bodySmall, color: colors.textSecondary },
   domainLoader: { marginVertical: spacing.sm },
+  childSelectorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.md },
+  childSelectorItem: { alignItems: 'center', minWidth: 72, paddingVertical: spacing.sm, paddingHorizontal: spacing.xs, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.border },
+  childSelectorItemSelected: { borderColor: colors.primary, backgroundColor: colors.surfaceSoft },
+  childSelectorName: { ...typography.Caption, marginTop: spacing.sm, maxWidth: 72, textAlign: 'center' },
+  childSelectorAdd: { alignItems: 'center', justifyContent: 'center', minWidth: 72, paddingVertical: spacing.sm, paddingHorizontal: spacing.xs, borderRadius: 12, borderWidth: 2, borderColor: colors.border, borderStyle: 'dashed' },
+  childSelectorAddText: { ...typography.Caption, color: colors.textSecondary },
   insightToggle: { marginTop: spacing.sm },
   insightToggleText: { ...typography.caption, color: colors.primary, textDecorationLine: 'underline' },
-  insightCard: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+  insightBlock: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
   insightTitle: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm },
   insightMessage: { ...typography.subtitle, fontWeight: '600', color: colors.text, marginBottom: spacing.xs },
   insightExplanation: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.sm, lineHeight: 20 },

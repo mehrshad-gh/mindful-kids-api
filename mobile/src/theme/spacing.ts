@@ -1,14 +1,17 @@
-/** 4px grid – primary scale */
-export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 48,
-} as const;
+/**
+ * Re-export design system spacing, radius, shadows (single source of truth: design/).
+ */
+import { spacing as designSpacing } from '../design/spacing';
 
-export const spacingLegacy = spacing;
+export const spacing = designSpacing;
+export type { Spacing } from '../design/spacing';
+export const spacingLegacy = designSpacing;
+
+export { radius } from '../design/radius';
+export type { Radius } from '../design/radius';
+
+export { shadows } from '../design/shadows';
+export type { Shadows } from '../design/shadows';
 
 export const borderRadius = {
   sm: 8,
@@ -17,44 +20,4 @@ export const borderRadius = {
   xl: 20,
   xxl: 24,
   full: 9999,
-} as const;
-
-export const shadows = {
-  sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  /** For FAB and prominent CTAs */
-  fab: {
-    shadowColor: '#0D9488',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  /** Soft glow for cards / hero sections */
-  glow: {
-    shadowColor: '#0D9488',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
 } as const;

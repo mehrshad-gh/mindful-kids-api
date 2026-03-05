@@ -19,6 +19,7 @@ const Stack = createNativeStackNavigator<AdminStackParamList>();
 export function AdminNavigator() {
   return (
     <Stack.Navigator
+      initialRouteName="AdminMain"
       screenOptions={{
         headerShown: true,
         headerStyle: { backgroundColor: colors.surface },

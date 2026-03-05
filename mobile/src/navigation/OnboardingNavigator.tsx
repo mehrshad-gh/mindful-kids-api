@@ -46,7 +46,7 @@ export function OnboardingNavigator({ route }: Props) {
       <Stack.Screen
         name="Login"
         component={LoginScreen}
-        options={{ title: 'Sign in' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="ClinicApplicationForm"

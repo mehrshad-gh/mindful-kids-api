@@ -8,7 +8,7 @@
  */
 
 /** Version of legal documents. Bump when terms/privacy/disclaimer change; used when recording acceptance. */
-export const LEGAL_DOCUMENT_VERSION = '2026-02-01';
+export const LEGAL_DOCUMENT_VERSION = '2026-03-04';
 
 export const TERMS_OF_SERVICE = `
 Terms of Service
@@ -16,30 +16,42 @@ Terms of Service
 Last updated: [Date]
 
 1. Acceptance
-By creating an account or using Mindful Kids, you agree to these Terms of Service and our Privacy Policy. If you do not agree, do not use the service.
+By creating an account or using MindfulKids, you agree to these Terms of Service and our Privacy Policy. If you do not agree, do not use the service.
 
-2. Description of Service
-Mindful Kids provides activities, advice, and tools to support emotional skill development and parent education. We are not a healthcare provider and do not diagnose, treat, or replace professional mental or medical care.
+2. Educational Purpose
+MindfulKids is an educational emotional skill-building platform. It does not provide medical, psychological, or clinical services. It does not diagnose, treat, or prevent any condition. Use of the platform does not create a therapist–client or other professional relationship between you and MindfulKids.
 
-3. Accounts
+3. Professional Independence
+Professionals (including therapists) listed on the platform are independent. MindfulKids does not supervise, control, or provide their professional services. Any therapeutic or other professional services are solely between you and that professional. MindfulKids is not responsible for the conduct, advice, or outcomes of any listed professional.
+
+4. Appointment Booking
+MindfulKids acts only as a scheduling platform for appointments. It does not employ therapists or other professionals. It does not control availability, scheduling decisions, or the provision of services. MindfulKids is not responsible for cancellations, no-shows, outcomes of sessions, or disputes between you and a professional.
+
+5. No Guaranteed Outcomes
+Emotional development and skill-building vary by individual. No specific results or outcomes from use of the platform are guaranteed.
+
+6. Parental Responsibility
+Parents or legal guardians are responsible for supervising their child’s use of the platform. Child profiles must be created and managed by a parent or legal guardian. MindfulKids is not responsible for unsupervised or inappropriate use of the platform by a child.
+
+7. Accounts
 You must provide accurate information when registering. You are responsible for keeping your password secure and for all activity under your account. You must be at least 18 years old (or the age of majority in your jurisdiction) to create an account.
 
-4. Acceptable Use
+8. Acceptable Use
 You agree to use the service only for lawful purposes and in a way that does not harm others or the service. You may not misuse the platform, attempt to gain unauthorized access, or use it to harass or harm minors.
 
-5. Content and Intellectual Property
-Content provided by Mindful Kids (activities, advice, design) is owned by us or our licensors. You may use it only within the app for personal, non-commercial use. User-generated content remains yours; you grant us a license to use it to operate and improve the service.
+9. Content and Intellectual Property
+Content provided by MindfulKids (activities, advice, design) is owned by us or our licensors. You may use it only within the app for personal, non-commercial use. User-generated content remains yours; you grant us a license to use it to operate and improve the service.
 
-6. Disclaimers
+10. Disclaimers
 The service is provided "as is." We do not guarantee uninterrupted or error-free service. We are not liable for decisions you make based on content in the app. For professional advice, consult a qualified professional.
 
-7. Limitation of Liability
-To the fullest extent permitted by law, Mindful Kids and its affiliates are not liable for indirect, incidental, special, or consequential damages arising from your use of the service.
+11. Limitation of Liability
+To the maximum extent permitted by law, MindfulKids and its affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from or related to your use of the platform.
 
-8. Changes
+12. Changes
 We may update these terms. We will notify you of material changes (e.g. in-app or by email). Continued use after changes constitutes acceptance.
 
-9. Contact
+13. Contact
 For questions about these terms, contact us via the app or the contact details on our website.
 `.trim();
 
@@ -49,49 +61,48 @@ Privacy Policy
 Last updated: [Date]
 
 1. Who we are
-Mindful Kids ("we," "our") operates the Mindful Kids app and related services. This policy describes how we collect, use, and protect your information.
+MindfulKids ("we," "our") operates the MindfulKids app and related services. This policy describes how we collect, use, and protect your information. We comply with applicable privacy laws in the jurisdictions where we operate.
 
-2. Information we collect
-• Account information: name, email, password (stored securely, never in plain text).
-• Child profile (if you add a child): name, age group, and optional birth date; used only to personalize activities and progress.
-• Usage and progress: activity completions, emotion check-ins, and similar data to provide and improve the service.
-• Device and logs: we may collect device type and general usage data for stability and support.
+2. What data we collect
+• Account information: name, email, and password (stored securely; passwords are never stored in plain text).
+• Child profile data: name, age group, and optional birth date when you add a child; used to personalize activities and progress.
+• Activity progress: activity completions, emotion check-ins, and similar data so we can provide the service and show progress.
+• Booking data: information related to scheduling appointments with professionals (e.g. selected professional, requested time) to facilitate appointment scheduling.
 
-3. How we use it
-We use your information to: provide and personalize the service; maintain your account; improve our content and product; communicate with you (e.g. important updates); and comply with legal obligations. We do not sell your personal data.
+3. Why we collect it
+We collect this data to: provide structured emotional skill practice; track progress; personalize the experience; facilitate appointment scheduling; maintain your account; improve our content and product; communicate with you about important updates; and comply with legal obligations. We do not sell your personal data.
 
-4. Sharing
-We may share data with service providers who help us operate (e.g. hosting, analytics) under strict confidentiality. We may disclose information if required by law or to protect rights and safety.
+4. Who controls child data
+Parents or legal guardians control their child’s profile and data. Child profiles are created and managed through the parent account.
 
-5. Security
-We use industry-standard measures to protect your data (encryption, access controls). No system is 100% secure; we encourage a strong password and keeping your device secure.
+5. Your rights and deletion
+You can access, correct, or delete your account and associated data from within the app or by contacting us. You may request deletion of your data at any time; we will process such requests in line with our policies and applicable law. In some jurisdictions you have additional rights (e.g. data portability, objection). Contact us to exercise them.
 
-6. Your rights
-You can access, correct, or delete your account and associated data from within the app or by contacting us. In some jurisdictions you have additional rights (e.g. data portability, objection). Contact us to exercise them.
+6. Sharing
+We may share data with service providers who help us operate (e.g. hosting, analytics) under strict confidentiality. We may disclose information if required by law or to protect rights and safety. We do not sell your data.
 
-7. Children
+7. Security
+We use industry-standard measures to protect your data (e.g. encryption, access controls). No system is 100% secure; we encourage a strong password and keeping your device secure.
+
+8. Children
 The service is intended for use by parents/guardians. We do not knowingly collect data from children under 13 without parental consent. Child profiles are set up and controlled by the parent account.
 
-8. International
-Data may be processed in countries where we or our providers operate. We take steps to ensure appropriate safeguards where required.
+9. International
+Data may be processed in countries where we or our providers operate. We take steps to ensure appropriate safeguards where required by applicable law.
 
-9. Changes
+10. Changes
 We may update this policy. We will notify you of material changes (e.g. in-app or by email). Continued use after changes constitutes acceptance.
 
-10. Contact
+11. Contact
 For privacy questions or requests, contact us via the app or the contact details on our website.
 `.trim();
 
 export const PROFESSIONAL_DISCLAIMER = `
 Professional Disclaimer
 
-Mindful Kids is an educational and support platform. It is not a substitute for professional mental health, medical, or legal advice.
+This platform is not therapy. It is an educational tool for structured emotional skill practice. It is not a substitute for professional mental health, medical, or legal advice or care.
 
-• We do not diagnose, treat, or cure any condition. Our activities and advice are for general emotional skill-building and parent education only.
+If you have concerns about your or your child’s mental health, please consult a qualified professional. In an emergency, contact local emergency services or a crisis helpline in your area.
 
-• If you or your child are in crisis or need clinical support, please contact a qualified professional, crisis line, or emergency services in your area.
-
-• Professionals listed in our directory (e.g. therapists, clinics) are independent. Verification by Mindful Kids means we have reviewed submitted credentials; it is not an endorsement of their practice or outcomes. Always use your own judgment when choosing care.
-
-• By using the app as a parent or professional, you acknowledge that you have read this disclaimer and understand the limits of the service.
+By using the app, you acknowledge that you have read this disclaimer and understand the limits of the service.
 `.trim();

@@ -6,8 +6,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useProgressSummary } from '../../hooks/useProgressSummary';
-import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { colors } from '../../design/colors';
+import { radius, spacing } from '../../design/theme';
+import { typography } from '../../design/typography';
 import type { ChildStackParamList } from '../../types/navigation';
 
 type Props = {
@@ -64,7 +65,6 @@ export function CompletionRewardScreen({ navigation, route }: Props) {
   }, [starScale, streakScale, messageOpacity]);
 
   const currentStreak = summary?.current_streak ?? 0;
-  const message = getEncouragingMessage(starsEarned);
 
   return (
     <View style={styles.container}>
@@ -79,8 +79,7 @@ export function CompletionRewardScreen({ navigation, route }: Props) {
         ]}
       >
         <Text style={styles.starsEmoji}>{'⭐'.repeat(Math.min(5, Math.max(0, starsEarned)))}</Text>
-        <Text style={styles.starsLabel}>Stars earned</Text>
-        <Text style={styles.starsValue}>{starsEarned}</Text>
+        <Text style={styles.starsLabel}>+{starsEarned} Stars Earned</Text>
       </Animated.View>
 
       <Animated.View
@@ -97,7 +96,7 @@ export function CompletionRewardScreen({ navigation, route }: Props) {
       </Animated.View>
 
       <Animated.Text style={[styles.message, { opacity: messageOpacity }]}>
-        {message}
+        Great practice!
       </Animated.Text>
 
       <Button
@@ -125,26 +124,22 @@ const styles = StyleSheet.create({
   },
   starsBox: {
     alignItems: 'center',
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing[24],
+    paddingHorizontal: spacing[32],
     marginBottom: spacing.lg,
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     borderWidth: 2,
     borderColor: colors.childAccent,
-    minWidth: 200,
+    minWidth: 220,
+    ...typography.CardTitle,
   },
   starsEmoji: {
-    fontSize: 40,
-    marginBottom: spacing.xs,
+    fontSize: 44,
+    marginBottom: spacing.sm,
   },
   starsLabel: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  starsValue: {
-    fontSize: 36,
-    fontWeight: '800',
+    ...typography.SectionTitle,
     color: colors.childAccent,
   },
   streakBox: {
@@ -152,8 +147,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.xl,
-    backgroundColor: colors.surface,
-    borderRadius: 16,
+    backgroundColor: colors.surfaceSoft,
+    borderRadius: radius.large,
     borderWidth: 1,
     borderColor: colors.border,
     minWidth: 180,
@@ -163,18 +158,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   streakLabel: {
-    fontSize: 14,
+    ...typography.Caption,
     color: colors.textSecondary,
   },
   streakValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.text,
+    ...typography.CardTitle,
+    color: colors.textPrimary,
   },
   message: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
+    ...typography.SectionTitle,
+    color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.xl,
     paddingHorizontal: spacing.lg,

@@ -18,8 +18,9 @@ import { fetchPsychologistAvailability, type AvailabilitySlot } from '../../api/
 import { createAppointment } from '../../api/appointments';
 import { fetchPsychologistById } from '../../api/psychologists';
 import type { ParentStackParamList } from '../../types/navigation';
-import { formatAppointmentTime } from '../../utils/dateTime';
-import { colors } from '../../theme/colors';
+import { HeaderBar } from '../../components/layout/HeaderBar';
+import { colors } from '../../design/colors';
+import { radius } from '../../design/radius';
 import { spacing, typography } from '../../theme';
 
 type Props = NativeStackScreenProps<ParentStackParamList, 'Booking'>;
@@ -101,10 +102,16 @@ export function BookingScreen({ route, navigation }: Props) {
     );
   }
 
+  const formatSlotLabel = (isoUtc: string) => {
+    const d = new Date(isoUtc);
+    const day = d.toLocaleDateString(undefined, { weekday: 'short' });
+    const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
+    return `${day} ${time}`;
+  };
+
   return (
     <ScreenLayout>
-      <Text style={styles.title}>Book with {psychologistName}</Text>
-      <Text style={styles.subtitle}>Choose a time (next 14 days)</Text>
+      <HeaderBar title={`Book with ${psychologistName}`} subtitle="Choose a time (next 14 days)" />
 
       {slots.length === 0 ? (
         <Card style={styles.card}>
@@ -114,23 +121,27 @@ export function BookingScreen({ route, navigation }: Props) {
         </Card>
       ) : (
         <>
-          <ScrollView style={styles.slotList} showsVerticalScrollIndicator={false}>
-            {slots.map((slot) => (
-              <TouchableOpacity
-                key={slot.id}
-                style={[styles.slotCard, selectedSlot?.id === slot.id && styles.slotCardSelected]}
-                onPress={() => setSelectedSlot(slot)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.slotText}>{formatAppointmentTime(slot.starts_at_utc, 'parent')}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <Text style={styles.slotSectionLabel}>Available times</Text>
+          <View style={styles.slotPillWrap}>
+            {slots.map((slot) => {
+              const isSelected = selectedSlot?.id === slot.id;
+              return (
+                <TouchableOpacity
+                  key={slot.id}
+                  style={[styles.slotPill, isSelected && styles.slotPillSelected]}
+                  onPress={() => setSelectedSlot(slot)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.slotPillText, isSelected && styles.slotPillTextSelected]}>
+                    {formatSlotLabel(slot.starts_at_utc)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
           {selectedSlot ? (
-            <Card style={styles.confirmCard}>
-              <Text style={styles.confirmLabel}>Selected</Text>
-              <Text style={styles.confirmTime}>{formatAppointmentTime(selectedSlot.starts_at_utc, 'parent')}</Text>
+            <Card style={styles.confirmCard} title="Selected time" subtitle={formatSlotLabel(selectedSlot.starts_at_utc)}>
               <Input
                 value={parentNotes}
                 onChangeText={setParentNotes}
@@ -145,6 +156,7 @@ export function BookingScreen({ route, navigation }: Props) {
                 loading={submitting}
                 disabled={submitting}
                 style={styles.confirmBtn}
+                size="large"
               />
             </Card>
           ) : null}
@@ -155,26 +167,25 @@ export function BookingScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  title: { ...typography.h2, color: colors.text, marginBottom: spacing.xs },
-  subtitle: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.md },
   card: { marginBottom: spacing.md },
   emptyText: { ...typography.body, color: colors.textSecondary },
-  slotList: { maxHeight: 280, marginBottom: spacing.md },
-  slotCard: {
-    padding: spacing.md,
-    backgroundColor: colors.surfaceSubtle,
-    borderRadius: 8,
-    marginBottom: spacing.sm,
-  },
-  slotCardSelected: {
-    backgroundColor: colors.primaryLight,
-    borderColor: colors.primary,
+  slotSectionLabel: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm },
+  slotPillWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
+  slotPill: {
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
     borderWidth: 2,
+    borderColor: colors.border,
   },
-  slotText: { ...typography.body, color: colors.text },
+  slotPillSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  slotPillText: { ...typography.Body, color: colors.textPrimary, fontWeight: '500' },
+  slotPillTextSelected: { color: colors.textInverse },
   confirmCard: { marginTop: spacing.sm },
-  confirmLabel: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.xs },
-  confirmTime: { ...typography.body, fontWeight: '600', marginBottom: spacing.md },
   notesInput: { marginBottom: spacing.md },
   confirmBtn: {},
   centered: { paddingVertical: spacing.xl, alignItems: 'center' },

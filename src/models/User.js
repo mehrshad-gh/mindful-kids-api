@@ -41,10 +41,38 @@ async function updateRole(userId, role) {
   return result.rows[0] || null;
 }
 
+const ROLE = Object.freeze({
+  parent: 'parent',
+  therapist: 'therapist',
+  clinic_admin: 'clinic_admin',
+  admin: 'admin',
+});
+
+/** List users by role (uses v_parents, v_therapists, v_clinic_admins, v_admins). Returns id, email, name, created_at, updated_at. */
+async function listByRole(role) {
+  const viewMap = {
+    [ROLE.parent]: 'v_parents',
+    [ROLE.therapist]: 'v_therapists',
+    [ROLE.clinic_admin]: 'v_clinic_admins',
+    [ROLE.admin]: 'v_admins',
+  };
+  const view = viewMap[role];
+  if (!view) {
+    throw new Error(`Invalid role: ${role}. Use parent, therapist, clinic_admin, or admin.`);
+  }
+  const result = await query(
+    `SELECT id, email, name, created_at, updated_at FROM ${view} ORDER BY created_at DESC`,
+    []
+  );
+  return result.rows;
+}
+
 module.exports = {
   toUser,
   findByEmail,
   findById,
   create,
   updateRole,
+  ROLE,
+  listByRole,
 };

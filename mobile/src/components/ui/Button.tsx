@@ -12,7 +12,7 @@ import { spacing, borderRadius } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { layout } from '../../theme';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'soft';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'soft' | 'danger';
 type Size = 'medium' | 'small' | 'large';
 
 interface ButtonProps {
@@ -54,7 +54,7 @@ export function Button({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'ghost' || variant === 'soft' ? colors.primary : colors.textInverse}
+          color={variant === 'ghost' || variant === 'soft' ? colors.primary : variant === 'danger' ? colors.textInverse : colors.textInverse}
           size="small"
         />
       ) : (
@@ -106,6 +106,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   variant_soft: { backgroundColor: colors.primaryMuted },
+  variant_danger: { backgroundColor: colors.danger },
   disabled: { opacity: 0.5 },
   text: { ...typography.body, fontWeight: '600' },
   textSmall: { fontSize: 14 },
@@ -115,4 +116,5 @@ const styles = StyleSheet.create({
   text_ghost: { color: colors.primary },
   text_outline: { color: colors.primary },
   text_soft: { color: colors.primaryDark },
+  text_danger: { color: colors.textInverse },
 });

@@ -1,20 +1,23 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { colors } from '../../theme/colors';
 import { borderRadius, shadows } from '../../theme/spacing';
 import { layout } from '../../theme';
+import { typography } from '../../theme/typography';
+import { spacing } from '../../theme/spacing';
 
-type CardVariant = 'default' | 'elevated' | 'outlined' | 'glow';
+type CardVariant = 'default' | 'elevated' | 'outlined' | 'glow' | 'domain';
 
 interface CardProps {
   children: React.ReactNode;
+  title?: string;
+  subtitle?: string;
   variant?: CardVariant;
-  /** Optional left accent bar (e.g. primary, childAccent) */
   accentColor?: string;
   style?: ViewStyle;
 }
 
-export function Card({ children, variant = 'default', accentColor, style }: CardProps) {
+export function Card({ children, title, subtitle, variant = 'default', accentColor, style }: CardProps) {
   return (
     <View
       style={[
@@ -22,10 +25,17 @@ export function Card({ children, variant = 'default', accentColor, style }: Card
         variant === 'elevated' && styles.elevated,
         variant === 'outlined' && styles.outlined,
         variant === 'glow' && styles.glow,
-        accentColor ? [styles.accent, { borderLeftColor: accentColor }] : undefined,
+        variant === 'domain' && accentColor && [styles.domain, { borderLeftColor: accentColor, backgroundColor: accentColor + '12' }],
+        accentColor && variant !== 'domain' ? [styles.accent, { borderLeftColor: accentColor }] : undefined,
         style,
       ]}
     >
+      {(title != null || subtitle != null) && (
+        <View style={styles.header}>
+          {title != null && <Text style={styles.title}>{title}</Text>}
+          {subtitle != null && <Text style={styles.subtitle}>{subtitle}</Text>}
+        </View>
+      )}
       {children}
     </View>
   );
@@ -55,5 +65,20 @@ const styles = StyleSheet.create({
   },
   accent: {
     borderLeftWidth: 4,
+  },
+  domain: {
+    borderLeftWidth: 4,
+  },
+  header: {
+    marginBottom: spacing.sm,
+  },
+  title: {
+    ...typography.CardTitle,
+    color: colors.text,
+  },
+  subtitle: {
+    ...typography.Caption,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
   },
 });

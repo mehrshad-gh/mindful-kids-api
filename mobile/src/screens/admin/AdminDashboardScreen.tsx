@@ -1,7 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl, ScrollView } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useAuth } from '../../context/AuthContext';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
 import { getDashboard, type AdminDashboard } from '../../api/admin';
@@ -37,6 +38,7 @@ function DashboardCard({
 
 export function AdminDashboardScreen() {
   const navigation = useNavigation<Nav>();
+  const { logout } = useAuth();
   const [data, setData] = useState<AdminDashboard | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,6 +70,16 @@ export function AdminDashboardScreen() {
     load();
   }, [load]);
 
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={logout} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Text style={styles.headerButton}>Sign out</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, logout]);
+
   if (loading && !data) {
     return (
       <ScreenLayout scroll={false}>
@@ -80,7 +92,7 @@ export function AdminDashboardScreen() {
   }
 
   return (
-    <ScreenLayout scroll>
+    <ScreenLayout scroll={false}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.container}
@@ -160,4 +172,5 @@ const styles = StyleSheet.create({
   errorText: { ...typography.body, color: colors.error },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg },
   loadingText: { ...typography.subtitle, marginTop: spacing.md },
+  headerButton: { ...typography.body, color: colors.primary, marginRight: spacing.sm },
 });
