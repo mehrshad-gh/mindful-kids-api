@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,22 +7,25 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  Animated,
-  Easing,
-  TextInput,
-  TextInputProps,
-  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { AuthBackground } from '../../components/auth/AuthBackground';
+import { AuthCard } from '../../components/auth/AuthCard';
+import { HeaderBar } from '../../components/layout/HeaderBar';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { SegmentedTabs } from '../../components/ui/SegmentedTabs';
 import { ScrollableScreen } from '../../components/layout/ScrollableScreen';
-import { recordStandardAcceptances } from '../../utils/legalAcceptance';
+import { recordLegalAcceptance } from '../../services/authService';
+import { LEGAL_DOCUMENT_VERSION } from '../../constants/legalContent';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
+import { spacing } from '../../theme/spacing';
 import { layout } from '../../theme';
+import { borderRadius } from '../../theme/spacing';
 import type { OnboardingStackParamList } from '../../types/navigation';
 
 type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'FamilyAuth'>;
@@ -46,203 +49,7 @@ function getErrorMessage(err: unknown): string {
   return 'Something went wrong. Try again.';
 }
 
-// ----------------------------------------------------------------------
-// Advanced UI Components
-// ----------------------------------------------------------------------
-
-const BackgroundBlobs = React.memo(() => {
-  const anim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 20000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    ).start();
-  }, [anim]);
-
-  const spin1 = anim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
-  const spin2 = anim.interpolate({ inputRange: [0, 1], outputRange: ['360deg', '0deg'] });
-
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#F4F7FB' }]} />
-      <Animated.View
-        style={[
-          styles.blob,
-          styles.blobPrimary,
-          { transform: [{ rotate: spin1 }, { translateX: 80 }] },
-        ]}
-      />
-      <Animated.View
-        style={[
-          styles.blob,
-          styles.blobSecondary,
-          { transform: [{ rotate: spin2 }, { translateX: -100 }] },
-        ]}
-      />
-      <Animated.View
-        style={[
-          styles.blob,
-          styles.blobAccent,
-          { transform: [{ rotate: spin1 }, { translateY: 100 }] },
-        ]}
-      />
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(244, 247, 251, 0.55)' }]} />
-    </View>
-  );
-});
-
-function PremiumTabs({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
-  const [width, setWidth] = useState(0);
-  const slideAnim = useRef(new Animated.Value(tab === 'signin' ? 0 : 1)).current;
-
-  useEffect(() => {
-    Animated.spring(slideAnim, {
-      toValue: tab === 'signin' ? 0 : 1,
-      useNativeDriver: true,
-      bounciness: 6,
-      speed: 16,
-    }).start();
-  }, [tab, slideAnim]);
-
-  const indicatorWidth = width > 0 ? (width - 8) / 2 : 0;
-  const translateX = slideAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, indicatorWidth],
-  });
-
-  return (
-    <View style={styles.tabsContainer} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-      {width > 0 && (
-        <Animated.View
-          style={[styles.tabIndicator, { width: indicatorWidth, transform: [{ translateX }] }]}
-        />
-      )}
-      <TouchableOpacity
-        style={styles.tabBtn}
-        onPress={() => setTab('signin')}
-        activeOpacity={0.7}
-      >
-        <Text style={[styles.tabText, tab === 'signin' && styles.tabTextActive]}>Sign in</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.tabBtn}
-        onPress={() => setTab('register')}
-        activeOpacity={0.7}
-      >
-        <Text style={[styles.tabText, tab === 'register' && styles.tabTextActive]}>Create account</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-interface PremiumInputProps extends TextInputProps {
-  label: string;
-  icon?: string;
-  isPassword?: boolean;
-  passwordVisible?: boolean;
-  onTogglePassword?: () => void;
-}
-
-function PremiumInput({
-  label,
-  icon,
-  isPassword,
-  passwordVisible,
-  onTogglePassword,
-  ...props
-}: PremiumInputProps) {
-  const [isFocused, setIsFocused] = useState(false);
-  const focusAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(focusAnim, {
-      toValue: isFocused ? 1 : 0,
-      duration: 250,
-      useNativeDriver: false,
-    }).start();
-  }, [isFocused, focusAnim]);
-
-  const borderColor = focusAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['rgba(255,255,255,0.8)', colors.primary],
-  });
-
-  const bgColor = focusAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['rgba(255,255,255,0.6)', 'rgba(255,255,255,0.95)'],
-  });
-
-  return (
-    <View style={styles.inputWrap}>
-      <Text style={styles.inputLabel}>{label}</Text>
-      <Animated.View style={[styles.inputBox, { borderColor, backgroundColor: bgColor }]}>
-        {icon && <Text style={styles.inputIcon}>{icon}</Text>}
-        <TextInput
-          style={styles.textInput}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          placeholderTextColor="rgba(31, 42, 55, 0.4)"
-          secureTextEntry={isPassword && !passwordVisible}
-          {...props}
-        />
-        {isPassword && (
-          <TouchableOpacity
-            onPress={onTogglePassword}
-            style={styles.eyeBtn}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <Text style={styles.eyeText}>{passwordVisible ? 'Hide' : 'Show'}</Text>
-          </TouchableOpacity>
-        )}
-      </Animated.View>
-    </View>
-  );
-}
-
-function GradientCTA({ title, onPress, loading }: { title: string; onPress: () => void; loading: boolean }) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  const handlePressIn = () => {
-    Animated.spring(scaleAnim, { toValue: 0.96, useNativeDriver: true }).start();
-  };
-  const handlePressOut = () => {
-    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
-  };
-
-  return (
-    <TouchableOpacity
-      activeOpacity={0.9}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      onPress={onPress}
-      disabled={loading}
-    >
-      <Animated.View style={[styles.ctaOuter, { transform: [{ scale: scaleAnim }] }]}>
-        <LinearGradient
-          colors={['#74A3FF', colors.primary, '#4A7BD9']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.ctaInner}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.ctaText}>{title}</Text>
-          )}
-        </LinearGradient>
-      </Animated.View>
-    </TouchableOpacity>
-  );
-}
-
-// ----------------------------------------------------------------------
-// Main Screen
-// ----------------------------------------------------------------------
+const INPUT_HEIGHT = 56;
 
 export function FamilyAuthScreen({
   navigation,
@@ -261,25 +68,6 @@ export function FamilyAuthScreen({
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [name, setName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
-
-  const titleOp = useRef(new Animated.Value(0)).current;
-  const titleSlide = useRef(new Animated.Value(20)).current;
-  const cardOp = useRef(new Animated.Value(0)).current;
-  const cardSlide = useRef(new Animated.Value(40)).current;
-
-  useEffect(() => {
-    Animated.stagger(150, [
-      Animated.parallel([
-        Animated.timing(titleOp, { toValue: 1, duration: 600, useNativeDriver: true }),
-        Animated.spring(titleSlide, { toValue: 0, tension: 40, friction: 8, useNativeDriver: true }),
-      ]),
-      Animated.parallel([
-        Animated.timing(cardOp, { toValue: 1, duration: 600, useNativeDriver: true }),
-        Animated.spring(cardSlide, { toValue: 0, tension: 40, friction: 8, useNativeDriver: true }),
-      ]),
-    ]).start();
-  }, [titleOp, titleSlide, cardOp, cardSlide]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
@@ -309,13 +97,14 @@ export function FamilyAuthScreen({
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
-    if (!termsAccepted) {
-      Alert.alert('Error', 'You must agree to the Terms of Service and Privacy Policy to continue.');
-      return;
-    }
     try {
       await register(email.trim(), password, name.trim());
-      await recordStandardAcceptances(['terms', 'privacy_policy']);
+      try {
+        await recordLegalAcceptance('terms', LEGAL_DOCUMENT_VERSION);
+        await recordLegalAcceptance('privacy_policy', LEGAL_DOCUMENT_VERSION);
+      } catch {
+        // Non-blocking
+      }
       if (onSuccessNavigateTo === 'AddChild') {
         (navigation as any).navigate('DisclaimerConsent', { next: 'AddChild' });
       }
@@ -334,372 +123,174 @@ export function FamilyAuthScreen({
   const openTerms = () => (navigation as any).navigate('TermsOfService');
   const openPrivacy = () => (navigation as any).navigate('PrivacyPolicy');
 
+  const inputStyle = [styles.input, { minHeight: INPUT_HEIGHT, borderRadius: borderRadius.large }];
+
   return (
-    <View style={styles.screen}>
-      <BackgroundBlobs />
-      
-      <ScrollableScreen
-        contentContainerStyle={StyleSheet.flatten([
-          styles.scrollContent,
-          { paddingTop: insets.top + 60, paddingBottom: insets.bottom + layout.sectionGap },
-        ])}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Animated.View
-          style={[styles.header, { opacity: titleOp, transform: [{ translateY: titleSlide }] }]}
+    <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <AuthBackground variant="family" heroFraction={0.4}>
+        <ScrollableScreen
+          contentContainerStyle={[styles.scrollContent, { paddingHorizontal: layout.screenPadding }]}
+          contentPaddingBottom={layout.sectionGap}
+          keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.logoRow}>
-            <Text style={styles.logoIcon}>✨</Text>
-            <Text style={styles.logoText}>MindfulKids</Text>
-          </View>
-          <Text style={styles.heroGreeting}>
-            {tab === 'signin' ? 'Welcome back.' : 'Start your journey.'}
-          </Text>
-        </Animated.View>
-
-        <Animated.View
-          style={[
-            styles.cardOuter,
-            { opacity: cardOp, transform: [{ translateY: cardSlide }] },
-          ]}
-        >
-          <View style={styles.glassCard}>
-            <PremiumTabs tab={tab} setTab={setTab} />
-
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <HeaderBar title="Family" subtitle="Sign in or create your account" style={styles.header} />
+          <AuthCard style={styles.card}>
+            <SegmentedTabs<Tab>
+              options={[
+                { value: 'signin', label: 'Sign in' },
+                { value: 'register', label: 'Create account' },
+              ]}
+              value={tab}
+              onChange={setTab}
+            />
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              style={styles.form}
+            >
               {tab === 'signin' ? (
                 <>
-                  <PremiumInput
-                    label="Email Address"
-                    icon="✉️"
+                  <Input
+                    label="Email"
                     value={email}
                     onChangeText={setEmail}
                     placeholder="you@example.com"
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
+                    style={inputStyle}
                   />
-                  <PremiumInput
-                    label="Password"
-                    icon="🔒"
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Enter your password"
-                    isPassword
-                    passwordVisible={passwordVisible}
-                    onTogglePassword={() => setPasswordVisible(!passwordVisible)}
-                  />
-                  <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotWrap}>
+                  <View style={styles.passwordRow}>
+                    <Input
+                      label="Password"
+                      value={password}
+                      onChangeText={setPassword}
+                      placeholder="Password"
+                      placeholderTextColor={colors.textMuted}
+                      secureTextEntry={!passwordVisible}
+                      autoComplete="password"
+                      style={[inputStyle, styles.passwordInput]}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setPasswordVisible((v) => !v)}
+                      style={styles.visibilityBtn}
+                      hitSlop={12}
+                      accessibilityLabel={passwordVisible ? 'Hide password' : 'Show password'}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.visibilityText}>{passwordVisible ? 'Hide' : 'Show'}</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <TouchableOpacity
+                    onPress={handleForgotPassword}
+                    style={styles.forgotWrap}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  >
                     <Text style={styles.forgotText}>Forgot password?</Text>
                   </TouchableOpacity>
-
-                  <GradientCTA title="Sign In" onPress={handleLogin} loading={isLoading} />
+                  <Button
+                    title="Sign in"
+                    onPress={handleLogin}
+                    loading={isLoading}
+                    fullWidth
+                    size="large"
+                    style={styles.cta}
+                  />
                 </>
               ) : (
                 <>
-                  <PremiumInput
-                    label="Full Name"
-                    icon="👤"
+                  <Input
+                    label="Name"
                     value={name}
                     onChangeText={setName}
                     placeholder="Your name"
+                    placeholderTextColor={colors.textMuted}
+                    style={inputStyle}
                   />
-                  <PremiumInput
-                    label="Email Address"
-                    icon="✉️"
+                  <Input
+                    label="Email"
                     value={email}
                     onChangeText={setEmail}
                     placeholder="you@example.com"
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
+                    style={inputStyle}
                   />
-                  <PremiumInput
+                  <Input
                     label="Password"
-                    icon="🔒"
                     value={password}
                     onChangeText={setPassword}
                     placeholder="At least 8 characters"
-                    isPassword
-                    passwordVisible={passwordVisible}
-                    onTogglePassword={() => setPasswordVisible(!passwordVisible)}
+                    placeholderTextColor={colors.textMuted}
+                    secureTextEntry
+                    style={inputStyle}
                   />
-                  <PremiumInput
-                    label="Confirm Password"
-                    icon="🔒"
+                  <Input
+                    label="Confirm password"
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
-                    placeholder="Re-enter your password"
+                    placeholder="Confirm password"
+                    placeholderTextColor={colors.textMuted}
                     secureTextEntry
+                    style={inputStyle}
                   />
-
-                  <View style={styles.checkboxRow}>
-                    <TouchableOpacity onPress={() => setTermsAccepted(!termsAccepted)} activeOpacity={0.7} style={styles.checkboxTouchTarget}>
-                      <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
-                        {termsAccepted && <Text style={styles.checkmark}>✓</Text>}
-                      </View>
-                    </TouchableOpacity>
-                    <View style={styles.legalCopyWrap}>
-                      <Text style={styles.legalCopy}>I agree to the </Text>
-                      <TouchableOpacity onPress={openTerms} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
-                        <Text style={styles.legalLink}>Terms of Service</Text>
-                      </TouchableOpacity>
-                      <Text style={styles.legalCopy}> and </Text>
-                      <TouchableOpacity onPress={openPrivacy} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
-                        <Text style={styles.legalLink}>Privacy Policy</Text>
-                      </TouchableOpacity>
-                      <Text style={styles.legalCopy}>.</Text>
-                    </View>
-                  </View>
-
-                  <GradientCTA title="Create Account" onPress={handleRegister} loading={isLoading} />
+                  <Text style={styles.agreement}>
+                    By creating an account you agree to our{' '}
+                    <Text style={styles.link} onPress={openTerms}>
+                      Terms of Service
+                    </Text>
+                    {' '}and{' '}
+                    <Text style={styles.link} onPress={openPrivacy}>
+                      Privacy Policy
+                    </Text>
+                    .
+                  </Text>
+                  <Button
+                    title="Create account"
+                    onPress={handleRegister}
+                    loading={isLoading}
+                    fullWidth
+                    size="large"
+                    style={styles.cta}
+                  />
                 </>
               )}
             </KeyboardAvoidingView>
-          </View>
-        </Animated.View>
-      </ScrollableScreen>
+          </AuthCard>
+        </ScrollableScreen>
+      </AuthBackground>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContent: {
-    paddingHorizontal: layout.screenPadding,
-  },
-
-  // --- Background Blobs ---
-  blob: {
+  screen: { flex: 1, backgroundColor: colors.background },
+  scrollContent: { paddingTop: spacing.md },
+  header: { marginBottom: spacing.sm },
+  card: { marginTop: spacing.sm },
+  form: { marginTop: spacing.lg },
+  input: { marginBottom: spacing.md },
+  passwordRow: { position: 'relative', marginBottom: spacing.md },
+  passwordInput: { marginBottom: 0, paddingRight: 56 },
+  visibilityBtn: {
     position: 'absolute',
-    width: 600,
-    height: 600,
-    borderRadius: 300,
-    opacity: 0.35,
-  },
-  blobPrimary: {
-    backgroundColor: colors.primary,
-    top: -200,
-    left: -150,
-  },
-  blobSecondary: {
-    backgroundColor: colors.secondary,
-    top: 300,
-    right: -200,
-  },
-  blobAccent: {
-    backgroundColor: colors.childAccent || '#9C89FF',
-    bottom: -200,
-    left: -50,
-  },
-
-  // --- Header ---
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    right: 12,
+    top: 36,
+    minHeight: 44,
+    minWidth: 44,
     justifyContent: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-end',
   },
-  logoIcon: {
-    fontSize: 22,
-    marginRight: 8,
-  },
-  logoText: {
-    ...typography.HeroTitle,
-    fontSize: 22,
-    letterSpacing: -0.2,
+  visibilityText: { ...typography.caption, color: colors.primary, fontWeight: '600' },
+  forgotWrap: { alignSelf: 'flex-end', marginBottom: spacing.lg, minHeight: 44, justifyContent: 'center' },
+  forgotText: { ...typography.caption, color: colors.primary, fontWeight: '600' },
+  cta: { marginTop: spacing.sm, minHeight: 52 },
+  agreement: {
+    ...typography.bodySmall,
     color: colors.textSecondary,
+    marginBottom: spacing.lg,
   },
-  heroGreeting: {
-    ...typography.HeroTitle,
-    fontSize: 38,
-    textAlign: 'center',
-    color: colors.textPrimary,
-    lineHeight: 46,
-  },
-
-  // --- Card ---
-  cardOuter: {
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 24 },
-    shadowOpacity: 0.08,
-    shadowRadius: 36,
-    elevation: 10,
-  },
-  glassCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
-    borderRadius: 32,
-    padding: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
-  },
-
-  // --- Tabs ---
-  tabsContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(0,0,0,0.04)',
-    borderRadius: 20,
-    padding: 4,
-    marginBottom: 32,
-    position: 'relative',
-  },
-  tabIndicator: {
-    position: 'absolute',
-    top: 4,
-    bottom: 4,
-    left: 4,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  tabBtn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-  },
-  tabText: {
-    ...typography.Body,
-    fontSize: 15,
-    fontWeight: '500',
-    color: colors.textSecondary,
-  },
-  tabTextActive: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-
-  // --- Inputs ---
-  inputWrap: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    ...typography.label,
-    color: colors.textSecondary,
-    marginBottom: 8,
-    marginLeft: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  inputBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    minHeight: 56,
-  },
-  inputIcon: {
-    fontSize: 18,
-    marginRight: 12,
-  },
-  textInput: {
-    flex: 1,
-    ...typography.Body,
-    color: colors.textPrimary,
-    height: '100%',
-    minHeight: 56,
-  },
-  eyeBtn: {
-    paddingLeft: 12,
-  },
-  eyeText: {
-    ...typography.Caption,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  forgotWrap: {
-    alignSelf: 'flex-end',
-    marginBottom: 28,
-    marginTop: -4,
-  },
-  forgotText: {
-    ...typography.Caption,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-
-  // --- CTA ---
-  ctaOuter: {
-    marginTop: 8,
-    borderRadius: 16,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    elevation: 8,
-  },
-  ctaInner: {
-    height: 60,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-  },
-  ctaText: {
-    ...typography.Body,
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 18,
-    letterSpacing: 0.5,
-  },
-
-  // --- Legal ---
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 24,
-    paddingHorizontal: 4,
-  },
-  checkboxTouchTarget: {
-    marginRight: 10,
-  },
-  legalCopyWrap: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    marginRight: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-  },
-  checkboxChecked: {
-    backgroundColor: colors.primary,
-  },
-  checkmark: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  legalCopy: {
-    ...typography.Caption,
-    color: colors.textSecondary,
-    flex: 1,
-    lineHeight: 20,
-  },
-  legalLink: {
-    color: colors.primary,
-    fontWeight: '600',
-  },
+  link: { ...typography.bodySmall, color: colors.primary, textDecorationLine: 'underline' },
 });
