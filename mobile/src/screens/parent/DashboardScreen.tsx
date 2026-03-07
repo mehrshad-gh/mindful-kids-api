@@ -410,7 +410,7 @@ export function DashboardScreen() {
         </View>
 
         {banner ? (
-          <Card style={styles.onboardingBanner} variant="glow" accentColor={colors.success}>
+          <Card style={styles.onboardingBanner} variant="glass">
             <Text style={styles.onboardingBannerText}>
               Great start! You practiced {banner.domainTitle} with {banner.childName}.
             </Text>
@@ -421,7 +421,7 @@ export function DashboardScreen() {
           </Card>
         ) : null}
         {resumeOnboardingVisible ? (
-          <Card style={styles.resumeOnboardingCard} variant="outlined">
+          <Card style={styles.resumeOnboardingCard} variant="glass">
             <Text style={styles.resumeOnboardingTitle}>Resume practice</Text>
             <Text style={styles.resumeOnboardingText}>You started a practice in Child mode. Resume or skip for now.</Text>
             <View style={styles.resumeOnboardingActions}>
@@ -434,7 +434,7 @@ export function DashboardScreen() {
         <View style={styles.sectionBlock}>
           <Text style={styles.sectionOverline}>Daily focus</Text>
           <Text style={styles.sectionTitle}>Today&apos;s tip</Text>
-          <Card style={styles.tipCard} variant="glow" accentColor={colors.parentAccent}>
+          <Card style={styles.tipCard} variant="glass">
           <Text style={styles.tipCardLabel}>Tip of the day</Text>
           {dailyTipViewed ? <Text style={styles.tipSeenToday}>✓ Seen today</Text> : null}
           {streak && streak.current_streak > 0 ? (
@@ -465,7 +465,7 @@ export function DashboardScreen() {
           </Card>
 
           <Text style={[styles.sectionTitle, styles.sectionTitleSecond]}>Daily advice</Text>
-          <Card style={styles.adviceCard} variant="glow" accentColor={colors.parentAccent}>
+          <Card style={styles.adviceCard} variant="glass">
           <Text style={styles.adviceCardLabel}>From our experts</Text>
           {adviceLoading && !featuredAdvice ? (
             <ActivityIndicator size="small" color={colors.parentAccent} style={styles.adviceLoader} />
@@ -492,7 +492,7 @@ export function DashboardScreen() {
           <View style={styles.sectionBlock}>
             <Text style={styles.sectionOverline}>Progress</Text>
             <Text style={styles.sectionTitle}>{selectedChild.name}&apos;s activity</Text>
-            <Card style={styles.dashboardCard} variant="elevated">
+            <Card style={styles.dashboardCard} variant="glass">
             <Text style={styles.dashboardChildName}>Summary</Text>
             {summaryLoading && !summary ? (
               <ActivityIndicator size="small" color={colors.parentAccent} style={styles.summaryLoader} />
@@ -798,19 +798,6 @@ export function DashboardScreen() {
 
 const CONTENT_INSET = 20;
 
-// Sign-in inspired: glass card (frosted, soft shadow)
-const glassCard = {
-  backgroundColor: 'rgba(255, 255, 255, 0.85)',
-  borderRadius: 32,
-  borderWidth: 1.5,
-  borderColor: 'rgba(255, 255, 255, 0.9)',
-  shadowColor: colors.primary,
-  shadowOffset: { width: 0, height: 24 },
-  shadowOpacity: 0.08,
-  shadowRadius: 36,
-  elevation: 10,
-};
-
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: {
@@ -896,14 +883,13 @@ const styles = StyleSheet.create({
   sectionTitleSecond: { marginTop: spacing.lg },
   onboardingBanner: {
     marginBottom: layout.sectionGapSmall,
-    ...glassCard,
   },
   onboardingBannerText: {
     ...typography.body,
   },
   onboardingBannerActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   onboardingBannerBtn: { minWidth: 140 },
-  resumeOnboardingCard: { marginBottom: layout.sectionGapSmall, ...glassCard },
+  resumeOnboardingCard: { marginBottom: layout.sectionGapSmall },
   resumeOnboardingTitle: { ...typography.CardTitle, color: colors.text, marginBottom: spacing.xs },
   resumeOnboardingText: { ...typography.Caption, color: colors.textSecondary, marginBottom: spacing.md },
   resumeOnboardingActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
@@ -918,7 +904,7 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: spacing.sm,
   },
-  tipCard: { marginBottom: layout.sectionGapSmall, ...glassCard },
+  tipCard: { marginBottom: layout.sectionGapSmall },
   tipCardLabel: { ...typography.label, color: colors.primary, marginBottom: spacing.xs },
   tipSeenToday: { ...typography.caption, color: colors.success, marginBottom: spacing.xs },
   tipStreak: { ...typography.caption, color: colors.text, marginBottom: spacing.xs },
@@ -959,14 +945,14 @@ const styles = StyleSheet.create({
   suggestionCardLabel: { ...typography.caption, color: colors.primary, marginBottom: spacing.xs },
   suggestionCardTitle: { ...typography.body, fontWeight: '600', color: colors.text },
   suggestionCardSummary: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
-  adviceCard: { marginBottom: layout.sectionGapSmall, ...glassCard },
+  adviceCard: { marginBottom: layout.sectionGapSmall },
   adviceCardLabel: { ...typography.label, color: colors.parentAccent, marginBottom: spacing.xs },
   adviceCardTitle: { ...typography.h3, marginBottom: spacing.sm },
   adviceCardSummary: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.md },
   adviceCardButton: { alignSelf: 'flex-start' },
   adviceCardEmpty: { ...typography.bodySmall, color: colors.textSecondary },
   adviceLoader: { marginVertical: spacing.sm },
-  dashboardCard: { marginBottom: spacing.lg, ...glassCard },
+  dashboardCard: { marginBottom: spacing.lg },
   dashboardChildName: { ...typography.h2, fontSize: 20, marginBottom: spacing.sm },
   progressSummary: { ...typography.subtitle, marginBottom: spacing.md },
   summaryLoader: { marginVertical: spacing.sm },
