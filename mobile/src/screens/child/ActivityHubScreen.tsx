@@ -17,10 +17,13 @@ import { EMOTIONAL_DOMAINS } from '../../constants/emotionalDomains';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { colors } from '../../theme/colors';
+import { colors, getDomainColor } from '../../theme/colors';
 import { spacing, layout } from '../../theme';
 import { typography } from '../../theme/typography';
 import type { ChildTabParamList, ChildStackParamList } from '../../types/navigation';
+
+const CONTENT_INSET = 20;
+const TAB_PADDING_BOTTOM = 100;
 
 type TabNav = NativeStackNavigationProp<ChildTabParamList, 'ActivityHub'>;
 type StackNav = NativeStackNavigationProp<ChildStackParamList, 'Main'>;
@@ -89,27 +92,31 @@ export function ActivityHubScreen() {
 
   if (!childId && children.length === 0) {
     return (
-      <ScreenLayout>
-        <Text style={styles.title}>Activity Hub</Text>
-        <Card style={styles.card}>
-          <Text style={styles.emptyText}>Add a child in parent mode to start building skills.</Text>
-        </Card>
-        <Button title="Back to Parent mode" onPress={() => setAppRole('parent')} variant="ghost" style={styles.switchBtn} />
+      <ScreenLayout edgeToEdge>
+        <View style={styles.sectionBlock}>
+          <Text style={styles.title}>Activity Hub</Text>
+          <Card style={styles.card}>
+            <Text style={styles.emptyText}>Add a child in parent mode to start building skills.</Text>
+          </Card>
+          <Button title="Back to Parent mode" onPress={() => setAppRole('parent')} variant="ghost" style={styles.switchBtn} />
+        </View>
       </ScreenLayout>
     );
   }
 
   return (
-    <ScreenLayout scroll={false}>
+    <ScreenLayout scroll={false} edgeToEdge>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.childAccent} />
         }
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Build Your Skills</Text>
-        <Text style={styles.subtitle}>Practice in each area to grow stronger every day.</Text>
+        <View style={styles.sectionBlock}>
+          <Text style={styles.title}>Build Your Skills</Text>
+          <Text style={styles.subtitle}>Practice in each area to grow stronger every day.</Text>
 
         {loading && Object.keys(progressByDomain).length === 0 ? (
           <View style={styles.centered}>
@@ -132,7 +139,7 @@ export function ActivityHubScreen() {
                 activeOpacity={0.82}
                 onPress={() => openDomain(domain.id)}
               >
-                <Card style={styles.card} variant="elevated" accentColor={colors.childAccent}>
+                <Card style={styles.card} variant="domain" accentColor={getDomainColor(domain.id)}>
                   <Text style={styles.domainTitle}>{domain.title}</Text>
                   <Text style={styles.domainDesc} numberOfLines={2}>
                     {domain.description}
@@ -149,12 +156,13 @@ export function ActivityHubScreen() {
           })
         )}
 
-        <Button
-          title="Back to Parent mode"
-          onPress={() => setAppRole('parent')}
-          variant="ghost"
-          style={styles.switchBtn}
-        />
+          <Button
+            title="Back to Parent mode"
+            onPress={() => setAppRole('parent')}
+            variant="ghost"
+            style={styles.switchBtn}
+          />
+        </View>
       </ScrollView>
     </ScreenLayout>
   );
@@ -162,11 +170,9 @@ export function ActivityHubScreen() {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  scrollContent: {
-    padding: layout.screenPadding,
-    paddingBottom: layout.fabContentPaddingBottom,
-  },
-  title: { ...typography.h2, marginBottom: spacing.xs },
+  scrollContent: { paddingHorizontal: 0, paddingBottom: TAB_PADDING_BOTTOM },
+  sectionBlock: { paddingHorizontal: CONTENT_INSET, marginBottom: layout.sectionGap },
+  title: { ...typography.h2, color: colors.childAccent, marginBottom: spacing.xs },
   subtitle: { ...typography.subtitle, marginBottom: layout.sectionGapSmall },
   card: { marginBottom: layout.listItemGap },
   domainTitle: { ...typography.h3, marginBottom: spacing.xs },

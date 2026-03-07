@@ -1,6 +1,8 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { DashboardScreen } from '../screens/parent/DashboardScreen';
 import { AdviceFeedScreen } from '../screens/parent/AdviceFeedScreen';
 import { ContentLibraryScreen } from '../screens/parent/ContentLibraryScreen';
@@ -28,26 +30,106 @@ import { colors } from '../theme/colors';
 const Tab = createBottomTabNavigator<ParentTabParamList>();
 const Stack = createNativeStackNavigator<ParentStackParamList>();
 
+const TAB_BAR_HEIGHT = 64;
+const TAB_BAR_MARGIN_H = 16;
+const TAB_BAR_MARGIN_BOTTOM = 12;
+const TAB_BAR_RADIUS = 28;
+
 function ParentTabs() {
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, TAB_BAR_MARGIN_BOTTOM);
+  const floatingTabBarStyle = {
+    position: 'absolute' as const,
+    left: TAB_BAR_MARGIN_H,
+    right: TAB_BAR_MARGIN_H,
+    bottom: bottomInset,
+    height: TAB_BAR_HEIGHT,
+    backgroundColor: colors.surface,
+    borderRadius: TAB_BAR_RADIUS,
+    borderTopWidth: 0,
+    paddingTop: 8,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 12,
+  };
+  const sceneContainerStyle = {
+    paddingBottom: TAB_BAR_HEIGHT + bottomInset + 16,
+  };
+
   return (
     <Tab.Navigator
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.text,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: floatingTabBarStyle,
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
+        tabBarIconStyle: { marginBottom: -2 },
+        tabBarShowLabel: true,
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.textPrimary,
         headerShadowVisible: false,
+        headerTitleStyle: { fontSize: 18, fontWeight: '700' },
       }}
+      sceneContainerStyle={sceneContainerStyle}
     >
-      <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ tabBarLabel: 'Home' }} />
-      <Tab.Screen name="AdviceFeed" component={AdviceFeedScreen} options={{ tabBarLabel: 'Advice' }} />
-      <Tab.Screen name="ContentLibrary" component={ContentLibraryScreen} options={{ tabBarLabel: 'Library' }} />
-      <Tab.Screen name="Search" component={SearchScreen} options={{ tabBarLabel: 'Search' }} />
-      <Tab.Screen name="PsychologistDirectory" component={PsychologistDirectoryScreen} options={{ tabBarLabel: 'Experts' }} />
-      <Tab.Screen name="Clinics" component={ClinicDirectoryScreen} options={{ tabBarLabel: 'Clinics' }} />
-      <Tab.Screen name="ChildProgress" component={ChildProgressScreen} options={{ tabBarLabel: 'Progress' }} />
+      <Tab.Screen
+        name="Dashboard"
+        component={DashboardScreen}
+        options={{
+          tabBarLabel: 'Home',
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size ?? 24} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="AdviceFeed"
+        component={AdviceFeedScreen}
+        options={{
+          tabBarLabel: 'Advice',
+          tabBarIcon: ({ color, size }) => <Ionicons name="bulb-outline" size={size ?? 24} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="ContentLibrary"
+        component={ContentLibraryScreen}
+        options={{
+          tabBarLabel: 'Library',
+          tabBarIcon: ({ color, size }) => <Ionicons name="library-outline" size={size ?? 24} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{
+          tabBarLabel: 'Search',
+          tabBarIcon: ({ color, size }) => <Ionicons name="search" size={size ?? 24} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="PsychologistDirectory"
+        component={PsychologistDirectoryScreen}
+        options={{
+          tabBarLabel: 'Experts',
+          tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size ?? 24} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Clinics"
+        component={ClinicDirectoryScreen}
+        options={{
+          tabBarLabel: 'Clinics',
+          tabBarIcon: ({ color, size }) => <Ionicons name="business-outline" size={size ?? 24} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="ChildProgress"
+        component={ChildProgressScreen}
+        options={{
+          tabBarLabel: 'Progress',
+          tabBarIcon: ({ color, size }) => <Ionicons name="trending-up" size={size ?? 24} color={color} />,
+        }}
+      />
     </Tab.Navigator>
   );
 }

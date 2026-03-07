@@ -12,9 +12,13 @@ import { useAuth } from '../../context/AuthContext';
 import { fetchChildren, type ChildItem } from '../../api/children';
 import { fetchProgressSummary, type ProgressSummary } from '../../api/progress';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
+import { HeroHeader } from '../../components/ui/HeroHeader';
 import { Card } from '../../components/ui/Card';
 import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { spacing, layout } from '../../theme';
+
+const CONTENT_INSET = 20;
+const TAB_PADDING_BOTTOM = 100;
 
 function formatCompletedAt(iso: string): string {
   const d = new Date(iso);
@@ -73,10 +77,12 @@ export function ChildProgressScreen() {
 
   if (loading && children.length === 0) {
     return (
-      <ScreenLayout>
-        <Text style={styles.title}>Child Progress</Text>
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" color={colors.parentAccent} />
+      <ScreenLayout edgeToEdge>
+        <View style={styles.sectionBlock}>
+          <HeroHeader title="Progress" subtitle="Loading…" overline="Child" />
+          <View style={styles.loading}>
+            <ActivityIndicator size="large" color={colors.parentAccent} />
+          </View>
         </View>
       </ScreenLayout>
     );
@@ -84,42 +90,50 @@ export function ChildProgressScreen() {
 
   if (error && children.length === 0) {
     return (
-      <ScreenLayout>
-        <Text style={styles.title}>Child Progress</Text>
-        <Card>
-          <Text style={styles.errorText}>{error}</Text>
-          <Text style={styles.hint}>Sign in and try again.</Text>
-        </Card>
+      <ScreenLayout edgeToEdge>
+        <View style={styles.sectionBlock}>
+          <HeroHeader title="Progress" subtitle="Something went wrong." overline="Child" />
+          <Card variant="glass" style={styles.card}>
+            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.hint}>Sign in and try again.</Text>
+          </Card>
+        </View>
       </ScreenLayout>
     );
   }
 
   return (
-    <ScreenLayout scroll={false}>
+    <ScreenLayout scroll={false} edgeToEdge>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.parentAccent} />
         }
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Child Progress</Text>
-        <Text style={styles.subtitle}>Stars, streaks, and activity summary. Tap a child to set them for Child mode.</Text>
-
-        {children.length === 0 ? (
-          <Card style={styles.card}>
-            <Text style={styles.emptyText}>Add a child in settings to see their progress here.</Text>
-          </Card>
-        ) : (
-          children.map((child) => {
-            const summary = summaries[child.id];
-            const isSelected = selectedChildId === child.id;
-            return (
-              <TouchableOpacity
-                key={child.id}
-                onPress={() => setSelectedChild(child.id)}
-                activeOpacity={0.8}
-              >
-                <Card style={[styles.card, isSelected && styles.cardSelected]}>
+        <View style={styles.sectionBlock}>
+          <HeroHeader
+            title="Progress"
+            subtitle="Stars, streaks, and activity summary. Tap a child to set them for Child mode."
+            overline="Child"
+          />
+        </View>
+        <View style={styles.sectionBlock}>
+          {children.length === 0 ? (
+            <Card variant="glass" style={styles.card}>
+              <Text style={styles.emptyText}>Add a child in settings to see their progress here.</Text>
+            </Card>
+          ) : (
+            children.map((child) => {
+              const summary = summaries[child.id];
+              const isSelected = selectedChildId === child.id;
+              return (
+                <TouchableOpacity
+                  key={child.id}
+                  onPress={() => setSelectedChild(child.id)}
+                  activeOpacity={0.8}
+                >
+                  <Card variant="glass" style={[styles.card, isSelected && styles.cardSelected]}>
                   <Text style={styles.childName}>{child.name}</Text>
                   {summary ? (
                     <View style={styles.statsRow}>
@@ -152,20 +166,20 @@ export function ChildProgressScreen() {
                       ))}
                     </View>
                   )}
-                </Card>
-              </TouchableOpacity>
-            );
-          })
-        )}
+                  </Card>
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </View>
       </ScrollView>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { padding: spacing.md, paddingBottom: spacing.xxl },
-  title: { fontSize: 24, fontWeight: '700', color: colors.text, marginBottom: spacing.xs },
-  subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.lg },
+  scrollContent: { paddingHorizontal: 0, paddingBottom: TAB_PADDING_BOTTOM },
+  sectionBlock: { paddingHorizontal: CONTENT_INSET, marginBottom: layout.sectionGap },
   card: { marginBottom: spacing.md },
   cardSelected: { borderColor: colors.parentAccent, borderWidth: 2 },
   childName: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },

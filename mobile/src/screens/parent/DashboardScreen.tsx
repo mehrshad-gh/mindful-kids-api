@@ -3,6 +3,20 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, RefreshControl, Scroll
 import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
+
+// Sign-in inspired: soft blob background (static)
+function DashboardBackground() {
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#F4F7FB' }]} />
+      <View style={[styles.blob, styles.blobPrimary]} />
+      <View style={[styles.blob, styles.blobSecondary]} />
+      <View style={[styles.blob, styles.blobAccent]} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(244, 247, 251, 0.5)' }]} />
+    </View>
+  );
+}
 import { useAuth } from '../../context/AuthContext';
 import { useParentOnboardingSuccess } from '../../context/ParentOnboardingSuccessContext';
 import { useChildren } from '../../hooks/useChildren';
@@ -16,7 +30,6 @@ import { fetchDomainProgress, type DomainProgressItem } from '../../api/domainPr
 import { EMOTIONAL_DOMAINS } from '../../constants/emotionalDomains';
 import { DOMAIN_INSIGHTS } from '../../constants/domainInsights';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
-import { HeaderBar } from '../../components/layout/HeaderBar';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { FAB } from '../../components/ui/FAB';
@@ -25,12 +38,11 @@ import { Badge } from '../../components/ui/Badge';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { IconCircle } from '../../components/ui/IconCircle';
 import { DomainIcon } from '../../components/ui/DomainIcon';
-import { colors, getDomainColor } from '../../design/colors';
-import { spacing, layout, borderRadius } from '../../theme';
-import { typography } from '../../theme/typography';
-import { getParentInsight } from '../../utils/parentInsight';
 import type { ParentTabParamList } from '../../types/navigation';
 import type { ParentStackParamList } from '../../types/navigation';
+import { colors, getDomainColor } from '../../theme/colors';
+import { spacing, layout, borderRadius, shadows } from '../../theme';
+import { typography } from '../../theme/typography';
 
 const ADVICE_SUMMARY_LENGTH = 120;
 const TIP_PREVIEW_LENGTH = 100;
@@ -45,6 +57,13 @@ function getTipPreview(content: string): string {
   const trimmed = content.trim();
   if (trimmed.length <= TIP_PREVIEW_LENGTH) return trimmed;
   return trimmed.slice(0, TIP_PREVIEW_LENGTH).trim() + '…';
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
 type TabNav = NativeStackNavigationProp<ParentTabParamList, 'Dashboard'>;
@@ -135,6 +154,7 @@ export function DashboardScreen() {
     reducedMotion: false,
   });
   const previousDomainLevels = useRef<Record<string, Record<string, number>>>({});
+  const loadDomainProgressRef = useRef<() => void>(() => {});
 
   const loadAdvice = useCallback(async () => {
     setAdviceLoading(true);
@@ -225,6 +245,8 @@ export function DashboardScreen() {
     }
   }, [selectedChildId, children]);
 
+  loadDomainProgressRef.current = loadDomainProgress;
+
   const openTipDetail = useCallback(async () => {
     if (!dailyTip) return;
     setTipModalVisible(true);
@@ -256,8 +278,8 @@ export function DashboardScreen() {
       loadAdvice();
       loadDailyTip();
       loadParentStreak();
-      loadDomainProgress();
-    }, [refresh, refreshSummary, loadAdvice, loadDailyTip, loadParentStreak, loadDomainProgress])
+      loadDomainProgressRef.current();
+    }, [refresh, refreshSummary, loadAdvice, loadDailyTip, loadParentStreak])
   );
 
   useEffect(() => {
@@ -316,14 +338,75 @@ export function DashboardScreen() {
   }, [refresh, refreshSummary, loadAdvice, loadDailyTip, loadParentStreak, loadDomainProgress]);
 
   return (
-    <ScreenLayout scroll={false}>
+    <ScreenLayout scroll={false} edgeToEdge>
+      <DashboardBackground />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={colors.parentAccent} />}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.headerSection}>
-          <HeaderBar title="Dashboard" subtitle={`Hello, ${user?.name ?? 'Parent'}!`} />
+        <LinearGradient
+          colors={[colors.primary, colors.primaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.welcomeStrip}
+        >
+          <View style={styles.logoRow}>
+            <Text style={styles.logoIcon}>✨</Text>
+            <Text style={styles.logoText}>Mindful Kids</Text>
+          </View>
+          <Text style={styles.welcomeGreeting}>{getGreeting()}</Text>
+          <Text style={styles.welcomeName}>{user?.name ?? 'Parent'}</Text>
+        </LinearGradient>
+
+        <View style={styles.sectionBlock}>
+          <Text style={styles.sectionOverline}>Viewing as</Text>
+          <Text style={styles.sectionTitle}>Child profile</Text>
+          {loading && children.length === 0 ? (
+            <View style={styles.centered}>
+              <ActivityIndicator size="small" color={colors.parentAccent} />
+            </View>
+          ) : error ? (
+            <Card style={styles.card}>
+              <Text style={styles.errorText}>{error.message}</Text>
+              <Button title="Retry" onPress={refresh} variant="outline" style={styles.retryBtn} />
+            </Card>
+          ) : children.length === 0 ? (
+            <Card style={styles.card}>
+              <Text style={styles.hint}>Add a child so they can use the app and you can track progress.</Text>
+              <Button title="Add child" onPress={handleAddChild} style={styles.addBtn} />
+            </Card>
+          ) : (
+            <>
+              <View style={styles.childPillWrapper}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childPillRow}>
+                  {children.map((c) => (
+                  <TouchableOpacity
+                    key={c.id}
+                    onPress={() => setSelectedChild(c.id)}
+                    activeOpacity={0.8}
+                    style={[styles.childPill, selectedChildId === c.id && styles.childPillSelected]}
+                  >
+                    <Avatar name={c.name} size={44} />
+                    <Text style={styles.childPillName} numberOfLines={1}>{c.name}</Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity onPress={handleAddChild} style={styles.childPillAdd} activeOpacity={0.8}>
+                  <IconCircle size={44} backgroundColor={colors.surfaceSoft}>
+                    <Text style={styles.childPillAddIcon}>+</Text>
+                  </IconCircle>
+                  <Text style={styles.childPillAddText}>Add</Text>
+                </TouchableOpacity>
+                </ScrollView>
+              </View>
+              {selectedChild && children.some((c) => c.id === selectedChildId) && (
+                <TouchableOpacity onPress={() => handleRemoveChild(selectedChildId!, selectedChild!.name)} style={styles.removeChildLink}>
+                  <Text style={styles.removeChildText}>Remove selected child&apos;s profile</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
         </View>
 
         {banner ? (
@@ -337,7 +420,6 @@ export function DashboardScreen() {
             </View>
           </Card>
         ) : null}
-
         {resumeOnboardingVisible ? (
           <Card style={styles.resumeOnboardingCard} variant="outlined">
             <Text style={styles.resumeOnboardingTitle}>Resume practice</Text>
@@ -349,38 +431,22 @@ export function DashboardScreen() {
           </Card>
         ) : null}
 
-        <Card style={styles.insightCard} variant="elevated" accentColor={colors.primary}>
-          <Text style={styles.insightLabel}>Insight for you</Text>
-          {children.length === 0 ? (
-            <Text style={styles.insightText}>Add a child to see a personalized insight based on their activities and check-ins.</Text>
-          ) : !selectedChild ? (
-            <Text style={styles.insightText}>Select a child below to see a short, supportive insight.</Text>
-          ) : summaryLoading && !summary ? (
-            <ActivityIndicator size="small" color={colors.parentAccent} style={styles.insightLoader} />
-          ) : (
-            <Text style={styles.insightText}>
-              {getParentInsight(summary ?? null, selectedChild.name)}
-            </Text>
-          )}
-        </Card>
-
-        <Card style={styles.tipCard} variant="glow" accentColor={colors.primary}>
-          <Text style={styles.tipCardLabel}>Today’s parenting tip</Text>
+        <View style={styles.sectionBlock}>
+          <Text style={styles.sectionOverline}>Daily focus</Text>
+          <Text style={styles.sectionTitle}>Today&apos;s tip</Text>
+          <Card style={styles.tipCard} variant="glow" accentColor={colors.parentAccent}>
+          <Text style={styles.tipCardLabel}>Tip of the day</Text>
+          {dailyTipViewed ? <Text style={styles.tipSeenToday}>✓ Seen today</Text> : null}
+          {streak && streak.current_streak > 0 ? (
+            <Text style={styles.tipStreak}>🔥 {streak.current_streak}-day streak</Text>
+          ) : null}
+          {streak && streak.current_streak >= 7 ? (
+            <Text style={styles.tipMilestone}>🎉 {streak.current_streak}-day milestone! You're building a strong habit.</Text>
+          ) : null}
           {dailyTipLoading && !dailyTip ? (
-            <ActivityIndicator size="small" color={colors.primary} style={styles.tipLoader} />
+            <ActivityIndicator size="small" color={colors.parentAccent} style={styles.tipLoader} />
           ) : dailyTip ? (
             <>
-              {dailyTipViewed ? (
-                <>
-                  <Text style={styles.tipSeenToday}>✔ Seen today</Text>
-                  {streak && streak.current_streak > 0 ? (
-                    <Text style={styles.tipStreak}>🔥 {streak.current_streak}-day streak</Text>
-                  ) : null}
-                  {streak && streak.current_streak >= 7 ? (
-                    <Text style={styles.tipMilestone}>🎉 {streak.current_streak}-day milestone! You’re building a strong habit.</Text>
-                  ) : null}
-                </>
-              ) : null}
               <Text style={styles.tipCardTitle}>{dailyTip.title}</Text>
               <Text style={styles.tipCardPreview} numberOfLines={2}>
                 {getTipPreview(dailyTip.content)}
@@ -389,22 +455,18 @@ export function DashboardScreen() {
                 <Text style={styles.tipCardBasis}>{dailyTip.psychology_basis}</Text>
               ) : null}
               {dailyTipViewed ? (
-                <Text style={styles.tipEncouragement}>You’re building a habit of small, supportive moments.</Text>
+                <Text style={styles.tipEncouragement}>You're building a habit of small, supportive moments.</Text>
               ) : null}
-              <Button
-                title="Try this today"
-                onPress={openTipDetail}
-                variant="outline"
-                style={styles.tipCardButton}
-              />
+              <Button title="Try this today" onPress={openTipDetail} variant="outline" style={styles.tipCardButton} />
             </>
           ) : (
             <Text style={styles.tipCardEmpty}>No tip for today. Check back tomorrow.</Text>
           )}
-        </Card>
+          </Card>
 
-        <Card style={styles.adviceCard} variant="glow" accentColor={colors.parentAccent}>
-          <Text style={styles.adviceCardLabel}>Daily advice</Text>
+          <Text style={[styles.sectionTitle, styles.sectionTitleSecond]}>Daily advice</Text>
+          <Card style={styles.adviceCard} variant="glow" accentColor={colors.parentAccent}>
+          <Text style={styles.adviceCardLabel}>From our experts</Text>
           {adviceLoading && !featuredAdvice ? (
             <ActivityIndicator size="small" color={colors.parentAccent} style={styles.adviceLoader} />
           ) : featuredAdvice ? (
@@ -423,11 +485,15 @@ export function DashboardScreen() {
           ) : (
             <Text style={styles.adviceCardEmpty}>No advice right now. Check back later.</Text>
           )}
-        </Card>
+          </Card>
+        </View>
 
         {children.length > 0 && selectedChild && (
-          <Card style={styles.dashboardCard} variant="elevated">
-            <Text style={styles.dashboardChildName}>{selectedChild.name}</Text>
+          <View style={styles.sectionBlock}>
+            <Text style={styles.sectionOverline}>Progress</Text>
+            <Text style={styles.sectionTitle}>{selectedChild.name}&apos;s activity</Text>
+            <Card style={styles.dashboardCard} variant="elevated">
+            <Text style={styles.dashboardChildName}>Summary</Text>
             {summaryLoading && !summary ? (
               <ActivityIndicator size="small" color={colors.parentAccent} style={styles.summaryLoader} />
             ) : summary ? (
@@ -503,7 +569,8 @@ export function DashboardScreen() {
                 )}
               </>
             ) : null}
-          </Card>
+            </Card>
+          </View>
         )}
 
         {levelUpCelebration ? (
@@ -518,9 +585,11 @@ export function DashboardScreen() {
           </TouchableOpacity>
         ) : null}
         {selectedChild && (
-          <View style={styles.domainSection}>
-            <Text style={styles.domainCardTitle}>Emotional Growth Overview</Text>
+          <View style={styles.sectionBlock}>
+            <Text style={styles.sectionOverline}>Skills</Text>
+            <Text style={styles.sectionTitle}>Emotional growth</Text>
             <Text style={styles.domainCardSubtitle}>Emotional skills grow through consistent practice.</Text>
+            <View style={styles.domainSection}>
             {domainProgressLoading && !domainProgress ? (
               <ActivityIndicator size="small" color={colors.primary} style={styles.domainLoader} />
             ) : domainProgress ? (
@@ -568,7 +637,6 @@ export function DashboardScreen() {
                         </TouchableOpacity>
                         {isExpanded && (
                           <View style={styles.insightDrawer}>
-                            <Text style={styles.insightTitle}>Growth Insight</Text>
                             <Text style={styles.insightMessage}>{insight.message}</Text>
                             <Text style={styles.insightExplanation}>{insight.explanation}</Text>
                             <View style={styles.insightPromptBox}>
@@ -585,53 +653,14 @@ export function DashboardScreen() {
             ) : (
               <Card style={styles.domainCardItem}><Text style={styles.domainEmpty}>No domain progress yet.</Text></Card>
             )}
+            </View>
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>Child for “Child mode”</Text>
-        {loading && children.length === 0 ? (
-          <View style={styles.centered}>
-            <ActivityIndicator size="small" color={colors.parentAccent} />
-          </View>
-        ) : error ? (
-          <Card style={styles.card}>
-            <Text style={styles.errorText}>{error.message}</Text>
-            <Button title="Retry" onPress={refresh} variant="outline" style={styles.retryBtn} />
-          </Card>
-        ) : children.length === 0 ? (
-          <Card style={styles.card}>
-            <Text style={styles.hint}>Add a child so they can use the app and you can track progress.</Text>
-            <Button title="Add child" onPress={handleAddChild} style={styles.addBtn} />
-          </Card>
-        ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.childPillRow}>
-            {children.map((c) => (
-              <TouchableOpacity
-                key={c.id}
-                onPress={() => setSelectedChild(c.id)}
-                activeOpacity={0.8}
-                style={[styles.childPill, selectedChildId === c.id && styles.childPillSelected]}
-              >
-                <Avatar name={c.name} size={44} />
-                <Text style={styles.childPillName} numberOfLines={1}>{c.name}</Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity onPress={handleAddChild} style={styles.childPillAdd} activeOpacity={0.8}>
-              <IconCircle size={44} backgroundColor={colors.surfaceSoft}>
-                <Text style={styles.childPillAddIcon}>+</Text>
-              </IconCircle>
-              <Text style={styles.childPillAddText}>Add</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        )}
-        {selectedChild && children.some((c) => c.id === selectedChildId) && (
-          <TouchableOpacity onPress={() => handleRemoveChild(selectedChildId!, selectedChild!.name)} style={styles.removeChildLink}>
-            <Text style={styles.removeChildText}>Remove selected child's profile</Text>
-          </TouchableOpacity>
-        )}
-
-        <View style={styles.quickActionsSection}>
-          <Text style={styles.quickActionsTitle}>Quick actions</Text>
+        <View style={styles.sectionBlock}>
+          <Text style={styles.sectionOverline}>Shortcuts</Text>
+          <Text style={styles.sectionTitle}>Quick actions</Text>
+          <View style={styles.quickActionsSection}>
           <View style={styles.quickActionsGrid}>
             <TouchableOpacity style={styles.quickActionCell} onPress={() => parentStack?.navigate('MyAppointments')} activeOpacity={0.8}>
               <IconCircle size={48} backgroundColor={colors.primaryMuted}>
@@ -658,48 +687,44 @@ export function DashboardScreen() {
               <Text style={styles.quickActionLabel}>Trust & safety</Text>
             </TouchableOpacity>
           </View>
+          </View>
         </View>
-
-        {selectedChildId ? (
+        {selectedChild && (
           <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => parentStack?.navigate('ChildSettings', { childId: selectedChildId })}
             style={styles.childSettingsCard}
+            onPress={() => parentStack?.navigate('ChildSettings', { childId: selectedChild.id })}
+            activeOpacity={0.7}
           >
             <Card variant="outlined" style={styles.childSettingsCardInner}>
               <Text style={styles.childSettingsTitle}>Child settings</Text>
-              <Text style={styles.childSettingsSubtitle}>Daily practice, rewards, and accessibility</Text>
-              <Text style={styles.childSettingsStatus}>
-                Quest: {childGamificationPreview.dailyQuestEnabled ? 'On' : 'Off'} · Stickers: {childGamificationPreview.stickersEnabled ? 'On' : 'Off'} · Motion: {childGamificationPreview.reducedMotion ? 'Reduced' : 'Normal'}
-              </Text>
+              <Text style={styles.childSettingsSubtitle}>Preferences and more for {selectedChild.name}</Text>
             </Card>
           </TouchableOpacity>
-        ) : null}
+        )}
 
-        <Button
-          title="Use app as Child"
-          onPress={handleUseAsChild}
-          variant="outline"
-          style={styles.switchBtn}
-        />
-
+        <TouchableOpacity activeOpacity={0.9} onPress={handleUseAsChild} style={styles.ctaOuter}>
+          <LinearGradient
+            colors={[colors.primary, colors.primaryDark]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.ctaInner}
+          >
+            <Text style={styles.ctaText}>Use app as Child</Text>
+          </LinearGradient>
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={() => (parentStack?.getParent() as { navigate: (name: string) => void } | undefined)?.navigate('RoleSelect')}
           style={styles.switchModeLink}
         >
           <Text style={styles.switchModeText}>Switch mode (Parent / Child / Therapist / Admin)</Text>
         </TouchableOpacity>
-
         <Button title="Sign out" onPress={logout} variant="ghost" style={styles.signOutBtn} />
 
         <View style={styles.disclaimerFooter}>
           <Text style={styles.disclaimerText}>
             Mindful Kids is not a replacement for professional mental health or medical care. If you or your child need clinical support, please contact a qualified professional.
           </Text>
-          <TouchableOpacity
-            onPress={() => parentStack?.navigate('TrustAndSafety')}
-            style={styles.learnMoreLink}
-          >
+          <TouchableOpacity onPress={() => parentStack?.navigate('TrustAndSafety')} style={styles.learnMoreLink}>
             <Text style={styles.learnMoreText}>Learn more — Trust & safety</Text>
           </TouchableOpacity>
         </View>
@@ -715,8 +740,8 @@ export function DashboardScreen() {
         <Pressable style={styles.modalOverlay} onPress={() => setTipModalVisible(false)}>
           <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{dailyTip?.title ?? 'Tip'}</Text>
-              <TouchableOpacity onPress={() => setTipModalVisible(false)} hitSlop={12}>
+              <Text style={styles.modalTitle} numberOfLines={2}>{dailyTip?.title ?? 'Today\'s tip'}</Text>
+              <TouchableOpacity onPress={() => setTipModalVisible(false)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                 <Text style={styles.modalClose}>Close</Text>
               </TouchableOpacity>
             </View>
@@ -771,50 +796,129 @@ export function DashboardScreen() {
   );
 }
 
+const CONTENT_INSET = 20;
+
+// Sign-in inspired: glass card (frosted, soft shadow)
+const glassCard = {
+  backgroundColor: 'rgba(255, 255, 255, 0.85)',
+  borderRadius: 32,
+  borderWidth: 1.5,
+  borderColor: 'rgba(255, 255, 255, 0.9)',
+  shadowColor: colors.primary,
+  shadowOffset: { width: 0, height: 24 },
+  shadowOpacity: 0.08,
+  shadowRadius: 36,
+  elevation: 10,
+};
+
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: {
-    padding: layout.screenPadding,
+    paddingHorizontal: 0,
     paddingBottom: layout.fabContentPaddingBottom,
   },
-  headerSection: { marginBottom: layout.sectionGapSmall },
-  title: { ...typography.h2, marginBottom: spacing.xs },
-  subtitle: { ...typography.body, color: colors.textSecondary, marginBottom: layout.sectionGapSmall },
+  // Blobs (sign-in inspired, static)
+  blob: {
+    position: 'absolute',
+    width: 480,
+    height: 480,
+    borderRadius: 240,
+    opacity: 0.3,
+  },
+  blobPrimary: {
+    backgroundColor: colors.primary,
+    top: -180,
+    left: -120,
+  },
+  blobSecondary: {
+    backgroundColor: colors.secondary,
+    top: 280,
+    right: -160,
+  },
+  blobAccent: {
+    backgroundColor: colors.childAccent,
+    bottom: -160,
+    left: -80,
+  },
+  welcomeStrip: {
+    marginBottom: layout.sectionGap,
+    paddingTop: 28,
+    paddingBottom: 32,
+    paddingHorizontal: CONTENT_INSET,
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  logoIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  logoText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.95)',
+    letterSpacing: -0.2,
+  },
+  welcomeGreeting: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.9)',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  welcomeName: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+    lineHeight: 36,
+  },
+  sectionBlock: {
+    marginBottom: layout.sectionGap,
+    paddingHorizontal: CONTENT_INSET,
+  },
+  sectionOverline: {
+    ...typography.caption,
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: spacing.xs,
+  },
+  sectionTitle: {
+    ...typography.SectionTitle,
+    fontSize: 18,
+    marginBottom: spacing.md,
+  },
+  sectionTitleSecond: { marginTop: spacing.lg },
   onboardingBanner: {
     marginBottom: layout.sectionGapSmall,
+    ...glassCard,
   },
   onboardingBannerText: {
     ...typography.body,
-    color: colors.text,
-    marginBottom: spacing.md,
   },
   onboardingBannerActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   onboardingBannerBtn: { minWidth: 140 },
-  resumeOnboardingCard: { marginBottom: layout.sectionGapSmall },
+  resumeOnboardingCard: { marginBottom: layout.sectionGapSmall, ...glassCard },
   resumeOnboardingTitle: { ...typography.CardTitle, color: colors.text, marginBottom: spacing.xs },
   resumeOnboardingText: { ...typography.Caption, color: colors.textSecondary, marginBottom: spacing.md },
   resumeOnboardingActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   resumeOnboardingBtn: { minWidth: 140 },
-  insightCard: {
-    marginBottom: layout.sectionGapSmall,
-    backgroundColor: colors.primary + '0C',
-    borderColor: colors.primary + '24',
-  },
-  insightLabel: {
-    ...typography.label,
-    color: colors.primary,
-    marginBottom: spacing.xs,
-  },
-  insightText: {
-    ...typography.bodySmall,
-    color: colors.text,
-    lineHeight: 22,
-  },
   insightLoader: {
     alignSelf: 'flex-start',
     marginVertical: spacing.xs,
   },
-  tipCard: { marginBottom: layout.sectionGapSmall },
+  childPillWrapper: {
+    backgroundColor: 'rgba(0,0,0,0.04)',
+    borderRadius: 20,
+    padding: 4,
+    marginBottom: spacing.sm,
+  },
+  tipCard: { marginBottom: layout.sectionGapSmall, ...glassCard },
   tipCardLabel: { ...typography.label, color: colors.primary, marginBottom: spacing.xs },
   tipSeenToday: { ...typography.caption, color: colors.success, marginBottom: spacing.xs },
   tipStreak: { ...typography.caption, color: colors.text, marginBottom: spacing.xs },
@@ -855,21 +959,32 @@ const styles = StyleSheet.create({
   suggestionCardLabel: { ...typography.caption, color: colors.primary, marginBottom: spacing.xs },
   suggestionCardTitle: { ...typography.body, fontWeight: '600', color: colors.text },
   suggestionCardSummary: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
-  adviceCard: { marginBottom: layout.sectionGapSmall },
+  adviceCard: { marginBottom: layout.sectionGapSmall, ...glassCard },
   adviceCardLabel: { ...typography.label, color: colors.parentAccent, marginBottom: spacing.xs },
   adviceCardTitle: { ...typography.h3, marginBottom: spacing.sm },
   adviceCardSummary: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.md },
   adviceCardButton: { alignSelf: 'flex-start' },
   adviceCardEmpty: { ...typography.bodySmall, color: colors.textSecondary },
   adviceLoader: { marginVertical: spacing.sm },
-  dashboardCard: { marginBottom: spacing.lg },
+  dashboardCard: { marginBottom: spacing.lg, ...glassCard },
   dashboardChildName: { ...typography.h2, fontSize: 20, marginBottom: spacing.sm },
   progressSummary: { ...typography.subtitle, marginBottom: spacing.md },
   summaryLoader: { marginVertical: spacing.sm },
-  statsRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
-  stat: { flex: 1 },
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  stat: {
+    flex: 1,
+    backgroundColor: colors.surfaceSubtle,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    alignItems: 'center',
+  },
   statValue: { ...typography.h2, fontSize: 20, color: colors.parentAccent },
-  statLabel: { ...typography.caption, marginTop: 2 },
+  statLabel: { ...typography.caption, marginTop: 4 },
   lastRewardSection: { marginBottom: spacing.sm, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
   lastRewardTitle: { ...typography.label, marginBottom: spacing.xs },
   lastRewardRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs },
@@ -892,8 +1007,16 @@ const styles = StyleSheet.create({
   recentActivity: { ...typography.subtitle, fontWeight: '600', color: colors.text },
   recentMeta: { ...typography.caption, marginTop: 2 },
   noActivity: { ...typography.subtitle },
-  levelUpBanner: { backgroundColor: colors.primaryLight, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: 8, marginBottom: spacing.sm },
-  levelUpBannerText: { ...typography.subtitle, color: colors.text, textAlign: 'center' },
+  levelUpBanner: {
+    backgroundColor: colors.primaryLight,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.primary + '30',
+  },
+  levelUpBannerText: { ...typography.subtitle, color: colors.text, textAlign: 'center', fontWeight: '600' },
   domainSection: { marginBottom: spacing.lg },
   domainCardTitle: { ...typography.SectionTitle, marginBottom: spacing.xs },
   domainCardSubtitle: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.md },
@@ -910,12 +1033,25 @@ const styles = StyleSheet.create({
   childPillAdd: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: borderRadius.full, borderWidth: 2, borderColor: colors.border, borderStyle: 'dashed', minWidth: 88 },
   childPillAddIcon: { ...typography.h3, color: colors.textSecondary },
   childPillAddText: { ...typography.Caption, color: colors.textSecondary, marginTop: spacing.xs },
-  quickActionsSection: { marginBottom: spacing.lg },
-  quickActionsTitle: { ...typography.SectionTitle, marginBottom: spacing.md },
-  quickActionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
-  quickActionCell: { width: '47%', minWidth: 140, backgroundColor: colors.surface, borderRadius: borderRadius.lg, padding: layout.cardPaddingCompact, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  quickActionsSection: {},
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+  },
+  quickActionCell: {
+    width: '47%',
+    minWidth: 140,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: layout.cardPaddingCompact,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.sm,
+  },
   quickActionEmoji: { fontSize: 24 },
-  quickActionLabel: { ...typography.Caption, color: colors.text, marginTop: spacing.sm, fontWeight: '600' },
+  quickActionLabel: { ...typography.Caption, color: colors.textPrimary, marginTop: spacing.sm, fontWeight: '600' },
   childSettingsCard: { marginBottom: layout.listItemGap },
   childSettingsCardInner: { marginBottom: 0 },
   childSettingsTitle: { ...typography.CardTitle, color: colors.text },
@@ -936,7 +1072,6 @@ const styles = StyleSheet.create({
   insightPromptBox: { backgroundColor: colors.surfaceSubtle, padding: spacing.md, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: colors.parentAccent },
   insightPromptLabel: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.xs },
   insightPrompt: { ...typography.bodySmall, color: colors.text, fontStyle: 'italic' },
-  sectionTitle: { ...typography.h3, fontSize: 16, marginBottom: spacing.sm },
   card: { marginBottom: layout.listItemGap },
   cardSelected: { borderColor: colors.parentAccent, borderWidth: 2 },
   childName: { ...typography.body, fontWeight: '600' },
@@ -953,7 +1088,29 @@ const styles = StyleSheet.create({
   addAnother: { marginBottom: spacing.md },
   removeChildLink: { marginTop: -spacing.sm, marginBottom: spacing.sm, paddingVertical: spacing.xs },
   removeChildText: { ...typography.caption, color: colors.error },
-  switchBtn: { marginTop: spacing.md },
+  ctaOuter: {
+    marginTop: spacing.md,
+    borderRadius: 16,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  ctaInner: {
+    height: 56,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+  ctaText: {
+    ...typography.body,
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 17,
+  },
   switchModeLink: { marginTop: spacing.sm, paddingVertical: spacing.sm, alignItems: 'center' },
   switchModeText: { ...typography.link, fontSize: 14 },
   signOutBtn: { marginTop: spacing.sm },

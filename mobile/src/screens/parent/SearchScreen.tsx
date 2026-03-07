@@ -12,6 +12,7 @@ import {
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
+import { HeroHeader } from '../../components/ui/HeroHeader';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { searchTherapists, searchClinics } from '../../api/search';
@@ -21,8 +22,11 @@ import type {
 } from '../../api/search';
 import type { ParentStackParamList, ParentTabParamList } from '../../types/navigation';
 import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { spacing, layout } from '../../theme';
 import { typography } from '../../theme/typography';
+
+const CONTENT_INSET = 20;
+const TAB_PADDING_BOTTOM = 100;
 
 type TabNav = NativeStackNavigationProp<ParentTabParamList, 'Search'>;
 
@@ -37,7 +41,7 @@ function TherapistResultCard({
 }) {
   return (
     <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
-      <Card style={styles.card}>
+      <Card variant="glass" style={styles.card}>
         <View style={styles.cardRow}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
@@ -78,7 +82,7 @@ function ClinicResultCard({
 }) {
   return (
     <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
-      <Card style={styles.card}>
+      <Card variant="glass" style={styles.card}>
         <View style={styles.nameRow}>
           <Text style={styles.clinicName} numberOfLines={1}>{item.name}</Text>
           {item.verification_status === 'verified' ? (
@@ -185,11 +189,15 @@ export function SearchScreen() {
   };
 
   return (
-    <ScreenLayout scroll={false}>
-      <Text style={styles.title}>Discover</Text>
-      <Text style={styles.subtitle}>Find verified therapists and clinics worldwide.</Text>
-
-      <View style={styles.tabRow}>
+    <ScreenLayout scroll={false} edgeToEdge>
+      <View style={[styles.headerSection, styles.inset]}>
+        <HeroHeader
+          title="Search"
+          subtitle="Find verified therapists and clinics worldwide."
+          overline="Discover"
+        />
+      </View>
+      <View style={[styles.tabRow, styles.inset]}>
         <TouchableOpacity
           style={[styles.tab, tab === 'therapists' && styles.tabActive]}
           onPress={() => setTab('therapists')}
@@ -208,7 +216,7 @@ export function SearchScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.filters}>
+      <View style={[styles.filters, styles.inset]}>
         <Text style={styles.filterLabel}>Country (optional)</Text>
         <Input
           value={country}
@@ -260,11 +268,13 @@ export function SearchScreen() {
       </View>
 
       {error ? (
-        <Card style={styles.errorCard}>
-          <Text style={styles.errorText}>{error}</Text>
-        </Card>
+        <View style={styles.inset}>
+          <Card variant="glass" style={styles.errorCard}>
+            <Text style={styles.errorText}>{error}</Text>
+          </Card>
+        </View>
       ) : loading && therapists.length === 0 && clinics.length === 0 ? (
-        <View style={styles.centered}>
+        <View style={[styles.centered, styles.inset]}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading…</Text>
         </View>
@@ -275,9 +285,9 @@ export function SearchScreen() {
           renderItem={({ item }) => (
             <TherapistResultCard item={item} onPress={() => openTherapist(item.id)} />
           )}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, styles.insetList]}
           listEmptyComponent={
-            <Card style={styles.emptyCard}>
+            <Card variant="glass" style={styles.emptyCard}>
               <Text style={styles.emptyText}>
                 No therapists match your filters. Try changing country or clinic.
               </Text>
@@ -295,9 +305,9 @@ export function SearchScreen() {
           renderItem={({ item }) => (
             <ClinicResultCard item={item} onPress={() => openClinic(item.id)} />
           )}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, styles.insetList]}
           listEmptyComponent={
-            <Card style={styles.emptyCard}>
+            <Card variant="glass" style={styles.emptyCard}>
               <Text style={styles.emptyText}>
                 No clinics match your filters. Try changing country.
               </Text>
@@ -314,8 +324,9 @@ export function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { ...typography.h2, marginBottom: spacing.xs },
-  subtitle: { ...typography.subtitle, marginBottom: spacing.md },
+  inset: { paddingHorizontal: CONTENT_INSET },
+  insetList: { paddingHorizontal: CONTENT_INSET, paddingBottom: TAB_PADDING_BOTTOM },
+  headerSection: { marginBottom: spacing.lg },
   tabRow: { flexDirection: 'row', marginBottom: spacing.md },
   tab: {
     paddingHorizontal: spacing.lg,
@@ -358,6 +369,7 @@ const styles = StyleSheet.create({
   },
   searchBtnText: { ...typography.body, fontWeight: '600', color: colors.textInverse },
   listContent: { paddingBottom: spacing.xl },
+  // insetList adds horizontal inset and bottom padding for tab bar
   card: { marginBottom: spacing.md },
   cardRow: { flexDirection: 'row', alignItems: 'center' },
   avatar: {

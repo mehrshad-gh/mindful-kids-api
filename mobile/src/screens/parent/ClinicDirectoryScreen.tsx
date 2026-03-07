@@ -11,20 +11,24 @@ import {
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
+import { HeroHeader } from '../../components/ui/HeroHeader';
 import { Card } from '../../components/ui/Card';
 import { listClinics } from '../../api/clinics';
 import type { Clinic } from '../../types/therapist';
 import type { ParentStackParamList, ParentTabParamList } from '../../types/navigation';
 import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { spacing, layout } from '../../theme';
 import { typography } from '../../theme/typography';
+
+const CONTENT_INSET = 20;
+const TAB_PADDING_BOTTOM = 100;
 
 type TabNav = NativeStackNavigationProp<ParentTabParamList, 'Clinics'>;
 
 function ClinicCard({ item, onPress }: { item: Clinic; onPress: () => void }) {
   return (
     <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
-      <Card style={styles.card}>
+      <Card variant="glass" style={styles.card}>
         <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
         {(item.location || item.address || item.country) && (
           <Text style={styles.location} numberOfLines={1}>
@@ -71,8 +75,8 @@ export function ClinicDirectoryScreen() {
 
   if (loading && clinics.length === 0) {
     return (
-      <ScreenLayout scroll={false}>
-        <View style={styles.centered}>
+      <ScreenLayout edgeToEdge>
+        <View style={[styles.centered, styles.inset]}>
           <ActivityIndicator size="large" color={colors.parentAccent} />
           <Text style={styles.loadingText}>Loading clinics…</Text>
         </View>
@@ -81,22 +85,29 @@ export function ClinicDirectoryScreen() {
   }
 
   return (
-    <ScreenLayout scroll={false}>
-      <Text style={styles.title}>Clinics</Text>
-      <Text style={styles.subtitle}>Browse clinics and their therapists.</Text>
+    <ScreenLayout scroll={false} edgeToEdge>
+      <View style={[styles.headerSection, styles.inset]}>
+        <HeroHeader
+          title="Clinics"
+          subtitle="Browse clinics and their therapists."
+          overline="Directory"
+        />
+      </View>
       <FlatList
         data={clinics}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <ClinicCard item={item} onPress={() => openClinic(item.id)} />
         )}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, styles.insetList]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} colors={[colors.parentAccent]} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.parentAccent} />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>No clinics in the directory yet.</Text>
+            <Card variant="glass" style={styles.emptyCard}>
+              <Text style={styles.emptyText}>No clinics in the directory yet.</Text>
+            </Card>
           </View>
         }
       />
@@ -105,10 +116,12 @@ export function ClinicDirectoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { ...typography.h2, marginBottom: spacing.xs, paddingHorizontal: spacing.md },
-  subtitle: { ...typography.subtitle, marginBottom: spacing.md, paddingHorizontal: spacing.md },
-  list: { padding: spacing.md, paddingTop: 0 },
+  inset: { paddingHorizontal: CONTENT_INSET },
+  insetList: { paddingHorizontal: CONTENT_INSET, paddingBottom: TAB_PADDING_BOTTOM },
+  headerSection: { marginBottom: layout.sectionGap },
+  list: { paddingTop: 0 },
   card: { marginBottom: spacing.md },
+  emptyCard: { marginTop: spacing.sm },
   name: { ...typography.h3, marginBottom: spacing.xs },
   location: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.xs },
   desc: { ...typography.bodySmall, color: colors.text },

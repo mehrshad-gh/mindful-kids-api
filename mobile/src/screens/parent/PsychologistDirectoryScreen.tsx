@@ -11,6 +11,7 @@ import {
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
+import { HeroHeader } from '../../components/ui/HeroHeader';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { VerifiedExplainerModal } from '../../components/VerifiedExplainerModal';
@@ -19,6 +20,9 @@ import type { ParentStackParamList, ParentTabParamList } from '../../types/navig
 import { colors } from '../../theme/colors';
 import { spacing, borderRadius, layout } from '../../theme';
 import { typography } from '../../theme/typography';
+
+const CONTENT_INSET = 20;
+const TAB_PADDING_BOTTOM = 100;
 
 const SPECIALTY_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: 'All specialties' },
@@ -53,7 +57,7 @@ function PsychologistCard({
 
   return (
     <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
-      <Card style={styles.card}>
+      <Card variant="glass" style={styles.card}>
         <View style={styles.cardHeader}>
           <View style={styles.avatarPlaceholder}>
             <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
@@ -143,9 +147,10 @@ export function PsychologistDirectoryScreen() {
 
   if (loading && list.length === 0) {
     return (
-      <ScreenLayout scroll={false}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.parentAccent} />
+      <ScreenLayout edgeToEdge>
+        <View style={[styles.centered, { paddingHorizontal: CONTENT_INSET }]}>
+          <HeroHeader title="Experts" subtitle="Loading…" overline="Directory" />
+          <ActivityIndicator size="large" color={colors.parentAccent} style={{ marginTop: spacing.md }} />
           <Text style={styles.loadingText}>Loading experts…</Text>
         </View>
       </ScreenLayout>
@@ -153,17 +158,20 @@ export function PsychologistDirectoryScreen() {
   }
 
   return (
-    <ScreenLayout scroll={false}>
-      <Text style={styles.title}>Expert directory</Text>
-      <View style={styles.subtitleRow}>
-        <Text style={styles.subtitle}>Browse verified psychologists. Tap a profile for details.</Text>
-        <TouchableOpacity onPress={() => setShowVerifiedExplainer(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+    <ScreenLayout scroll={false} edgeToEdge>
+      <View style={[styles.headerSection, { paddingHorizontal: CONTENT_INSET }]}>
+        <HeroHeader
+          title="Experts"
+          subtitle="Browse verified psychologists. Tap a profile for details."
+          overline="Directory"
+        />
+        <TouchableOpacity onPress={() => setShowVerifiedExplainer(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.verifiedLinkWrap}>
           <Text style={styles.verifiedLink}>What does Verified mean?</Text>
         </TouchableOpacity>
       </View>
       <VerifiedExplainerModal visible={showVerifiedExplainer} onClose={() => setShowVerifiedExplainer(false)} />
 
-      <View style={styles.filters}>
+      <View style={[styles.filters, { paddingHorizontal: CONTENT_INSET }]}>
         <Text style={styles.filterLabel}>Specialty</Text>
         <View style={styles.chipRow}>
           {SPECIALTY_OPTIONS.map((opt) => (
@@ -203,10 +211,12 @@ export function PsychologistDirectoryScreen() {
       </View>
 
       {error ? (
-        <Card style={styles.errorCard}>
-          <Text style={styles.errorText}>{error}</Text>
-          <Text style={styles.hint}>Pull down to try again.</Text>
-        </Card>
+        <View style={{ paddingHorizontal: CONTENT_INSET }}>
+          <Card variant="glass" style={styles.errorCard}>
+            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.hint}>Pull down to try again.</Text>
+          </Card>
+        </View>
       ) : (
         <FlatList
           data={list}
@@ -214,9 +224,9 @@ export function PsychologistDirectoryScreen() {
           renderItem={({ item }) => (
             <PsychologistCard item={item} onPress={() => openProfile(item.id)} />
           )}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingHorizontal: CONTENT_INSET, paddingBottom: TAB_PADDING_BOTTOM }]}
           listEmptyComponent={
-            <Card style={styles.emptyCard}>
+            <Card variant="glass" style={styles.emptyCard}>
               <Text style={styles.emptyText}>
                 No experts match your filters. Try changing specialty, location, or rating.
               </Text>
@@ -233,20 +243,11 @@ export function PsychologistDirectoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: {
-    ...typography.h2,
-    marginBottom: spacing.xs,
-  },
-  subtitleRow: {
-    marginBottom: spacing.md,
-  },
-  subtitle: {
-    ...typography.subtitle,
-  },
+  headerSection: { marginBottom: spacing.md },
+  verifiedLinkWrap: { marginTop: spacing.xs },
   verifiedLink: {
     ...typography.caption,
     color: colors.primary,
-    marginTop: 4,
     textDecorationLine: 'underline',
   },
   filters: {

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
+import { HeroHeader } from '../../components/ui/HeroHeader';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { fetchFeaturedAdvice, type AdviceItem } from '../../api/advice';
@@ -16,6 +17,9 @@ import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../theme/colors';
 import { spacing, layout } from '../../theme';
 import { typography } from '../../theme/typography';
+
+const CONTENT_INSET = 20;
+const TAB_PADDING_BOTTOM = 100;
 
 export function AdviceFeedScreen() {
   const { setAppRole, setPendingActivityId } = useAuth();
@@ -44,7 +48,7 @@ export function AdviceFeedScreen() {
   );
 
   return (
-    <ScreenLayout scroll={false}>
+    <ScreenLayout scroll={false} edgeToEdge>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
@@ -52,16 +56,21 @@ export function AdviceFeedScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Daily Advice</Text>
-        <Text style={styles.subtitle}>Evidence-based tips for parenting and child wellbeing.</Text>
-
-        {loading && !featured ? (
+        <View style={styles.sectionBlock}>
+          <HeroHeader
+            title="Advice"
+            subtitle="Evidence-based tips for parenting and child wellbeing."
+            overline="Daily"
+          />
+        </View>
+        <View style={styles.sectionBlock}>
+          {loading && !featured ? (
           <View style={styles.centered}>
             <ActivityIndicator size="large" color={colors.parentAccent} />
             <Text style={styles.loadingText}>Loading…</Text>
           </View>
         ) : error ? (
-          <Card style={styles.card}>
+          <Card variant="glass" style={styles.card}>
             <Text style={styles.errorText}>{error}</Text>
             <Text style={styles.hint}>Pull down to try again.</Text>
           </Card>
@@ -73,7 +82,7 @@ export function AdviceFeedScreen() {
             <Text style={styles.adviceTitle}>{featured.title}</Text>
             <Text style={styles.adviceContent}>{featured.content}</Text>
             {featured.psychology_basis ? (
-              <Card style={styles.psychologyCard}>
+              <Card variant="glass" style={styles.psychologyCard}>
                 <Text style={styles.psychologyLabel}>Why it works</Text>
                 <Text style={styles.psychologyText}>{featured.psychology_basis}</Text>
               </Card>
@@ -93,19 +102,19 @@ export function AdviceFeedScreen() {
             ) : null}
           </View>
         ) : (
-          <Card style={styles.card}>
+          <Card variant="glass" style={styles.card}>
             <Text style={styles.emptyText}>No advice available yet. Check back later.</Text>
           </Card>
         )}
+        </View>
       </ScrollView>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { padding: layout.screenPadding, paddingBottom: spacing.xxl },
-  title: { ...typography.h2, marginBottom: spacing.xs },
-  subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.lg },
+  scrollContent: { paddingHorizontal: 0, paddingBottom: TAB_PADDING_BOTTOM },
+  sectionBlock: { paddingHorizontal: CONTENT_INSET, marginBottom: layout.sectionGap },
   centered: { paddingVertical: spacing.xxl, alignItems: 'center' },
   loadingText: { ...typography.bodySmall, marginTop: spacing.sm, color: colors.textSecondary },
   card: { marginBottom: layout.listItemGap },

@@ -11,11 +11,13 @@ interface ScreenLayoutProps {
   centered?: boolean;
   /** Add bottom padding so content isn't hidden behind a FAB */
   fabSpacing?: boolean;
+  /** Full-bleed: no horizontal padding, content can go edge-to-edge */
+  edgeToEdge?: boolean;
   style?: ViewStyle;
 }
 
-export function ScreenLayout({ children, scroll = true, centered = false, fabSpacing = false, style }: ScreenLayoutProps) {
-  const paddingStyle = centered ? styles.scrollContentCentered : styles.scrollContent;
+export function ScreenLayout({ children, scroll = true, centered = false, fabSpacing = false, edgeToEdge = false, style }: ScreenLayoutProps) {
+  const paddingStyle = edgeToEdge ? styles.scrollContentEdgeToEdge : (centered ? styles.scrollContentCentered : styles.scrollContent);
   const contentPadding = fabSpacing ? { paddingBottom: layout.fabContentPaddingBottom } : undefined;
   const content = scroll ? (
     <ScrollView
@@ -27,7 +29,7 @@ export function ScreenLayout({ children, scroll = true, centered = false, fabSpa
       {children}
     </ScrollView>
   ) : (
-    <View style={[styles.container, centered && styles.containerCentered, contentPadding]}>{children}</View>
+    <View style={[styles.container, centered && styles.containerCentered, edgeToEdge && styles.containerEdgeToEdge, contentPadding]}>{children}</View>
   );
 
   return (
@@ -42,6 +44,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContentBase: { flexGrow: 1 },
   scrollContent: { padding: layout.screenPadding },
+  scrollContentEdgeToEdge: { paddingHorizontal: 0, paddingTop: 0, paddingBottom: layout.screenPadding },
   scrollContentCentered: {
     padding: layout.screenPadding,
     maxWidth: layout.maxContentWidth,
@@ -49,5 +52,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   container: { flex: 1, padding: layout.screenPadding },
+  containerEdgeToEdge: { paddingHorizontal: 0, paddingTop: 0 },
   containerCentered: { maxWidth: layout.maxContentWidth, alignSelf: 'center', width: '100%' },
 });

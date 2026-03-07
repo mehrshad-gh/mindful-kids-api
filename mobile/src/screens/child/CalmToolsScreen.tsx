@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
 import { EmotionWheel } from '../../components/EmotionWheel';
@@ -7,7 +7,10 @@ import { useAuth } from '../../context/AuthContext';
 import { saveEmotionToBackend } from '../../api/emotionLogs';
 import type { EmotionOption } from '../../components/EmotionWheel/emotionData';
 import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { spacing, layout } from '../../theme';
+
+const CONTENT_INSET = 20;
+const TAB_PADDING_BOTTOM = 100;
 
 export function CalmToolsScreen() {
   const { selectedChildId } = useAuth();
@@ -25,23 +28,26 @@ export function CalmToolsScreen() {
   const canSave = Boolean(selectedChildId);
 
   return (
-    <ScreenLayout>
-      <Text style={styles.title}>Calm Tools</Text>
-      <EmotionWheel
-        title="How do you feel?"
-        childId={selectedChildId}
-        onSave={canSave ? handleSaveEmotion : undefined}
-      />
-      <Card style={styles.card}>
-        <Text style={styles.cardTitle}>Breathing & relaxation</Text>
-        <Text style={styles.cardDesc}>Guided breathing, grounding, and calming exercises.</Text>
-      </Card>
+    <ScreenLayout edgeToEdge>
+      <View style={[styles.sectionBlock, { paddingBottom: TAB_PADDING_BOTTOM }]}>
+        <Text style={styles.title}>Calm Tools</Text>
+        <EmotionWheel
+          title="How do you feel?"
+          childId={selectedChildId}
+          onSave={canSave ? handleSaveEmotion : undefined}
+        />
+        <Card style={styles.card}>
+          <Text style={styles.cardTitle}>Breathing & relaxation</Text>
+          <Text style={styles.cardDesc}>Guided breathing, grounding, and calming exercises.</Text>
+        </Card>
+      </View>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: colors.text, marginBottom: spacing.lg },
+  sectionBlock: { paddingHorizontal: CONTENT_INSET, marginBottom: layout.sectionGap },
+  title: { fontSize: 24, fontWeight: '700', color: colors.childAccent, marginBottom: spacing.lg },
   card: { marginBottom: spacing.md },
   cardTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
   cardDesc: { color: colors.textSecondary, marginTop: spacing.xs },

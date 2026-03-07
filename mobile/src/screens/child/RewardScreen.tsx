@@ -5,7 +5,10 @@ import { useProgressSummary } from '../../hooks/useProgressSummary';
 import { ScreenLayout } from '../../components/layout/ScreenLayout';
 import { Card } from '../../components/ui/Card';
 import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { spacing, layout } from '../../theme';
+
+const CONTENT_INSET = 20;
+const TAB_PADDING_BOTTOM = 100;
 
 export function RewardScreen() {
   const { selectedChildId } = useAuth();
@@ -13,24 +16,28 @@ export function RewardScreen() {
 
   if (!selectedChildId) {
     return (
-      <ScreenLayout>
-        <Text style={styles.title}>Rewards</Text>
-        <Card>
-          <Text style={styles.placeholder}>Ask a parent to select your profile so your stars and streak show here.</Text>
-        </Card>
+      <ScreenLayout edgeToEdge>
+        <View style={styles.sectionBlock}>
+          <Text style={styles.title}>Rewards</Text>
+          <Card style={styles.card}>
+            <Text style={styles.placeholder}>Ask a parent to select your profile so your stars and streak show here.</Text>
+          </Card>
+        </View>
       </ScreenLayout>
     );
   }
 
   return (
-    <ScreenLayout scroll={false}>
+    <ScreenLayout scroll={false} edgeToEdge>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.childAccent} />
         }
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Your rewards</Text>
+        <View style={styles.sectionBlock}>
+          <Text style={styles.title}>Your rewards</Text>
 
         {error && (
           <Card style={styles.card}>
@@ -85,19 +92,21 @@ export function RewardScreen() {
           </Card>
         )}
 
-        {loading && !summary && (
-          <View style={styles.loading}>
-            <ActivityIndicator size="large" color={colors.childAccent} />
-          </View>
-        )}
+          {loading && !summary && (
+            <View style={styles.loading}>
+              <ActivityIndicator size="large" color={colors.childAccent} />
+            </View>
+          )}
+        </View>
       </ScrollView>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { padding: spacing.md, paddingBottom: spacing.xxl },
-  title: { fontSize: 24, fontWeight: '700', color: colors.text, marginBottom: spacing.lg },
+  scrollContent: { paddingHorizontal: 0, paddingBottom: TAB_PADDING_BOTTOM },
+  sectionBlock: { paddingHorizontal: CONTENT_INSET, marginBottom: layout.sectionGap },
+  title: { fontSize: 24, fontWeight: '700', color: colors.childAccent, marginBottom: spacing.lg },
   placeholder: { color: colors.textSecondary, fontSize: 16 },
   card: { marginBottom: spacing.md },
   errorText: { color: colors.error },

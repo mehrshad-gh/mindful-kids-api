@@ -6,7 +6,7 @@ import { layout } from '../../theme';
 import { typography } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 
-type CardVariant = 'default' | 'elevated' | 'outlined' | 'glow' | 'domain';
+type CardVariant = 'default' | 'elevated' | 'outlined' | 'glow' | 'domain' | 'glass';
 
 interface CardProps {
   children: React.ReactNode;
@@ -25,6 +25,7 @@ export function Card({ children, title, subtitle, variant = 'default', accentCol
         variant === 'elevated' && styles.elevated,
         variant === 'outlined' && styles.outlined,
         variant === 'glow' && styles.glow,
+        variant === 'glass' && styles.glass,
         variant === 'domain' && accentColor && [styles.domain, { borderLeftColor: accentColor, backgroundColor: accentColor + '12' }],
         accentColor && variant !== 'domain' ? [styles.accent, { borderLeftColor: accentColor }] : undefined,
         style,
@@ -44,27 +45,38 @@ export function Card({ children, title, subtitle, variant = 'default', accentCol
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     padding: layout.cardPadding,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.sm,
+    borderWidth: 0,
+    ...shadows.card,
   },
   elevated: {
-    ...shadows.md,
-    borderColor: 'transparent',
+    ...shadows.elevated,
   },
   outlined: {
+    borderWidth: 1,
+    borderColor: colors.border,
     shadowOpacity: 0,
     elevation: 0,
-    borderColor: colors.border,
   },
   glow: {
     ...shadows.glow,
-    borderColor: colors.primary + '20',
+    borderWidth: 0,
+  },
+  glass: {
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 32,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 24 },
+    shadowOpacity: 0.08,
+    shadowRadius: 36,
+    elevation: 10,
   },
   accent: {
     borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
   },
   domain: {
     borderLeftWidth: 4,
